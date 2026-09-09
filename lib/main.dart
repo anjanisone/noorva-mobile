@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'core/theme/app_theme.dart';
-import 'core/theme/theme_provider.dart';
+import 'core/theme/bloc/theme_bloc.dart';
+import 'core/theme/bloc/theme_state.dart';
 import 'core/routes/app_routes.dart';
 import 'core/routes/app_router.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
-import 'features/auth/presentation/providers/auth_provider.dart';
-import 'features/events/presentation/providers/events_provider.dart';
-import 'features/goals/presentation/providers/goals_provider.dart';
-import 'features/notifications/presentation/providers/notification_provider.dart';
+import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/events/presentation/bloc/events_bloc.dart';
+import 'features/goals/presentation/bloc/goals_bloc.dart';
+import 'features/notifications/presentation/bloc/notification_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,13 +22,13 @@ void main() async {
   final authRepository = AuthRepositoryImpl();
 
   runApp(
-    MultiProvider(
+    MultiBlocProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => AuthProvider(authRepository)),
-        ChangeNotifierProvider(create: (_) => EventsProvider()),
-        ChangeNotifierProvider(create: (_) => GoalsProvider()),
-        ChangeNotifierProvider(create: (_) => NotificationProvider()..initialize()),
+        BlocProvider(create: (_) => ThemeBloc()),
+        BlocProvider(create: (_) => AuthBloc(authRepository)),
+        BlocProvider(create: (_) => EventsBloc()),
+        BlocProvider(create: (_) => GoalsBloc()),
+        BlocProvider(create: (_) => NotificationBloc()),
       ],
       child: const MyApp(),
     ),
@@ -39,16 +40,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-
-    return MaterialApp(
-      title: 'Noorva App',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: themeProvider.themeMode,
-      initialRoute: AppRoutes.splash,
-      onGenerateRoute: AppRouter.onGenerateRoute,
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, themeState) {
+        return MaterialApp(
+          title: 'Noorva App',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeState.themeMode,
+          initialRoute: AppRoutes.splash,
+          onGenerateRoute: AppRouter.onGenerateRoute,
+        );
+      },
     );
   }
 }

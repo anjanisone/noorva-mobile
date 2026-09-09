@@ -22,7 +22,7 @@ class CrystalBorderPainter extends CustomPainter {
     // 173.83 degrees converted to radians for LinearGradient
     // CSS degrees to Flutter: (angle - 90) * pi / 180
     const angle = 173.83;
-    final radians = (angle - 90) * (math.pi / 180);
+    const radians = (angle - 90) * (math.pi / 180);
 
     paint.shader = LinearGradient(
       begin: Alignment.topLeft,

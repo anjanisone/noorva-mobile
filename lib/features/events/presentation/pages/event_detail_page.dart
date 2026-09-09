@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/noorva_delete_dialog.dart';
-import '../providers/events_provider.dart';
+import '../../data/models/event_model.dart';
+import '../bloc/events_bloc.dart';
+import '../bloc/events_event.dart';
+import '../bloc/events_state.dart';
 
 class EventDetailPage extends StatefulWidget {
   final String eventId;
@@ -19,9 +22,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<EventsProvider>(
-      builder: (context, provider, child) {
-        final event = provider.getEventById(widget.eventId);
+    return BlocBuilder<EventsBloc, EventsState>(
+      builder: (context, state) {
+        final event = state.getEventById(widget.eventId);
         if (event == null) {
           return const Scaffold(
             backgroundColor: AppColors.background,
@@ -132,7 +135,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       const SizedBox(height: 16),
 
                       // Task List items
-                      ...event.tasks.map((task) => _buildTaskItem(context, provider, event.id, task)),
+                      ...event.tasks.map((task) => _buildTaskItem(context, event.id, task)),
                       
                       // Extra bottom padding so scroll doesn't block the floating button
                       const SizedBox(height: 20),
@@ -257,7 +260,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
-  Widget _buildTaskItem(BuildContext context, EventsProvider provider, String eventId, EventTask task) {
+  Widget _buildTaskItem(BuildContext context, String eventId, EventTask task) {
     final isExpanded = _expandedTaskIds.contains(task.id);
 
     return Container(
@@ -289,7 +292,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   // Circular/Rounded Checked State Checkbox
                   GestureDetector(
                     onTap: () {
-                      provider.toggleTask(eventId, task.id);
+                      context.read<EventsBloc>().add(EventTaskToggled(eventId, task.id));
                     },
                     child: Container(
                       width: 24,
@@ -368,7 +371,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     height: 48,
                     child: ElevatedButton(
                       onPressed: () {
-                        provider.toggleTask(eventId, task.id);
+                        context.read<EventsBloc>().add(EventTaskToggled(eventId, task.id));
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: task.isCompleted ? const Color(0xFF65C466) : Colors.white,
@@ -450,7 +453,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           title: 'Delete Event',
           content: 'Are you ready to lift this event from your board and release it to the void?',
           onConfirm: () {
-            Provider.of<EventsProvider>(context, listen: false).deleteEvent(eventId);
+            context.read<EventsBloc>().add(EventDeleted(eventId));
             Navigator.pop(context); // pop detail page
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(

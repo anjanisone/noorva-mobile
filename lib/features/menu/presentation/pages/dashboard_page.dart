@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/crystal_card.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -129,7 +129,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildGuidanceCard() {
-    final userName = context.watch<AuthProvider>().user?.name ?? 'User';
+    final userName = context.watch<AuthBloc>().state.user?.name ?? 'User';
     String messageText = '';
     double progressValue = 0.0;
     String progressText = '';

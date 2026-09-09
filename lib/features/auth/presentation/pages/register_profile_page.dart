@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/crystal_card.dart';
 import '../../../../core/widgets/noorva_button.dart';
 import '../../../../core/widgets/noorva_text_field.dart';
-import '../providers/auth_provider.dart';
+import '../bloc/auth_bloc.dart';
+import '../bloc/auth_event.dart';
+import '../bloc/auth_state.dart';
 
 class RegisterProfilePage extends StatefulWidget {
   const RegisterProfilePage({super.key});
@@ -59,7 +61,23 @@ class _RegisterProfilePageState extends State<RegisterProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocListener<AuthBloc, AuthState>(
+      listenWhen: (previous, current) =>
+          current.status == AuthStatus.signupOtpSent ||
+          current.status == AuthStatus.signupOtpFailure,
+      listener: (context, state) {
+        if (state.status == AuthStatus.signupOtpSent) {
+          Navigator.pushNamed(context, AppRoutes.otpVerification, arguments: 'register');
+        } else if (state.status == AuthStatus.signupOtpFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage ?? 'Failed to send verification code.'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+      },
+      child: Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
@@ -215,9 +233,9 @@ class _RegisterProfilePageState extends State<RegisterProfilePage> {
                       const SizedBox(height: 40),
 
                       // Register Button
-                      Consumer<AuthProvider>(
-                        builder: (context, auth, _) {
-                          if (auth.isOtpLoading || auth.isLoading) {
+                      BlocBuilder<AuthBloc, AuthState>(
+                        builder: (context, state) {
+                          if (state.isOtpLoading || state.isLoading) {
                             return const Center(
                               child: Padding(
                                 padding: EdgeInsets.symmetric(vertical: 12),
@@ -227,28 +245,15 @@ class _RegisterProfilePageState extends State<RegisterProfilePage> {
                           }
                           return NoorvaButton(
                             text: 'Register',
-                            onPressed: () async {
+                            onPressed: () {
                               if (_agreedToTerms) {
-                                auth.setPendingProfileData(
-                                  dob: _dobController.text,
-                                  gender: _selectedGender,
-                                  occupation: _occupationController.text,
-                                );
-                                final success = await auth.sendSignupOtp();
-                                if (success && context.mounted) {
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.otpVerification,
-                                    arguments: 'register',
-                                  );
-                                } else if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(auth.errorMessage ?? 'Failed to send verification code.'),
-                                      backgroundColor: Colors.redAccent,
-                                    ),
-                                  );
-                                }
+                                context.read<AuthBloc>()
+                                  ..add(AuthPendingProfileDataSet(
+                                    dob: _dobController.text,
+                                    gender: _selectedGender,
+                                    occupation: _occupationController.text,
+                                  ))
+                                  ..add(const AuthSignupOtpRequested());
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
@@ -268,6 +273,7 @@ class _RegisterProfilePageState extends State<RegisterProfilePage> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

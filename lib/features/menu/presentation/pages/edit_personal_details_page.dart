@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/noorva_button.dart';
 import '../../../../core/widgets/noorva_text_field.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_event.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 import 'profile_page.dart'; // To access UserProfileState fallback
 
 class EditPersonalDetailsPage extends StatefulWidget {
@@ -25,8 +27,7 @@ class _EditPersonalDetailsPageState extends State<EditPersonalDetailsPage> {
   @override
   void initState() {
     super.initState();
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final user = auth.user;
+    final user = context.read<AuthBloc>().state.user;
     _nameController = TextEditingController(text: user?.name ?? UserProfileState.name);
     _emailController = TextEditingController(text: user?.email ?? UserProfileState.email);
     _dobController = TextEditingController(text: user?.dob ?? UserProfileState.dob);
@@ -71,19 +72,28 @@ class _EditPersonalDetailsPageState extends State<EditPersonalDetailsPage> {
     }
   }
 
-  Future<void> _saveChanges() async {
+  void _saveChanges() {
     if (_formKey.currentState?.validate() ?? false) {
-      final auth = Provider.of<AuthProvider>(context, listen: false);
-      final success = await auth.updateUserProfile(
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        dob: _dobController.text.trim(),
-        gender: _selectedGender,
-        occupation: _occupationController.text.trim(),
-      );
+      context.read<AuthBloc>().add(AuthProfileUpdateRequested(
+            name: _nameController.text.trim(),
+            email: _emailController.text.trim(),
+            dob: _dobController.text.trim(),
+            gender: _selectedGender,
+            occupation: _occupationController.text.trim(),
+          ));
+    }
+  }
 
-      if (mounted) {
-        if (success) {
+  @override
+  Widget build(BuildContext context) {
+    final displayInitials = UserProfileState.initials;
+
+    return BlocListener<AuthBloc, AuthState>(
+      listenWhen: (previous, current) =>
+          current.status == AuthStatus.profileUpdateSuccess ||
+          current.status == AuthStatus.profileUpdateFailure,
+      listener: (context, state) {
+        if (state.status == AuthStatus.profileUpdateSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               backgroundColor: const Color(0xFF1E1E22),
@@ -98,7 +108,7 @@ class _EditPersonalDetailsPageState extends State<EditPersonalDetailsPage> {
             ),
           );
           Navigator.pop(context);
-        } else {
+        } else if (state.status == AuthStatus.profileUpdateFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               backgroundColor: Colors.redAccent,
@@ -107,21 +117,14 @@ class _EditPersonalDetailsPageState extends State<EditPersonalDetailsPage> {
                 borderRadius: BorderRadius.circular(16),
               ),
               content: Text(
-                auth.errorMessage ?? 'Failed to update profile details.',
+                state.errorMessage ?? 'Failed to update profile details.',
                 style: GoogleFonts.outfit(color: Colors.white),
               ),
             ),
           );
         }
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final displayInitials = UserProfileState.initials;
-
-    return Scaffold(
+      },
+      child: Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
@@ -304,11 +307,11 @@ class _EditPersonalDetailsPageState extends State<EditPersonalDetailsPage> {
                       const SizedBox(height: 40),
 
                       // Save Changes Button
-                      Consumer<AuthProvider>(
-                        builder: (context, auth, _) {
+                      BlocBuilder<AuthBloc, AuthState>(
+                        builder: (context, state) {
                           return NoorvaButton(
-                            text: auth.isLoading ? 'Saving...' : 'Save Changes',
-                            onPressed: auth.isLoading ? () {} : _saveChanges,
+                            text: state.isLoading ? 'Saving...' : 'Save Changes',
+                            onPressed: state.isLoading ? () {} : _saveChanges,
                           );
                         },
                       ),
@@ -320,6 +323,7 @@ class _EditPersonalDetailsPageState extends State<EditPersonalDetailsPage> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

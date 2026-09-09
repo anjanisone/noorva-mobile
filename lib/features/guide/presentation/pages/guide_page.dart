@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routes/app_routes.dart';
-import '../../../goals/presentation/providers/goals_provider.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../goals/data/models/goal_model.dart';
+import '../../../goals/presentation/bloc/goals_bloc.dart';
+import '../../../goals/presentation/bloc/goals_event.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 import 'image_viewer_page.dart';
 import 'sources_web_view_page.dart';
 import '../../../../core/widgets/radio_dot.dart';
@@ -133,8 +135,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
         _taskId = args.taskId;
         _showInitialWelcome = false;
 
-        final goalsProvider = Provider.of<GoalsProvider>(context, listen: false);
-        final goal = goalsProvider.getGoalById(_goalId!);
+        final goal = context.read<GoalsBloc>().state.getGoalById(_goalId!);
         if (goal != null) {
           _chatGoal = goal;
           final task = goal.tasks.firstWhere((t) => t.id == _taskId, orElse: () => goal.tasks.first);
@@ -1195,8 +1196,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                   ),
                   onPressed: () {
                     if (_goalId != null && _taskId != null) {
-                      Provider.of<GoalsProvider>(context, listen: false)
-                          .completeTask(_goalId!, _taskId!);
+                      context.read<GoalsBloc>().add(GoalTaskCompleted(_goalId!, _taskId!));
                     }
                     Navigator.pop(context);
                   },
@@ -1941,20 +1941,20 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
             ],
           ),
         ),
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: 'report',
           padding: EdgeInsets.zero,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Divider(height: 1, color: AppColors.borderLight),
+              Divider(height: 1, color: AppColors.borderLight),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
-                    const Icon(Icons.chat_bubble_outline, color: Colors.white70, size: 18),
-                    const SizedBox(width: 12),
-                    const Text('Report an Issue', style: TextStyle(color: Colors.white, fontSize: 15)),
+                    Icon(Icons.chat_bubble_outline, color: Colors.white70, size: 18),
+                    SizedBox(width: 12),
+                    Text('Report an Issue', style: TextStyle(color: Colors.white, fontSize: 15)),
                   ],
                 ),
               ),
@@ -2271,43 +2271,43 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
           }
         },
         itemBuilder: (context) => [
-          PopupMenuItem(
+          const PopupMenuItem(
             value: 'add',
             child: Row(
               children: [
                 Icon(Icons.playlist_add, color: Colors.white70, size: 18),
-                const SizedBox(width: 12),
-                const Text('Add to tasks', style: TextStyle(color: Colors.white, fontSize: 15)),
+                SizedBox(width: 12),
+                Text('Add to tasks', style: TextStyle(color: Colors.white, fontSize: 15)),
               ],
             ),
           ),
-          PopupMenuItem(
+          const PopupMenuItem(
             value: 'pin',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Divider(height: 1, color: AppColors.borderLight),
+                Divider(height: 1, color: AppColors.borderLight),
                 Row(
                   children: [
                     Icon(Icons.pin_drop_outlined, color: Colors.white70, size: 18),
-                    const SizedBox(width: 12),
-                    const Text('Pin / Highlight', style: TextStyle(color: Colors.white, fontSize: 15)),
+                    SizedBox(width: 12),
+                    Text('Pin / Highlight', style: TextStyle(color: Colors.white, fontSize: 15)),
                   ],
                 ),
               ],
             ),
           ),
-          PopupMenuItem(
+          const PopupMenuItem(
             value: 'report',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Divider(height: 1, color: AppColors.borderLight),
+                Divider(height: 1, color: AppColors.borderLight),
                 Row(
                   children: [
                     Icon(Icons.report_problem_outlined, color: Colors.white70, size: 18),
-                    const SizedBox(width: 12),
-                    const Text('Report an Issue', style: TextStyle(color: Colors.white, fontSize: 15)),
+                    SizedBox(width: 12),
+                    Text('Report an Issue', style: TextStyle(color: Colors.white, fontSize: 15)),
                   ],
                 ),
               ],
@@ -2354,7 +2354,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
             "Hi Sumanth,\n\n"
             "I wanted to give you a quick update on the Q3 design phase. We're currently rethinking the core architecture to make sure the foundation is solid, which means the initial delivery will be slightly delayed, but we will have a new timeline outlined for you by this Friday. Thanks for your patience while we get this right.\n\n"
             "Best regards,\n"
-            "${Provider.of<AuthProvider>(context, listen: false).user?.name ?? 'User'}",
+            "${context.read<AuthBloc>().state.user?.name ?? 'User'}",
             style: const TextStyle(color: Colors.white70, fontSize: 15, height: 1.45),
           ),
         ],
@@ -2402,9 +2402,9 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AccordionWidget(
+        const AccordionWidget(
           title: "Thought for 6 seconds",
-          content: const Text(
+          content: Text(
             "User is looking for natural ways to beat the afternoon slump without relying on caffeine. I need to avoid generic lifestyle advice and focus on proven biological triggers: circadian rhythm adjustments, adenosine clearing, and proper hydration to maintain cognitive performance.",
             style: TextStyle(
               color: Colors.white70,
@@ -2413,9 +2413,9 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
             ),
           ),
         ),
-        AccordionWidget(
+        const AccordionWidget(
           title: "Found 12 results",
-          content: const Column(
+          content: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text("• Nature Neuroscience - Circadian Rhythms & Cognitive Performance (2024)",
@@ -2868,27 +2868,27 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                         }
                       },
                       itemBuilder: (context) => [
-                        PopupMenuItem(
+                        const PopupMenuItem(
                           value: 'share',
                           child: Row(
                             children: [
-                              const Icon(Icons.share, color: Colors.white70, size: 18),
-                              const SizedBox(width: 12),
-                              const Text('Share', style: TextStyle(color: Colors.white, fontSize: 15)),
+                              Icon(Icons.share, color: Colors.white70, size: 18),
+                              SizedBox(width: 12),
+                              Text('Share', style: TextStyle(color: Colors.white, fontSize: 15)),
                             ],
                           ),
                         ),
-                        PopupMenuItem(
+                        const PopupMenuItem(
                           value: 'report',
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const Divider(height: 1, color: AppColors.borderLight),
+                              Divider(height: 1, color: AppColors.borderLight),
                               Row(
                                 children: [
-                                  const Icon(Icons.report_problem_outlined, color: Colors.white70, size: 18),
-                                  const SizedBox(width: 12),
-                                  const Text('Report an Issue', style: TextStyle(color: Colors.white, fontSize: 15)),
+                                  Icon(Icons.report_problem_outlined, color: Colors.white70, size: 18),
+                                  SizedBox(width: 12),
+                                  Text('Report an Issue', style: TextStyle(color: Colors.white, fontSize: 15)),
                                 ],
                               ),
                             ],
@@ -3790,13 +3790,13 @@ class _MeditationCarouselState extends State<MeditationCarousel> {
                         ],
                       ),
                     ),
-                    PopupMenuItem(
+                    const PopupMenuItem(
                       value: 'report',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Divider(height: 1, color: AppColors.borderLight),
-                          const Row(
+                          Divider(height: 1, color: AppColors.borderLight),
+                          Row(
                             children: [
                               Icon(Icons.report_problem_outlined, color: Colors.white70, size: 18),
                               SizedBox(width: 12),

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/widgets/crystal_card.dart';
 import '../../../../core/widgets/thought_bubble.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 
 // ─── Data model ────────────────────────────────────────────────────────────────
 
@@ -771,7 +771,7 @@ class _TasksPageState extends State<TasksPage> {
                       blurSigmaY: 12,
                       child: Center(
                         child: Text(
-                          '${context.watch<AuthProvider>().user?.name ?? 'User'}, you have no active tasks present. '
+                          '${context.watch<AuthBloc>().state.user?.name ?? 'User'}, you have no active tasks present. '
                           "Let's together build your first goal to add tasks",
                           textAlign: TextAlign.center,
                           style: GoogleFonts.outfit(

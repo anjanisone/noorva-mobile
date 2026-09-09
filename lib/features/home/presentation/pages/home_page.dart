@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/crystal_card.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -298,7 +298,7 @@ class _HomePageState extends State<HomePage> {
                                       Text(
                                         (_isFocused || _isInputNotEmpty)
                                             ? 'How can I help?'
-                                            : 'Hey ${context.watch<AuthProvider>().user?.name ?? 'User'}',
+                                            : 'Hey ${context.watch<AuthBloc>().state.user?.name ?? 'User'}',
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize:
@@ -586,7 +586,7 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              _isInputNotEmpty ? 'How can I help?' : 'Hey ${context.watch<AuthProvider>().user?.name ?? 'User'}',
+              _isInputNotEmpty ? 'How can I help?' : 'Hey ${context.watch<AuthBloc>().state.user?.name ?? 'User'}',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 24,

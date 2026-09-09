@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routes/app_routes.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 
 class InteractiveAiPage extends StatefulWidget {
   const InteractiveAiPage({super.key});
@@ -128,8 +128,8 @@ class _InteractiveAiPageState extends State<InteractiveAiPage> {
                         ),
                         child: Text(
                           _isVoiceMode
-                              ? "Hey ${context.watch<AuthProvider>().user?.name ?? 'User'}! I've been thinking a lot about hobbies lately. My absolute favorite way to unwind is going for an evening walk. What about you?"
-                              : "A beautiful way to sharpen the mind and find silence. What kind of books are you drawn to right now, ${context.watch<AuthProvider>().user?.name ?? 'User'}? Tell me, so I understand how you prefer to rest your mind",
+                              ? "Hey ${context.watch<AuthBloc>().state.user?.name ?? 'User'}! I've been thinking a lot about hobbies lately. My absolute favorite way to unwind is going for an evening walk. What about you?"
+                              : "A beautiful way to sharpen the mind and find silence. What kind of books are you drawn to right now, ${context.watch<AuthBloc>().state.user?.name ?? 'User'}? Tell me, so I understand how you prefer to rest your mind",
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 15.0,

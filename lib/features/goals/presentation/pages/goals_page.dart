@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routes/app_routes.dart';
-import '../providers/goals_provider.dart';
+import '../../data/models/goal_model.dart';
+import '../bloc/goals_bloc.dart';
+import '../bloc/goals_state.dart';
 
 class TargetBoardPainter extends CustomPainter {
   @override
@@ -89,10 +91,10 @@ class _GoalsPageState extends State<GoalsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GoalsProvider>(
-      builder: (context, provider, child) {
-        final ongoing = provider.ongoingGoals;
-        final completed = provider.completedGoals;
+    return BlocBuilder<GoalsBloc, GoalsState>(
+      builder: (context, state) {
+        final ongoing = state.ongoingGoals;
+        final completed = state.completedGoals;
         final currentGoals = _selectedTabIndex == 0 ? ongoing : completed;
 
         return Scaffold(

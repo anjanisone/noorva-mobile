@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/crystal_card.dart';
 import '../../../../core/widgets/noorva_button.dart';
 import '../../../../core/widgets/noorva_text_field.dart';
-import '../providers/auth_provider.dart';
+import '../bloc/auth_bloc.dart';
+import '../bloc/auth_event.dart';
+import '../bloc/auth_state.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -119,9 +121,28 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                 },
                               ),
                               const SizedBox(height: 40),
-                              Consumer<AuthProvider>(
-                                builder: (context, auth, _) {
-                                  if (auth.isOtpLoading || auth.isLoading) {
+                              BlocConsumer<AuthBloc, AuthState>(
+                                listenWhen: (previous, current) =>
+                                    current.status == AuthStatus.passwordResetOtpSent ||
+                                    current.status == AuthStatus.passwordResetOtpFailure,
+                                listener: (context, state) {
+                                  if (state.status == AuthStatus.passwordResetOtpSent) {
+                                    Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.otpVerification,
+                                      arguments: 'forgotPassword',
+                                    );
+                                  } else if (state.status == AuthStatus.passwordResetOtpFailure) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(state.errorMessage ?? 'Failed to send reset code.'),
+                                        backgroundColor: Colors.redAccent,
+                                      ),
+                                    );
+                                  }
+                                },
+                                builder: (context, state) {
+                                  if (state.isOtpLoading || state.isLoading) {
                                     return const Center(
                                       child: Padding(
                                         padding: EdgeInsets.symmetric(vertical: 12),
@@ -131,23 +152,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                   }
                                   return NoorvaButton(
                                     text: 'Get OTP',
-                                    onPressed: () async {
+                                    onPressed: () {
                                       if (_formKey.currentState!.validate()) {
-                                        final success = await auth.sendPasswordResetOtp(_emailController.text);
-                                        if (success && context.mounted) {
-                                          Navigator.pushNamed(
-                                            context,
-                                            AppRoutes.otpVerification,
-                                            arguments: 'forgotPassword',
-                                          );
-                                        } else if (context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text(auth.errorMessage ?? 'Failed to send reset code.'),
-                                              backgroundColor: Colors.redAccent,
-                                            ),
-                                          );
-                                        }
+                                        context.read<AuthBloc>().add(
+                                              AuthPasswordResetOtpRequested(_emailController.text),
+                                            );
                                       }
                                     },
                                   );

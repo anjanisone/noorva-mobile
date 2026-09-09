@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/crystal_card.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 import 'profile_page.dart'; // To access UserProfileState fallback
 
 class PersonalDetailsPage extends StatefulWidget {
@@ -26,8 +26,8 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final user = authProvider.user;
+    final authState = context.watch<AuthBloc>().state;
+    final user = authState.user;
 
     final displayName = user?.name ?? UserProfileState.name;
     final displayEmail = user?.email ?? UserProfileState.email;

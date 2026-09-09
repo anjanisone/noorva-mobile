@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/crystal_card.dart';
 import '../../../../core/widgets/noorva_delete_dialog.dart';
 import '../../data/models/notification_model.dart';
-import '../providers/notification_provider.dart';
+import '../bloc/notification_bloc.dart';
+import '../bloc/notification_event.dart';
+import '../bloc/notification_state.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -15,15 +17,15 @@ class NotificationsPage extends StatefulWidget {
 }
 
 class _NotificationsPageState extends State<NotificationsPage> {
-  void _toggleSelectionMode(NotificationProvider provider) {
-    provider.isSelectionMode = !provider.isSelectionMode;
+  void _toggleSelectionMode(NotificationState state) {
+    context.read<NotificationBloc>().add(NotificationSelectionModeToggled(!state.isSelectionMode));
   }
 
-  void _selectAll(NotificationProvider provider) {
-    provider.selectAll(true);
+  void _selectAll() {
+    context.read<NotificationBloc>().add(const NotificationSelectAllToggled(true));
   }
 
-  void _showDeleteConfirmation(NotificationProvider provider) {
+  void _showDeleteConfirmation() {
     showDialog(
       context: context,
       builder: (context) {
@@ -31,7 +33,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           title: 'Delete notifications',
           content: 'This action will permanently delete the notifications from your feed',
           onConfirm: () {
-            provider.deleteSelectedNotifications();
+            context.read<NotificationBloc>().add(const NotificationsDeleteSelectedRequested());
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Notifications deleted successfully'),
@@ -106,7 +108,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       child: InkWell(
         onTap: () {
           Navigator.pop(context);
-          context.read<NotificationProvider>().triggerSimulatedNotification(index);
+          context.read<NotificationBloc>().add(NotificationSimulateRequested(index));
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(
@@ -154,73 +156,76 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<NotificationProvider>();
-    final today = provider.todayNotifications;
-    final week = provider.weekNotifications;
+    return BlocBuilder<NotificationBloc, NotificationState>(
+      builder: (context, state) {
+        final today = state.todayNotifications;
+        final week = state.weekNotifications;
 
-    // Handle post frame actions (e.g. snackbar for action clicks)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (provider.lastActionResponse != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              provider.lastActionResponse!,
-              style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w500),
-            ),
-            backgroundColor: const Color(0xFF2C2C2E),
-            duration: const Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-        provider.clearLastActionResponse();
-      }
-    });
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(provider),
-            Expanded(
-              child: provider.notifications.isEmpty
-                  ? _buildEmptyState()
-                  : ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      children: [
-                        if (today.isNotEmpty) ...[
-                          _buildSectionHeader('Today'),
-                          ...today.map((n) => _buildNotificationCard(n, provider)),
-                        ],
-                        if (week.isNotEmpty) ...[
-                          const SizedBox(height: 24),
-                          _buildSectionHeader('This Week'),
-                          ...week.map((n) => _buildNotificationCard(n, provider)),
-                        ],
-                        const SizedBox(height: 100), // Space for bottom bar
-                      ],
-                    ),
-            ),
-          ],
-        ),
-      ),
-      bottomSheet: provider.isSelectionMode ? _buildBottomActionSheet(provider) : null,
-      floatingActionButton: !provider.isSelectionMode
-          ? FloatingActionButton.extended(
-              onPressed: _showTestNotificationsBottomSheet,
-              backgroundColor: const Color(0xFF8B80F9),
-              icon: const Icon(Icons.bolt_rounded, color: Colors.white),
-              label: Text(
-                'Simulate FCM',
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+        // Handle post frame actions (e.g. snackbar for action clicks)
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (state.lastActionResponse != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  state.lastActionResponse!,
+                  style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w500),
                 ),
+                backgroundColor: const Color(0xFF2C2C2E),
+                duration: const Duration(seconds: 3),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-            )
-          : null,
+            );
+            context.read<NotificationBloc>().add(const NotificationActionResponseCleared());
+          }
+        });
+
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(state),
+                Expanded(
+                  child: state.notifications.isEmpty
+                      ? _buildEmptyState()
+                      : ListView(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          children: [
+                            if (today.isNotEmpty) ...[
+                              _buildSectionHeader('Today'),
+                              ...today.map((n) => _buildNotificationCard(n, state)),
+                            ],
+                            if (week.isNotEmpty) ...[
+                              const SizedBox(height: 24),
+                              _buildSectionHeader('This Week'),
+                              ...week.map((n) => _buildNotificationCard(n, state)),
+                            ],
+                            const SizedBox(height: 100), // Space for bottom bar
+                          ],
+                        ),
+                ),
+              ],
+            ),
+          ),
+          bottomSheet: state.isSelectionMode ? _buildBottomActionSheet() : null,
+          floatingActionButton: !state.isSelectionMode
+              ? FloatingActionButton.extended(
+                  onPressed: _showTestNotificationsBottomSheet,
+                  backgroundColor: const Color(0xFF8B80F9),
+                  icon: const Icon(Icons.bolt_rounded, color: Colors.white),
+                  label: Text(
+                    'Simulate FCM',
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                )
+              : null,
+        );
+      },
     );
   }
 
@@ -256,7 +261,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  Widget _buildHeader(NotificationProvider provider) {
+  Widget _buildHeader(NotificationState state) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Row(
@@ -273,11 +278,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
             ),
           ),
           const Spacer(),
-          if (provider.notifications.isNotEmpty)
+          if (state.notifications.isNotEmpty)
             GestureDetector(
-              onTap: () => _toggleSelectionMode(provider),
+              onTap: () => _toggleSelectionMode(state),
               child: Text(
-                provider.isSelectionMode ? 'Cancel' : 'Edit',
+                state.isSelectionMode ? 'Cancel' : 'Edit',
                 style: GoogleFonts.outfit(
                   color: Colors.white70,
                   fontSize: 16,
@@ -303,14 +308,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  Widget _buildNotificationCard(NotificationModel item, NotificationProvider provider) {
+  Widget _buildNotificationCard(NotificationModel item, NotificationState state) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          if (provider.isSelectionMode) ...[
+          if (state.isSelectionMode) ...[
             GestureDetector(
-              onTap: () => provider.toggleSelection(item.id),
+              onTap: () => context.read<NotificationBloc>().add(NotificationSelectionToggled(item.id)),
               child: Container(
                 margin: const EdgeInsets.only(right: 12),
                 width: 24,
@@ -332,10 +337,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
           Expanded(
             child: GestureDetector(
               onTap: () {
-                if (provider.isSelectionMode) {
-                  provider.toggleSelection(item.id);
+                if (state.isSelectionMode) {
+                  context.read<NotificationBloc>().add(NotificationSelectionToggled(item.id));
                 } else {
-                  provider.markAsRead(item.id);
+                  context.read<NotificationBloc>().add(NotificationMarkedAsRead(item.id));
                 }
               },
               child: CrystalCard(
@@ -398,7 +403,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  Widget _buildBottomActionSheet(NotificationProvider provider) {
+  Widget _buildBottomActionSheet() {
     return Container(
       color: AppColors.background,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
@@ -406,7 +411,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           GestureDetector(
-            onTap: () => _selectAll(provider),
+            onTap: _selectAll,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               decoration: BoxDecoration(
@@ -420,7 +425,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             ),
           ),
           GestureDetector(
-            onTap: () => _showDeleteConfirmation(provider),
+            onTap: _showDeleteConfirmation,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               decoration: BoxDecoration(

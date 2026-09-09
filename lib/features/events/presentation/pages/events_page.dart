@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routes/app_routes.dart';
-import '../providers/events_provider.dart';
+import '../../data/models/event_model.dart';
+import '../bloc/events_bloc.dart';
+import '../bloc/events_state.dart';
 
 class EventsPage extends StatelessWidget {
   const EventsPage({super.key});
@@ -16,9 +18,9 @@ class EventsPage extends StatelessWidget {
           children: [
             _buildAppBar(context),
             Expanded(
-              child: Consumer<EventsProvider>(
-                builder: (context, provider, child) {
-                  final events = provider.events;
+              child: BlocBuilder<EventsBloc, EventsState>(
+                builder: (context, state) {
+                  final events = state.events;
                   if (events.isEmpty) {
                     return const Center(
                       child: Text(

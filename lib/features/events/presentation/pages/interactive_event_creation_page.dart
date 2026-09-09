@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 
 class InteractiveEventCreationPage extends StatefulWidget {
   const InteractiveEventCreationPage({super.key});
@@ -171,7 +171,7 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
             child: Column(
               children: [
                 Text(
-                  'Hey ${context.watch<AuthProvider>().user?.name ?? 'User'}',
+                  'Hey ${context.watch<AuthBloc>().state.user?.name ?? 'User'}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,
@@ -342,7 +342,7 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
         // ── Step 5: Keep tasks confirmation ───────────────────────────────────
         if (_flowStep >= 5) ...[
           _buildNoorvaMessage(
-            text: 'Understood. Your tasks will remain active while you\'re in London. I\'ll keep watch so nothing slips through the cracks. Safe travels, ${context.watch<AuthProvider>().user?.name ?? 'User'}.',
+            text: 'Understood. Your tasks will remain active while you\'re in London. I\'ll keep watch so nothing slips through the cracks. Safe travels, ${context.watch<AuthBloc>().state.user?.name ?? 'User'}.',
             showAvatar: true,
             showActionIcons: true,
           ),
@@ -518,11 +518,11 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
   }
 
   Widget _buildActionIconsRow() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 10, right: 4, bottom: 4),
+    return const Padding(
+      padding: EdgeInsets.only(top: 10, right: 4, bottom: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
-        children: const [
+        children: [
           Icon(Icons.copy_outlined, color: Colors.white38, size: 20),
           SizedBox(width: 18),
           Icon(Icons.refresh_outlined, color: Colors.white38, size: 20),

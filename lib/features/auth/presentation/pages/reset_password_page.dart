@@ -1,13 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/crystal_card.dart';
 import '../../../../core/widgets/noorva_button.dart';
 import '../../../../core/widgets/noorva_text_field.dart';
-import '../providers/auth_provider.dart';
+import '../bloc/auth_bloc.dart';
+import '../bloc/auth_event.dart';
+import '../bloc/auth_state.dart';
 
 class ResetPasswordPage extends StatefulWidget {
   const ResetPasswordPage({super.key});
@@ -200,9 +202,30 @@ class _ResetPasswordPageState extends State<ResetPasswordPage>
                                 },
                               ),
                               const SizedBox(height: 40),
-                              Consumer<AuthProvider>(
-                                builder: (context, auth, _) {
-                                  if (auth.isLoading) {
+                              BlocConsumer<AuthBloc, AuthState>(
+                                listenWhen: (previous, current) =>
+                                    current.status == AuthStatus.resetPasswordSuccess ||
+                                    current.status == AuthStatus.resetPasswordFailure,
+                                listener: (context, state) {
+                                  if (state.status == AuthStatus.resetPasswordSuccess) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Password reset successfully! Check your email for validation.'),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                    Navigator.pushReplacementNamed(context, AppRoutes.login);
+                                  } else if (state.status == AuthStatus.resetPasswordFailure) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(state.errorMessage ?? 'Password reset failed.'),
+                                        backgroundColor: Colors.redAccent,
+                                      ),
+                                    );
+                                  }
+                                },
+                                builder: (context, state) {
+                                  if (state.isLoading) {
                                     return const Center(
                                       child: Padding(
                                         padding: EdgeInsets.symmetric(vertical: 12),
@@ -212,26 +235,11 @@ class _ResetPasswordPageState extends State<ResetPasswordPage>
                                   }
                                   return NoorvaButton(
                                     text: 'Reset Password',
-                                    onPressed: () async {
+                                    onPressed: () {
                                       if (_formKey.currentState!.validate()) {
-                                        final success = await auth.resetPassword(_newPasswordController.text);
-                                        if (success && context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                              content: Text('Password reset successfully! Check your email for validation.'),
-                                              backgroundColor: Colors.green,
-                                            ),
-                                          );
-                                          Navigator.pushReplacementNamed(
-                                              context, AppRoutes.login);
-                                        } else if (context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text(auth.errorMessage ?? 'Password reset failed.'),
-                                              backgroundColor: Colors.redAccent,
-                                            ),
-                                          );
-                                        }
+                                        context.read<AuthBloc>().add(
+                                              AuthResetPasswordRequested(_newPasswordController.text),
+                                            );
                                       }
                                     },
                                   );

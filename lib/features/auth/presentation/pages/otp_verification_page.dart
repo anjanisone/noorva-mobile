@@ -2,13 +2,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/crystal_card.dart';
 import '../../../../core/widgets/noorva_button.dart';
-import '../providers/auth_provider.dart';
-import '../../../../core/services/otp_service.dart';
+import '../bloc/auth_bloc.dart';
+import '../bloc/auth_event.dart';
+import '../bloc/auth_state.dart';
 
 class OtpVerificationPage extends StatefulWidget {
   const OtpVerificationPage({super.key});
@@ -67,6 +68,11 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
 
   String get _otp => _controllers.map((c) => c.text).join();
 
+  String _flow() {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    return args?.toString() ?? 'register';
+  }
+
   String _formatTime(int seconds) {
     final minutes = seconds ~/ 60;
     final remainingSeconds = seconds % 60;
@@ -84,7 +90,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
     return "${username.substring(0, 2)}***${username.substring(username.length - 1)}@$domain";
   }
 
-  Future<void> _handleVerify() async {
+  void _handleVerify() {
     if (_isExpired) return;
     if (_otp.length < 6) {
       setState(() {
@@ -92,264 +98,261 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
       });
       return;
     }
+    context.read<AuthBloc>().add(AuthOtpVerifyRequested(_otp, flow: _flow()));
+  }
 
-    final args = ModalRoute.of(context)?.settings.arguments;
-    final flow = args?.toString() ?? 'register';
-
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final result = await authProvider.verifyOtp(_otp, flow: flow);
-
-    if (result == OtpVerificationResult.success) {
-      setState(() {
-        _errorMessage = null;
-      });
-
-      if (flow == 'forgotPassword') {
-        if (mounted) {
-          Navigator.pushReplacementNamed(context, AppRoutes.resetPassword);
-        }
-      } else {
-        final success = await authProvider.registerPendingUser();
-        if (success && mounted) {
-          Navigator.pushReplacementNamed(context, AppRoutes.permissions);
-        } else if (mounted) {
-          setState(() {
-            _errorMessage = authProvider.errorMessage ?? "Registration failed. Please try again.";
-          });
-        }
-      }
+  void _handleResend() {
+    final flow = _flow();
+    final authBloc = context.read<AuthBloc>();
+    if (flow == 'forgotPassword') {
+      authBloc.add(AuthPasswordResetOtpRequested(authBloc.state.otpTargetEmail ?? ''));
     } else {
-      setState(() {
-        _errorMessage = authProvider.errorMessage ?? "Verification failed. Please try again.";
-      });
+      authBloc.add(const AuthSignupOtpRequested());
     }
   }
 
-  Future<void> _handleResend() async {
-    final args = ModalRoute.of(context)?.settings.arguments;
-    final flow = args?.toString() ?? 'register';
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-    bool success = false;
-    if (flow == 'forgotPassword') {
-      success = await authProvider.sendPasswordResetOtp(authProvider.otpTargetEmail ?? '');
-    } else {
-      success = await authProvider.sendSignupOtp();
+  void _onResendSucceeded() {
+    for (var controller in _controllers) {
+      controller.clear();
     }
-
-    if (success) {
-      for (var controller in _controllers) {
-        controller.clear();
-      }
-      _focusNodes[0].requestFocus();
-      _startTimer();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('A new 6-digit verification code has been sent.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(authProvider.errorMessage ?? 'Failed to resend code. Please try again.'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-    }
+    _focusNodes[0].requestFocus();
+    _startTimer();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('A new 6-digit verification code has been sent.'),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final targetEmail = authProvider.otpTargetEmail ?? '';
-    final maskedEmail = _maskEmail(targetEmail);
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      resizeToAvoidBottomInset: false,
-      body: Stack(
-        children: [
-          // Stationary Character Image at bottom right
-          Positioned(
-            bottom: 0,
-            right: -20,
-            child: Image.asset(
-              'assets/images/forgot_password.png',
-              height: 350,
-              fit: BoxFit.contain,
-            ),
-          ),
-          // Scrollable content
-          SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height,
+    return BlocConsumer<AuthBloc, AuthState>(
+      listenWhen: (previous, current) =>
+          current.status == AuthStatus.otpVerifiedForgotPasswordFlow ||
+          current.status == AuthStatus.otpVerifiedRegisterFlow ||
+          current.status == AuthStatus.otpVerificationFailure ||
+          current.status == AuthStatus.registerFailure ||
+          current.status == AuthStatus.signupOtpSent ||
+          current.status == AuthStatus.signupOtpFailure ||
+          current.status == AuthStatus.passwordResetOtpSent ||
+          current.status == AuthStatus.passwordResetOtpFailure,
+      listener: (context, state) {
+        switch (state.status) {
+          case AuthStatus.otpVerifiedForgotPasswordFlow:
+            setState(() => _errorMessage = null);
+            Navigator.pushReplacementNamed(context, AppRoutes.resetPassword);
+            break;
+          case AuthStatus.otpVerifiedRegisterFlow:
+            setState(() => _errorMessage = null);
+            Navigator.pushReplacementNamed(context, AppRoutes.permissions);
+            break;
+          case AuthStatus.otpVerificationFailure:
+          case AuthStatus.registerFailure:
+            setState(() {
+              _errorMessage = state.errorMessage ?? 'Verification failed. Please try again.';
+            });
+            break;
+          case AuthStatus.signupOtpSent:
+          case AuthStatus.passwordResetOtpSent:
+            _onResendSucceeded();
+            break;
+          case AuthStatus.signupOtpFailure:
+          case AuthStatus.passwordResetOtpFailure:
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.errorMessage ?? 'Failed to resend code. Please try again.'),
+                backgroundColor: Colors.redAccent,
               ),
-              child: SafeArea(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Custom Back Button
-                    Padding(
-                      padding: const EdgeInsets.only(left: 20, top: 10),
-                      child: GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF111113),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.1),
-                              width: 1,
+            );
+            break;
+          default:
+            break;
+        }
+      },
+      builder: (context, state) {
+        final targetEmail = state.otpTargetEmail ?? '';
+        final maskedEmail = _maskEmail(targetEmail);
+
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          resizeToAvoidBottomInset: false,
+          body: Stack(
+            children: [
+              // Stationary Character Image at bottom right
+              Positioned(
+                bottom: 0,
+                right: -20,
+                child: Image.asset(
+                  'assets/images/forgot_password.png',
+                  height: 350,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              // Scrollable content
+              SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: MediaQuery.of(context).size.height,
+                  ),
+                  child: SafeArea(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Custom Back Button
+                        Padding(
+                          padding: const EdgeInsets.only(left: 20, top: 10),
+                          child: GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF111113),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.1),
+                                  width: 1,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.chevron_left,
+                                color: Colors.white,
+                                size: 24,
+                              ),
                             ),
-                          ),
-                          child: const Icon(
-                            Icons.chevron_left,
-                            color: Colors.white,
-                            size: 24,
                           ),
                         ),
-                      ),
-                    ),
 
-                    const SizedBox(height: 30),
+                        const SizedBox(height: 30),
 
-                    // Main Card
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: CrystalCard(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'OTP Verification',
-                              style: GoogleFonts.outfit(
-                                color: Colors.white,
-                                fontSize: 32,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              targetEmail.isNotEmpty
-                                  ? 'Enter the 6 digit code sent to $maskedEmail'
-                                  : 'Enter the 6 digit code sent to your registered email address',
-                              style: GoogleFonts.outfit(
-                                color: Colors.white.withValues(alpha: 0.6),
-                                fontSize: 16,
-                                height: 1.4,
-                              ),
-                            ),
-                            const SizedBox(height: 40),
-
-                            // OTP Input Row (6 Digits)
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: List.generate(
-                                  6, (index) => _buildOtpBox(index)),
-                            ),
-
-                            const SizedBox(height: 32),
-
-                            // Error or Timer Message
-                            if (_errorMessage != null)
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Padding(
-                                    padding: EdgeInsets.only(top: 2),
-                                    child: Icon(Icons.error_outline,
-                                        color: Color(0xFFEF4444), size: 18),
+                        // Main Card
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: CrystalCard(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'OTP Verification',
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white,
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w500,
                                   ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  targetEmail.isNotEmpty
+                                      ? 'Enter the 6 digit code sent to $maskedEmail'
+                                      : 'Enter the 6 digit code sent to your registered email address',
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white.withValues(alpha: 0.6),
+                                    fontSize: 16,
+                                    height: 1.4,
+                                  ),
+                                ),
+                                const SizedBox(height: 40),
+
+                                // OTP Input Row (6 Digits)
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: List.generate(
+                                      6, (index) => _buildOtpBox(index)),
+                                ),
+
+                                const SizedBox(height: 32),
+
+                                // Error or Timer Message
+                                if (_errorMessage != null)
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Padding(
+                                        padding: EdgeInsets.only(top: 2),
+                                        child: Icon(Icons.error_outline,
+                                            color: Color(0xFFEF4444), size: 18),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          _errorMessage!,
+                                          style: GoogleFonts.outfit(
+                                            color: const Color(0xFFEF4444),
+                                            fontSize: 14,
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                else if (!_isExpired)
+                                  Center(
                                     child: Text(
-                                      _errorMessage!,
+                                      'OTP Expires in ${_formatTime(_secondsRemaining)}',
                                       style: GoogleFonts.outfit(
-                                        color: const Color(0xFFEF4444),
-                                        fontSize: 14,
-                                        height: 1.4,
+                                        color: const Color(0xFFFF8A80),
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w400,
                                       ),
                                     ),
                                   ),
-                                ],
-                              )
-                            else if (!_isExpired)
-                              Center(
-                                child: Text(
-                                  'OTP Expires in ${_formatTime(_secondsRemaining)}',
-                                  style: GoogleFonts.outfit(
-                                    color: const Color(0xFFFF8A80),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                              ),
 
-                            const SizedBox(height: 32),
+                                const SizedBox(height: 32),
 
-                            Consumer<AuthProvider>(
-                              builder: (context, auth, _) {
-                                if (auth.isOtpLoading || auth.isLoading) {
-                                  return const Center(
+                                if (state.isOtpLoading || state.isLoading)
+                                  const Center(
                                     child: Padding(
                                       padding: EdgeInsets.symmetric(vertical: 12),
                                       child: CircularProgressIndicator(color: Colors.white),
                                     ),
-                                  );
-                                }
-                                return NoorvaButton(
-                                  text: 'Verify OTP',
-                                  onPressed: _isExpired ? () {} : _handleVerify,
-                                );
-                              },
-                            ),
-
-                            const SizedBox(height: 24),
-
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Haven’t received OTP? ",
-                                  style: GoogleFonts.outfit(
-                                    color: Colors.white.withValues(alpha: 0.6),
-                                    fontSize: 16,
+                                  )
+                                else
+                                  NoorvaButton(
+                                    text: 'Verify OTP',
+                                    onPressed: _isExpired ? () {} : _handleVerify,
                                   ),
-                                ),
-                                GestureDetector(
-                                  onTap: _handleResend,
-                                  child: Text(
-                                    'Resend OTP',
-                                    style: GoogleFonts.outfit(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+
+                                const SizedBox(height: 24),
+
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "Haven’t received OTP? ",
+                                      style: GoogleFonts.outfit(
+                                        color: Colors.white.withValues(alpha: 0.6),
+                                        fontSize: 16,
+                                      ),
                                     ),
-                                  ),
+                                    GestureDetector(
+                                      onTap: _handleResend,
+                                      child: Text(
+                                        'Resend OTP',
+                                        style: GoogleFonts.outfit(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
+                        // Space for keyboard when scrolled
+                        SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 20),
+                      ],
                     ),
-                    // Space for keyboard when scrolled
-                    SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 20),
-                  ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

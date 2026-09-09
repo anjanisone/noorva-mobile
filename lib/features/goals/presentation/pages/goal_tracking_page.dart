@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routes/app_routes.dart';
-import '../providers/goals_provider.dart';
+import '../../data/models/goal_model.dart';
+import '../bloc/goals_bloc.dart';
+import '../bloc/goals_event.dart';
+import '../bloc/goals_state.dart';
 import '../../../guide/presentation/pages/guide_page.dart';
 
 class GoalTrackingPage extends StatefulWidget {
@@ -22,9 +25,9 @@ class _GoalTrackingPageState extends State<GoalTrackingPage> {
   Widget build(BuildContext context) {
     final goalId = ModalRoute.of(context)?.settings.arguments as String? ?? 'inner-peace';
 
-    return Consumer<GoalsProvider>(
-      builder: (context, provider, child) {
-        final goal = provider.getGoalById(goalId);
+    return BlocBuilder<GoalsBloc, GoalsState>(
+      builder: (context, state) {
+        final goal = state.getGoalById(goalId);
 
         if (goal == null) {
           return const Scaffold(
@@ -602,9 +605,8 @@ class _GoalTrackingPageState extends State<GoalTrackingPage> {
                           ),
                         ),
                         onPressed: () {
-                          // Complete task in provider
-                          Provider.of<GoalsProvider>(context, listen: false)
-                              .completeTask(goal.id, task.id);
+                          // Complete task in bloc
+                          context.read<GoalsBloc>().add(GoalTaskCompleted(goal.id, task.id));
                           setState(() {
                             _expandedTaskId = null; // collapse
                           });
