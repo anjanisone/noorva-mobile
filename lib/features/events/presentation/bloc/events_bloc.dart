@@ -10,15 +10,20 @@ class EventsBloc extends Bloc<EventsEvent, EventsState> {
   }
 
   void _onTaskToggled(EventTaskToggled event, Emitter<EventsState> emit) {
-    final events = state.events;
+    final events = List<Event>.from(state.events);
     final eventIndex = events.indexWhere((e) => e.id == event.eventId);
     if (eventIndex == -1) return;
     final target = events[eventIndex];
     final taskIndex = target.tasks.indexWhere((t) => t.id == event.taskId);
     if (taskIndex == -1) return;
 
-    target.tasks[taskIndex].isCompleted = !target.tasks[taskIndex].isCompleted;
-    emit(state.copyWith(events: List<Event>.from(events)));
+    final updatedTasks = List<EventTask>.from(target.tasks);
+    updatedTasks[taskIndex] = updatedTasks[taskIndex].copyWith(
+      isCompleted: !updatedTasks[taskIndex].isCompleted,
+    );
+    events[eventIndex] = target.copyWith(tasks: updatedTasks);
+
+    emit(state.copyWith(events: events));
   }
 
   void _onEventDeleted(EventDeleted event, Emitter<EventsState> emit) {

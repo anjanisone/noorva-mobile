@@ -27,7 +27,7 @@ class CrystalBorderPainter extends CustomPainter {
     paint.shader = LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
-      transform: GradientRotation(radians),
+      transform: const GradientRotation(radians),
       colors: [
         Colors.white.withValues(alpha: 0.6),
         Colors.white.withValues(alpha: 0.6),

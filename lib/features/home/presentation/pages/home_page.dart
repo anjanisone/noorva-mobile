@@ -313,18 +313,20 @@ class _HomePageState extends State<HomePage> {
                                         AnimatedSwitcher(
                                           duration:
                                               const Duration(milliseconds: 500),
-                                            child: Text(
-                                              _conversations.isNotEmpty && _currentCardPage >= 0 && _currentCardPage < _conversations.length
-                                                  ? _conversations[_currentCardPage]['welcomeMessage']!
-                                                  : 'You are all caught up!',
-                                              key: ValueKey(_currentCardPage),
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(
-                                              color: Colors.white70,
-                                              fontSize: 16,
-                                              height: 1.4,
+                                            child: SingleChildScrollView(
+                                              child: Text(
+                                                _conversations.isNotEmpty && _currentCardPage >= 0 && _currentCardPage < _conversations.length
+                                                    ? _conversations[_currentCardPage]['welcomeMessage']!
+                                                    : 'You are all caught up!',
+                                                key: ValueKey(_currentCardPage),
+                                              textAlign: TextAlign.center,
+                                              style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 16,
+                                                height: 1.4,
+                                              ),
+                                                                                        ),
                                             ),
-                                          ),
                                         ),
                                       ],
                                     ],
@@ -345,7 +347,7 @@ class _HomePageState extends State<HomePage> {
                     child: Column(
                       children: [
                         SizedBox(
-                          height: 260,
+                          height: 280,
                           child: PageView.builder(
                             controller: _pageController,
                             onPageChanged: (index) {
@@ -901,9 +903,10 @@ class _HomePageState extends State<HomePage> {
           borderRadius: BorderRadius.circular(32),
           border: Border.all(color: const Color(0xFF3B3B3B)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
@@ -988,6 +991,7 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 8),
           ],
+        ),
         ),
       ),
     );
