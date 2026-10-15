@@ -7,10 +7,12 @@ class InteractiveEventCreationPage extends StatefulWidget {
   const InteractiveEventCreationPage({super.key});
 
   @override
-  State<InteractiveEventCreationPage> createState() => _InteractiveEventCreationPageState();
+  State<InteractiveEventCreationPage> createState() =>
+      _InteractiveEventCreationPageState();
 }
 
-class _InteractiveEventCreationPageState extends State<InteractiveEventCreationPage> {
+class _InteractiveEventCreationPageState
+    extends State<InteractiveEventCreationPage> {
   int _flowStep = 0;
   bool _showMenuOverlay = false;
   final TextEditingController _inputController = TextEditingController();
@@ -86,19 +88,12 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
               children: [
                 _buildHeader(),
                 Expanded(
-                  child: _flowStep == 0 ? _buildInitialState() : _buildChatState(),
+                  child:
+                      _flowStep == 0 ? _buildInitialState() : _buildChatState(),
                 ),
                 _buildBottomInput(),
               ],
             ),
-            // Floating overlay menu
-            if (_showMenuOverlay)
-              GestureDetector(
-                onTap: () => setState(() => _showMenuOverlay = false),
-                behavior: HitTestBehavior.opaque,
-                child: Container(color: Colors.transparent),
-              ),
-            if (_showMenuOverlay) _buildFloatingMenuOverlay(),
           ],
         ),
       ),
@@ -121,7 +116,8 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
               ),
-              child: const Icon(Icons.chevron_left, color: Colors.white, size: 24),
+              child:
+                  const Icon(Icons.chevron_left, color: Colors.white, size: 24),
             ),
           ),
           if (_flowStep > 0)
@@ -160,7 +156,7 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
             decoration: BoxDecoration(
@@ -202,7 +198,8 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
                 child: Column(
                   children: [
                     Container(
-                      width: 18, height: 18,
+                      width: 18,
+                      height: 18,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white24, width: 1.5),
@@ -210,7 +207,8 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
                     ),
                     const SizedBox(height: 6),
                     Container(
-                      width: 11, height: 11,
+                      width: 11,
+                      height: 11,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white24, width: 1.5),
@@ -239,29 +237,68 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
       children: [
         // ── Step 1: User message + Noorva first response ──────────────────────
         if (_flowStep >= 1) ...[
-          _buildUserMessage('I am planning to go to London next week on Sunday'),
+          _buildUserMessage(
+              'I am planning to go to London next week on Sunday'),
           _buildNoorvaMessage(
-            text: 'A change of environment often brings a shift in perspective. Before you depart for London, we must prepare the board. Tell me—is this journey for deep execution, shared dialogue, or a necessary biological reset?',
+            text:
+                'A change of environment often brings a shift in perspective. Before you depart for London, we must prepare the board. Tell me—is this journey for deep execution, shared dialogue, or a necessary biological reset?',
             showAvatar: true,
             showActionIcons: false,
             actionWidget: _flowStep == 1
                 ? Padding(
                     padding: const EdgeInsets.only(top: 4),
-                    child: ElevatedButton(
-                      onPressed: () => setState(() => _showMenuOverlay = true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () => setState(
+                              () => _showMenuOverlay = !_showMenuOverlay),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Respond to Noorva',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w600),
+                          ),
                         ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Respond to Noorva',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                      ),
+                        ClipRect(
+                          child: AnimatedSize(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOutCubic,
+                            alignment: Alignment.topCenter,
+                            onEnd: _scrollToBottom,
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 220),
+                              transitionBuilder: (child, animation) {
+                                final slideAnimation = Tween<Offset>(
+                                  begin: const Offset(0, -0.08),
+                                  end: Offset.zero,
+                                ).animate(animation);
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: SlideTransition(
+                                    position: slideAnimation,
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: _showMenuOverlay
+                                  ? _buildMenuOptions()
+                                  : const SizedBox(
+                                      key: ValueKey('menu-hidden'),
+                                      width: double.infinity,
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   )
                 : null,
@@ -287,7 +324,8 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
         if (_flowStep >= 3) ...[
           _buildUserMessage('I will stay in London for a week'),
           _buildNoorvaMessage(
-            text: 'You have unresolved intentions on the board. Carrying them on your journey will divide your focus. Tap to safely suspend them until your return.',
+            text:
+                'You have unresolved intentions on the board. Carrying them on your journey will divide your focus. Tap to safely suspend them until your return.',
             showAvatar: true,
             showActionIcons: false,
             actionWidget: _flowStep == 3
@@ -311,7 +349,8 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
                         ),
                         child: const Text(
                           'Suspend Tasks',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600),
                         ),
                       ),
                       TextButton(
@@ -333,7 +372,8 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
         // ── Step 4: Tasks suspended confirmation ───────────────────────────────
         if (_flowStep >= 4) ...[
           _buildNoorvaMessage(
-            text: 'I have suspended your tasks for next week, so that you could enjoy your trip without any distractions',
+            text:
+                'I have suspended your tasks for next week, so that you could enjoy your trip without any distractions',
             showAvatar: true,
             showActionIcons: true,
           ),
@@ -342,7 +382,8 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
         // ── Step 5: Keep tasks confirmation ───────────────────────────────────
         if (_flowStep >= 5) ...[
           _buildNoorvaMessage(
-            text: 'Understood. Your tasks will remain active while you\'re in London. I\'ll keep watch so nothing slips through the cracks. Safe travels, ${context.watch<AuthBloc>().state.user?.name ?? 'User'}.',
+            text:
+                'Understood. Your tasks will remain active while you\'re in London. I\'ll keep watch so nothing slips through the cracks. Safe travels, ${context.watch<AuthBloc>().state.user?.name ?? 'User'}.',
             showAvatar: true,
             showActionIcons: true,
           ),
@@ -418,7 +459,8 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
                 ),
                 const Padding(
                   padding: EdgeInsets.only(top: 4),
-                  child: Icon(Icons.volume_up_outlined, color: Colors.white38, size: 22),
+                  child: Icon(Icons.volume_up_outlined,
+                      color: Colors.white38, size: 22),
                 ),
               ],
             ),
@@ -533,64 +575,57 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
     );
   }
 
-  // ─── Floating Option Overlay ─────────────────────────────────────────────────
+  // ─── Response Menu ────────────────────────────────────────────────────────────
 
-  Widget _buildFloatingMenuOverlay() {
+  Widget _buildMenuOptions() {
     const options = [
       'Anchor your essential documents',
       'Prepare the physical space',
       'Pack with intention',
       'Store offline guidance',
     ];
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 0,
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(24, 0, 24, 120),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: options.map((option) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _showMenuOverlay = false;
-                    _flowStep = 2;
-                    _inputController.text = 'I will stay in London for a week';
-                  });
-                  _scrollToBottom();
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E1E20),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.09)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.35),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
+    return Column(
+      key: const ValueKey('menu-open'),
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: options.map((option) {
+        return Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                _showMenuOverlay = false;
+                _flowStep = 2;
+                _inputController.text = 'I will stay in London for a week';
+              });
+              _scrollToBottom();
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E20),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.09)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
                   ),
-                  child: Text(
-                    option,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
+                ],
+              ),
+              child: Text(
+                option,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
-            );
-          }).toList(),
-        ),
-      ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -638,12 +673,13 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
           ),
           const SizedBox(height: 10),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildIconButton(Icons.attach_file_rounded),
-              const SizedBox(width: 8),
+
               // Events pill
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
@@ -651,7 +687,8 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.calendar_today_outlined, color: Colors.black, size: 16),
+                    Icon(Icons.calendar_today_outlined,
+                        color: Colors.black, size: 16),
                     SizedBox(width: 6),
                     Text(
                       'Events',
@@ -662,16 +699,16 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
                       ),
                     ),
                     SizedBox(width: 4),
-                    Icon(Icons.keyboard_arrow_down, color: Colors.black, size: 16),
+                    Icon(Icons.keyboard_arrow_down,
+                        color: Colors.black, size: 16),
                   ],
                 ),
               ),
-              const Spacer(),
+
               _buildIconButton(Icons.mic_none_rounded),
-              const SizedBox(width: 8),
+
               _buildIconButton(Icons.graphic_eq_rounded),
               if (showSubmitArrow) ...[
-                const SizedBox(width: 8),
                 GestureDetector(
                   onTap: _submitMessage,
                   child: Container(
@@ -680,7 +717,8 @@ class _InteractiveEventCreationPageState extends State<InteractiveEventCreationP
                       color: Colors.white,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.arrow_upward_rounded, color: Colors.black, size: 20),
+                    child: const Icon(Icons.arrow_upward_rounded,
+                        color: Colors.black, size: 20),
                   ),
                 ),
               ],

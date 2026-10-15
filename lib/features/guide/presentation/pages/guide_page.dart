@@ -52,7 +52,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
   bool _showSuccessOverlay = false;
   bool _isVideoPlaying = false;
   bool _isVideoBuffering = false;
-  
+
   bool _isDraftingEmail = false;
   int _emailDraftStep = 0;
 
@@ -71,7 +71,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
   final stt.SpeechToText _speech = stt.SpeechToText();
   bool _isListening = false;
   String _lastWords = '';
-  final TextEditingController _customTitleController = TextEditingController(text: 'The Morning Anchor');
+  final TextEditingController _customTitleController =
+      TextEditingController(text: 'The Morning Anchor');
   bool _shouldFailGalleryDownload = true;
 
   @override
@@ -138,7 +139,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
         final goal = context.read<GoalsBloc>().state.getGoalById(_goalId!);
         if (goal != null) {
           _chatGoal = goal;
-          final task = goal.tasks.firstWhere((t) => t.id == _taskId, orElse: () => goal.tasks.first);
+          final task = goal.tasks.firstWhere((t) => t.id == _taskId,
+              orElse: () => goal.tasks.first);
           _chatTask = task;
           _conversationTitle = goal.title;
 
@@ -251,9 +253,10 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
           _emailDraftStep = 2;
         });
         _scrollToBottom();
-        
+
         _simulateBotResponse(ChatMessage(
-          text: "Got it. I drafted something straightforward so it doesn't create unnecessary back-and-forth. How does this sound?",
+          text:
+              "Got it. I drafted something straightforward so it doesn't create unnecessary back-and-forth. How does this sound?",
           isUser: false,
           type: MessageType.emailDraft,
           showCharacter: true,
@@ -262,7 +265,9 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
       }
     }
 
-    if ((lower.contains('draft') || lower.contains('write') || lower.contains('send')) &&
+    if ((lower.contains('draft') ||
+            lower.contains('write') ||
+            lower.contains('send')) &&
         (lower.contains('email') || lower.contains('mail')) &&
         lower.contains('sumanth')) {
       setState(() {
@@ -274,7 +279,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
       _scrollToBottom();
 
       _simulateBotResponse(ChatMessage(
-        text: "Sure thing. What’s the core message you want to get across to Sumanth today? Are we just giving him a quick update, or do you need him to take action on something?",
+        text:
+            "Sure thing. What’s the core message you want to get across to Sumanth today? Are we just giving him a quick update, or do you need him to take action on something?",
         isUser: false,
         showCharacter: true,
       ));
@@ -300,8 +306,12 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
     }
 
     // Image fetch request
-    if ((lower.contains('generate') || lower.contains('fetch') || lower.contains('find')) &&
-        (lower.contains('image') || lower.contains('photo') || lower.contains('picture')) ||
+    if ((lower.contains('generate') ||
+                lower.contains('fetch') ||
+                lower.contains('find')) &&
+            (lower.contains('image') ||
+                lower.contains('photo') ||
+                lower.contains('picture')) ||
         (lower.contains('zen monk') || lower.contains('monk meditating'))) {
       _simulateBotResponse(ChatMessage(
         text:
@@ -314,7 +324,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
         ],
         showCharacter: false,
       ));
-    // User specified a time → settlement + priority
+      // User specified a time → settlement + priority
     } else if ((lower.contains('meditate at') ||
             lower.contains('want to meditate') ||
             lower.contains('i want to meditate at')) &&
@@ -416,7 +426,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
         _emailDraftStep = 0;
       });
       _simulateBotResponse(ChatMessage(
-        text: "Done. That is sent and off your plate. You can clear Sumanth from your mind for now and get back to your focus",
+        text:
+            "Done. That is sent and off your plate. You can clear Sumanth from your mind for now and get back to your focus",
         isUser: false,
         showCharacter: true,
       ));
@@ -436,7 +447,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
         _emailDraftStep = 0;
       });
       _simulateBotResponse(ChatMessage(
-        text: "I have saved this draft for you. You can resume writing or send it whenever you are ready.",
+        text:
+            "I have saved this draft for you. You can resume writing or send it whenever you are ready.",
         isUser: false,
         showCharacter: true,
       ));
@@ -445,7 +457,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
 
     if (option == "Yes, generate my reset plan") {
       _simulateBotResponse(ChatMessage(
-        text: "Excellent. I will structure a precise routine utilizing light, movement, and hydration. To ensure it fits your workday, what time do you usually feel this energy drop hit the hardest?",
+        text:
+            "Excellent. I will structure a precise routine utilizing light, movement, and hydration. To ensure it fits your workday, what time do you usually feel this energy drop hit the hardest?",
         isUser: false,
         type: MessageType.options,
         options: const [
@@ -458,7 +471,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
       return;
     } else if (option == "Yes, but let's focus only on diet") {
       _simulateBotResponse(ChatMessage(
-        text: "Understood. We will focus purely on post-meal nutrition, blood sugar stabilization, and smart snacking. What time does your slump usually occur?",
+        text:
+            "Understood. We will focus purely on post-meal nutrition, blood sugar stabilization, and smart snacking. What time does your slump usually occur?",
         isUser: false,
         type: MessageType.options,
         options: const [
@@ -471,14 +485,16 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
       return;
     } else if (option == "No, I just need the information") {
       _simulateBotResponse(ChatMessage(
-        text: "Of course. Let me know if you would like me to summarize any other scientific insights or neurobiology data regarding health and wellness.",
+        text:
+            "Of course. Let me know if you would like me to summarize any other scientific insights or neurobiology data regarding health and wellness.",
         isUser: false,
         showCharacter: true,
       ));
       return;
     } else if (option == "Around 1:30 PM" || option == "Around 3:00 PM") {
       _simulateBotResponse(ChatMessage(
-        text: "Wonderful. I have added a daily 15-minute 'Afternoon Reset' task to your goals list, starting tomorrow at ${option.replaceAll('Around ', '')}. I will be here to nudge you when the time comes.",
+        text:
+            "Wonderful. I have added a daily 15-minute 'Afternoon Reset' task to your goals list, starting tomorrow at ${option.replaceAll('Around ', '')}. I will be here to nudge you when the time comes.",
         isUser: false,
         showCharacter: true,
       ));
@@ -493,12 +509,15 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
       _scrollToBottom();
 
       if (option == 'Yes, I finished it') {
-        _simulateBotResponse(ChatMessage(
-          text: 'Incredible work! I have marked this task as completed. Keep up the amazing progress.',
-          isUser: false,
-          showCharacter: true,
-        ), delayMs: 600);
-        
+        _simulateBotResponse(
+            ChatMessage(
+              text:
+                  'Incredible work! I have marked this task as completed. Keep up the amazing progress.',
+              isUser: false,
+              showCharacter: true,
+            ),
+            delayMs: 600);
+
         Future.delayed(const Duration(milliseconds: 1600), () {
           if (mounted) {
             setState(() {
@@ -508,7 +527,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
         });
       } else if (option == 'I\'m having trouble') {
         _simulateBotResponse(ChatMessage(
-          text: 'It\'s completely okay. Settle down, take a deep breath. Let me guide you through the pause. What part is feeling difficult?',
+          text:
+              'It\'s completely okay. Settle down, take a deep breath. Let me guide you through the pause. What part is feeling difficult?',
           isUser: false,
           showCharacter: true,
           type: MessageType.options,
@@ -520,7 +540,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
         ));
       } else {
         _simulateBotResponse(ChatMessage(
-          text: 'I understand. Remember, consistency is about making space for the pause, even if it feels incomplete. Let\'s try together next time!',
+          text:
+              'I understand. Remember, consistency is about making space for the pause, even if it feels incomplete. Let\'s try together next time!',
           isUser: false,
           showCharacter: true,
         ));
@@ -545,7 +566,6 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
         hasInputOption: true,
         showCharacter: true,
       ));
-
     } else if (option.contains("Days")) {
       // Roadmap message: text + PDF attachment + time-of-day options
       _simulateBotResponse(
@@ -569,7 +589,6 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
         ),
         delayMs: 800,
       );
-
     } else if (option.startsWith("Morning") ||
         option.startsWith("Afternoon") ||
         option.startsWith("Evening")) {
@@ -583,7 +602,6 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
         isUser: false,
         showCharacter: false,
       ));
-
     } else if (option == "Suggest me the best option") {
       setState(() => _conversationTitle = 'Meditation for inner peace');
       // First send a text response, then follow with the video message
@@ -623,17 +641,20 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
           );
         }
       });
-
     } else if (option == "High Priority") {
       _simulateBotResponse(ChatMessage(
-        text: "High priority. I have noted the weight of this commitment. I will be firm but gentle tomorrow morning—I will not let this window slide by unnoticed. To help anchor your focus the moment you hear my chime, what shall we call this morning intention?",
+        text:
+            "High priority. I have noted the weight of this commitment. I will be firm but gentle tomorrow morning—I will not let this window slide by unnoticed. To help anchor your focus the moment you hear my chime, what shall we call this morning intention?",
         isUser: false,
         type: MessageType.titleInput,
         showCharacter: true,
       ));
-    } else if (option == "Medium Priority" || option == "Low Priority" || option == "I'll decide later") {
+    } else if (option == "Medium Priority" ||
+        option == "Low Priority" ||
+        option == "I'll decide later") {
       _simulateBotResponse(ChatMessage(
-        text: "Intention set. I have noted the weight of this commitment. I will nudge you gently tomorrow morning. To help anchor your focus the moment you hear my chime, what shall we call this morning intention?",
+        text:
+            "Intention set. I have noted the weight of this commitment. I will nudge you gently tomorrow morning. To help anchor your focus the moment you hear my chime, what shall we call this morning intention?",
         isUser: false,
         type: MessageType.titleInput,
         showCharacter: true,
@@ -681,7 +702,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
 
   void _handleTrialFinished() {
     setState(() {
-      _messages.add(ChatMessage(text: "Trial session completed!", isUser: true));
+      _messages
+          .add(ChatMessage(text: "Trial session completed!", isUser: true));
     });
     _scrollToBottom();
 
@@ -692,7 +714,6 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
       showCharacter: true,
     ));
   }
-
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -811,7 +832,6 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                   )
                 else
                   const Spacer(),
-
                 if (_isTyping)
                   const Padding(
                     padding: EdgeInsets.only(left: 20, bottom: 10),
@@ -826,13 +846,11 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                         SizedBox(width: 12),
                         Text(
                           "Noorva is thinking...",
-                          style:
-                              TextStyle(color: Colors.white54, fontSize: 12),
+                          style: TextStyle(color: Colors.white54, fontSize: 12),
                         ),
                       ],
                     ),
                   ),
-
                 _buildInputSection(),
               ],
             ),
@@ -910,7 +928,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                   Text(
                     _chatTask!.title,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -933,7 +951,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
           Text(
             _chatTask!.content,
             style: const TextStyle(
-              color: Colors.white70,
+              color: Colors.black,
               fontSize: 15,
               height: 1.55,
             ),
@@ -965,14 +983,16 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
               fit: StackFit.expand,
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(16)),
                   child: Image.asset(
                     'assets/images/mindful_breathing.png',
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
                       color: Colors.white10,
                       child: const Center(
-                        child: Icon(Icons.image, color: Colors.white30, size: 40),
+                        child:
+                            Icon(Icons.image, color: Colors.white30, size: 40),
                       ),
                     ),
                   ),
@@ -1022,7 +1042,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                     left: 0,
                     right: 0,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 8),
                       color: Colors.black54,
                       child: Row(
                         children: [
@@ -1032,14 +1053,16 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                                 _isVideoPlaying = false;
                               });
                             },
-                            child: const Icon(Icons.pause, color: Colors.white, size: 18),
+                            child: const Icon(Icons.pause,
+                                color: Colors.white, size: 18),
                           ),
                           const SizedBox(width: 10),
                           const Expanded(
                             child: LinearProgressIndicator(
                               value: 0.15,
                               backgroundColor: Colors.white24,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.red),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -1154,7 +1177,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                   decoration: BoxDecoration(
                     color: const Color(0x2610B981),
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFF10B981), width: 3),
+                    border:
+                        Border.all(color: const Color(0xFF10B981), width: 3),
                   ),
                   child: const Center(
                     child: Icon(
@@ -1178,7 +1202,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                   'You are one step closer to your goal of\n"${_chatGoal?.title ?? ''}"',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    color: Colors.white70,
+                    color: Colors.black54,
                     fontSize: 15,
                     height: 1.45,
                   ),
@@ -1188,7 +1212,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 48, vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -1196,7 +1221,9 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                   ),
                   onPressed: () {
                     if (_goalId != null && _taskId != null) {
-                      context.read<GoalsBloc>().add(GoalTaskCompleted(_goalId!, _taskId!));
+                      context
+                          .read<GoalsBloc>()
+                          .add(GoalTaskCompleted(_goalId!, _taskId!));
                     }
                     Navigator.pop(context);
                   },
@@ -1285,7 +1312,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
         ),
         child: Center(
           child: Image.asset(assetPath,
-              width: 22, height: 22, color: Colors.white),
+              width: 22, height: 22, color: Colors.black),
         ),
       ),
     );
@@ -1343,7 +1370,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                 ),
                 child: Text(
                   message.text,
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  style: const TextStyle(color: Colors.black, fontSize: 16),
                 ),
               ),
             ),
@@ -1433,7 +1460,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                                         child: Text(
                                           point.trim(),
                                           style: const TextStyle(
-                                            color: Colors.white70,
+                                            color: Colors.black,
                                             fontSize: 14,
                                             height: 1.55,
                                           ),
@@ -1454,7 +1481,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                   Text(
                     message.text,
                     style: const TextStyle(
-                      color: Colors.white70,
+                      color: Colors.black54,
                       fontSize: 16,
                       height: 1.55,
                     ),
@@ -1476,7 +1503,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                 Text(
                   message.secondaryText!,
                   style: const TextStyle(
-                    color: Colors.white70,
+                    color: Colors.black54,
                     fontSize: 16,
                     height: 1.55,
                   ),
@@ -1549,13 +1576,16 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                     foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30)),
                   ),
                   onPressed: () => _handleOptionSelected("Looks good, send it"),
                   child: const SizedBox(
                     width: double.infinity,
                     child: Center(
-                      child: Text("Looks good, send it", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: Text("Looks good, send it",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ),
@@ -1566,13 +1596,17 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30)),
                   ),
-                  onPressed: () => _handleOptionSelected("Let's tweak the tone"),
+                  onPressed: () =>
+                      _handleOptionSelected("Let's tweak the tone"),
                   child: const SizedBox(
                     width: double.infinity,
                     child: Center(
-                      child: Text("Let's tweak the tone", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: Text("Let's tweak the tone",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ),
@@ -1583,13 +1617,16 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30)),
                   ),
                   onPressed: () => _handleOptionSelected("Save it for later"),
                   child: const SizedBox(
                     width: double.infinity,
                     child: Center(
-                      child: Text("Save it for later", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: Text("Save it for later",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ),
@@ -1857,7 +1894,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: Image.asset(assetPath, width: 20, height: 20, color: Colors.white),
+        child:
+            Image.asset(assetPath, width: 20, height: 20, color: Colors.white),
       ),
     );
   }
@@ -1888,8 +1926,10 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
     );
   }
 
-  void _showImageContextMenu(BuildContext context, String assetPath, TapDownDetails details) async {
-    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+  void _showImageContextMenu(
+      BuildContext context, String assetPath, TapDownDetails details) async {
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
     final RelativeRect position = RelativeRect.fromLTRB(
       details.globalPosition.dx,
       details.globalPosition.dy,
@@ -1914,9 +1954,11 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                Image.asset('assets/icons/copy.png', width: 18, height: 18, color: Colors.white70),
+                Image.asset('assets/icons/copy.png',
+                    width: 18, height: 18, color: Colors.white70),
                 const SizedBox(width: 12),
-                const Text('Copy Image', style: TextStyle(color: Colors.white, fontSize: 15)),
+                const Text('Copy Image',
+                    style: TextStyle(color: Colors.white, fontSize: 15)),
               ],
             ),
           ),
@@ -1929,12 +1971,15 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
             children: [
               const Divider(height: 1, color: AppColors.borderLight),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
-                    Image.asset('assets/icons/download.png', width: 18, height: 18, color: Colors.white70),
+                    Image.asset('assets/icons/download.png',
+                        width: 18, height: 18, color: Colors.white70),
                     const SizedBox(width: 12),
-                    const Text('Download Image', style: TextStyle(color: Colors.white, fontSize: 15)),
+                    const Text('Download Image',
+                        style: TextStyle(color: Colors.white, fontSize: 15)),
                   ],
                 ),
               ),
@@ -1952,9 +1997,11 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
-                    Icon(Icons.chat_bubble_outline, color: Colors.white70, size: 18),
+                    Icon(Icons.chat_bubble_outline,
+                        color: Colors.white70, size: 18),
                     SizedBox(width: 12),
-                    Text('Report an Issue', style: TextStyle(color: Colors.white, fontSize: 15)),
+                    Text('Report an Issue',
+                        style: TextStyle(color: Colors.white, fontSize: 15)),
                   ],
                 ),
               ),
@@ -2035,8 +2082,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                 const SizedBox(width: 8),
                 Expanded(
                   child: InkWell(
-                    onTap: () =>
-                        _handleSendMessage(_currentSuggestions.first),
+                    onTap: () => _handleSendMessage(_currentSuggestions.first),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 12),
@@ -2047,8 +2093,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                       ),
                       child: Text(
                         _currentSuggestions.first,
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 14),
+                        style:
+                            const TextStyle(color: Colors.black, fontSize: 14),
                       ),
                     ),
                   ),
@@ -2067,11 +2113,9 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                 horizontal: size.width * 0.04, vertical: 8),
             child: Row(
               children: [
-                _buildQuickActionButton(
-                    Icons.checklist_rtl_outlined, "Tasks"),
+                _buildQuickActionButton(Icons.checklist_rtl_outlined, "Tasks"),
                 const SizedBox(width: 12),
-                _buildQuickActionButton(
-                    Icons.track_changes_outlined, "Goals"),
+                _buildQuickActionButton(Icons.track_changes_outlined, "Goals"),
               ],
             ),
           ),
@@ -2099,11 +2143,11 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                   maxLines: null,
                   minLines: 1,
                   keyboardType: TextInputType.multiline,
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  style: const TextStyle(color: Colors.black, fontSize: 16),
                   decoration: InputDecoration(
                     hintText: 'Ask Noorva Anything',
-                    hintStyle: const TextStyle(
-                        color: Colors.white38, fontSize: 16),
+                    hintStyle:
+                        const TextStyle(color: Colors.black38, fontSize: 16),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide.none,
@@ -2151,9 +2195,9 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
     return GestureDetector(
       onTap: () {},
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Colors.black38,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Row(
@@ -2196,10 +2240,10 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: Colors.white70, size: 18),
+            Icon(icon, color: Colors.black54, size: 18),
             const SizedBox(width: 8),
             Text(label,
-                style: const TextStyle(color: Colors.white, fontSize: 14)),
+                style: const TextStyle(color: Colors.black, fontSize: 14)),
           ],
         ),
       ),
@@ -2214,10 +2258,10 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: const BoxDecoration(
-          color: Colors.white70,
+          color: Colors.black,
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.arrow_upward, color: Colors.black, size: 20),
+        child: const Icon(Icons.arrow_upward, color: Colors.white, size: 20),
       ),
     );
   }
@@ -2229,14 +2273,14 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: isActive ? Colors.white24 : Colors.white10,
+          color: isActive ? Colors.white24 : Colors.black38,
           shape: BoxShape.circle,
         ),
         child: Image.asset(
           assetPath,
           width: 20,
           height: 20,
-          color: isActive ? AppColors.blueAccent : Colors.white,
+          color: isActive ? AppColors.blueAccent : Colors.black,
         ),
       ),
     );
@@ -2277,7 +2321,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
               children: [
                 Icon(Icons.playlist_add, color: Colors.white70, size: 18),
                 SizedBox(width: 12),
-                Text('Add to tasks', style: TextStyle(color: Colors.white, fontSize: 15)),
+                Text('Add to tasks',
+                    style: TextStyle(color: Colors.white, fontSize: 15)),
               ],
             ),
           ),
@@ -2289,9 +2334,11 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                 Divider(height: 1, color: AppColors.borderLight),
                 Row(
                   children: [
-                    Icon(Icons.pin_drop_outlined, color: Colors.white70, size: 18),
+                    Icon(Icons.pin_drop_outlined,
+                        color: Colors.white70, size: 18),
                     SizedBox(width: 12),
-                    Text('Pin / Highlight', style: TextStyle(color: Colors.white, fontSize: 15)),
+                    Text('Pin / Highlight',
+                        style: TextStyle(color: Colors.white, fontSize: 15)),
                   ],
                 ),
               ],
@@ -2305,9 +2352,11 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                 Divider(height: 1, color: AppColors.borderLight),
                 Row(
                   children: [
-                    Icon(Icons.report_problem_outlined, color: Colors.white70, size: 18),
+                    Icon(Icons.report_problem_outlined,
+                        color: Colors.white70, size: 18),
                     SizedBox(width: 12),
-                    Text('Report an Issue', style: TextStyle(color: Colors.white, fontSize: 15)),
+                    Text('Report an Issue',
+                        style: TextStyle(color: Colors.white, fontSize: 15)),
                   ],
                 ),
               ],
@@ -2332,7 +2381,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
         children: [
           const Text(
             "To: Sumanth",
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           const Text(
@@ -2342,7 +2392,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
           const SizedBox(height: 4),
           const Text(
             "Quick update on Q3 designs",
-            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
+            style: TextStyle(
+                color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 20),
           const Text(
@@ -2355,7 +2406,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
             "I wanted to give you a quick update on the Q3 design phase. We're currently rethinking the core architecture to make sure the foundation is solid, which means the initial delivery will be slightly delayed, but we will have a new timeline outlined for you by this Friday. Thanks for your patience while we get this right.\n\n"
             "Best regards,\n"
             "${context.read<AuthBloc>().state.user?.name ?? 'User'}",
-            style: const TextStyle(color: Colors.white70, fontSize: 15, height: 1.45),
+            style: const TextStyle(
+                color: Colors.white70, fontSize: 15, height: 1.45),
           ),
         ],
       ),
@@ -2368,7 +2420,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
       if (index != -1) {
         _messages[index] = ChatMessage(
           text: "How to beat the afternoon energy slump without coffee",
-          secondaryText: "The afternoon slump, typically hitting between 1:00 PM and 3:00 PM, is not a sign of weakness; it is a biological reality driven by three factors: a natural dip in your circadian rhythm, a buildup of adenosine (a sleep-inducing chemical), and post-meal blood sugar fluctuations. Pushing through it with caffeine only delays the crash. Here is how to naturally reset your system",
+          secondaryText:
+              "The afternoon slump, typically hitting between 1:00 PM and 3:00 PM, is not a sign of weakness; it is a biological reality driven by three factors: a natural dip in your circadian rhythm, a buildup of adenosine (a sleep-inducing chemical), and post-meal blood sugar fluctuations. Pushing through it with caffeine only delays the crash. Here is how to naturally reset your system",
           isUser: false,
           type: MessageType.preciseSearchResult,
           showCharacter: true,
@@ -2382,7 +2435,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
       if (mounted) {
         setState(() {
           _messages.add(ChatMessage(
-            text: "Understanding the biology is the first step. The second is building a system to handle it. Would you like me to step in as your guide and generate a personalized 15-minute 'Afternoon Reset' plan to tackle this tomorrow?",
+            text:
+                "Understanding the biology is the first step. The second is building a system to handle it. Would you like me to step in as your guide and generate a personalized 15-minute 'Afternoon Reset' plan to tackle this tomorrow?",
             isUser: false,
             type: MessageType.options,
             options: const [
@@ -2418,17 +2472,25 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("• Nature Neuroscience - Circadian Rhythms & Cognitive Performance (2024)",
-                  style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
+              Text(
+                  "• Nature Neuroscience - Circadian Rhythms & Cognitive Performance (2024)",
+                  style: TextStyle(
+                      color: Colors.white70, fontSize: 13, height: 1.4)),
               SizedBox(height: 6),
-              Text("• Journal of Clinical Sleep Medicine - Adenosine Accumulation Dynamics",
-                  style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
+              Text(
+                  "• Journal of Clinical Sleep Medicine - Adenosine Accumulation Dynamics",
+                  style: TextStyle(
+                      color: Colors.white70, fontSize: 13, height: 1.4)),
               SizedBox(height: 6),
-              Text("• Harvard Health Publishing - Dehydration and Brain Function",
-                  style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
+              Text(
+                  "• Harvard Health Publishing - Dehydration and Brain Function",
+                  style: TextStyle(
+                      color: Colors.white70, fontSize: 13, height: 1.4)),
               SizedBox(height: 6),
-              Text("• Journal of Applied Physiology - Short Walks and Alertness",
-                  style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
+              Text(
+                  "• Journal of Applied Physiology - Short Walks and Alertness",
+                  style: TextStyle(
+                      color: Colors.white70, fontSize: 13, height: 1.4)),
             ],
           ),
         ),
@@ -2447,7 +2509,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
           Text(
             message.secondaryText!,
             style: const TextStyle(
-              color: Colors.white70,
+              color: Colors.black38,
               fontSize: 15,
               height: 1.5,
             ),
@@ -2467,7 +2529,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
           "2. Signal wakefulness with light: Viewing natural sunlight (without sunglasses) for even 5 minutes triggers the optic nerve to suppress melatonin production, instantly boosting alertness.\n\n"
           "3. Stabilize your hydration: Even a 2% drop in hydration causes a noticeable decline in cognitive performance. Drink 16 ounces of cold water immediately when the slump begins.",
           style: TextStyle(
-            color: Colors.white70,
+            color: Colors.black38,
             fontSize: 15,
             height: 1.5,
           ),
@@ -2537,6 +2599,7 @@ class ChatMessage {
   final String? pdfName;
   final String? pdfSize;
   final List<String>? imagePaths;
+
   /// When type == videoWithSources, these steps appear above the exploration text
   final List<String>? steps;
 
@@ -2644,8 +2707,8 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                         child: GestureDetector(
                           onTap: () {
                             setState(() => _isVideoBuffering = true);
-                            Future.delayed(
-                                const Duration(milliseconds: 1200), () {
+                            Future.delayed(const Duration(milliseconds: 1200),
+                                () {
                               if (mounted) {
                                 setState(() {
                                   _isVideoBuffering = false;
@@ -2676,17 +2739,20 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                       )
                     else ...[
                       GestureDetector(
-                        onTap: () => setState(() => _showControls = !_showControls),
+                        onTap: () =>
+                            setState(() => _showControls = !_showControls),
                         child: Container(color: Colors.transparent),
                       ),
                       if (_showControls)
                         Positioned.fill(
                           child: GestureDetector(
-                            onTap: () => setState(() => _showControls = !_showControls),
+                            onTap: () =>
+                                setState(() => _showControls = !_showControls),
                             child: Container(
                               color: Colors.black54,
                               child: Column(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   const SizedBox(height: 10),
                                   Row(
@@ -2694,17 +2760,24 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                                     children: [
                                       GestureDetector(
                                         onTap: () {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text('Rewound 10 seconds'), duration: Duration(seconds: 1)),
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                                content:
+                                                    Text('Rewound 10 seconds'),
+                                                duration: Duration(seconds: 1)),
                                           );
                                         },
                                         child: Container(
                                           padding: const EdgeInsets.all(8),
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
-                                            border: Border.all(color: Colors.white60, width: 1.5),
+                                            border: Border.all(
+                                                color: Colors.white60,
+                                                width: 1.5),
                                           ),
-                                          child: const Icon(Icons.replay_10, color: Colors.white, size: 24),
+                                          child: const Icon(Icons.replay_10,
+                                              color: Colors.white, size: 24),
                                         ),
                                       ),
                                       const SizedBox(width: 24),
@@ -2720,29 +2793,38 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                                             color: Colors.white,
                                             shape: BoxShape.circle,
                                           ),
-                                          child: const Icon(Icons.pause, color: Colors.black, size: 28),
+                                          child: const Icon(Icons.pause,
+                                              color: Colors.black, size: 28),
                                         ),
                                       ),
                                       const SizedBox(width: 24),
                                       GestureDetector(
                                         onTap: () {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text('Skipped forward 10 seconds'), duration: Duration(seconds: 1)),
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                                content: Text(
+                                                    'Skipped forward 10 seconds'),
+                                                duration: Duration(seconds: 1)),
                                           );
                                         },
                                         child: Container(
                                           padding: const EdgeInsets.all(8),
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
-                                            border: Border.all(color: Colors.white60, width: 1.5),
+                                            border: Border.all(
+                                                color: Colors.white60,
+                                                width: 1.5),
                                           ),
-                                          child: const Icon(Icons.forward_10, color: Colors.white, size: 24),
+                                          child: const Icon(Icons.forward_10,
+                                              color: Colors.white, size: 24),
                                         ),
                                       ),
                                     ],
                                   ),
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8),
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
@@ -2751,27 +2833,35 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                                           child: LinearProgressIndicator(
                                             value: 0.15,
                                             backgroundColor: Colors.white24,
-                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                    Colors.red),
                                           ),
                                         ),
                                         const SizedBox(height: 8),
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
                                             const Text(
                                               "0:45 / 5:00",
-                                              style: TextStyle(color: Colors.white, fontSize: 11),
+                                              style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 11),
                                             ),
                                             Row(
                                               children: [
                                                 GestureDetector(
                                                   onTap: () {
                                                     setState(() {
-                                                      _isVideoMuted = !_isVideoMuted;
+                                                      _isVideoMuted =
+                                                          !_isVideoMuted;
                                                     });
                                                   },
                                                   child: Icon(
-                                                    _isVideoMuted ? Icons.volume_off : Icons.volume_up,
+                                                    _isVideoMuted
+                                                        ? Icons.volume_off
+                                                        : Icons.volume_up,
                                                     color: Colors.white,
                                                     size: 18,
                                                   ),
@@ -2779,11 +2869,20 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                                                 const SizedBox(width: 14),
                                                 GestureDetector(
                                                   onTap: () {
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      const SnackBar(content: Text('Fullscreen Mode'), duration: Duration(seconds: 1)),
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .showSnackBar(
+                                                      const SnackBar(
+                                                          content: Text(
+                                                              'Fullscreen Mode'),
+                                                          duration: Duration(
+                                                              seconds: 1)),
                                                     );
                                                   },
-                                                  child: const Icon(Icons.fullscreen, color: Colors.white, size: 20),
+                                                  child: const Icon(
+                                                      Icons.fullscreen,
+                                                      color: Colors.white,
+                                                      size: 20),
                                                 ),
                                               ],
                                             ),
@@ -2849,7 +2948,8 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                         color: Colors.red, size: 20),
                     const SizedBox(width: 4),
                     PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_vert, color: Colors.white54, size: 16),
+                      icon: const Icon(Icons.more_vert,
+                          color: Colors.white54, size: 16),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                       color: const Color(0xFF1E1E21),
@@ -2861,7 +2961,8 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                       onSelected: (val) {
                         if (val == 'share') {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Video shared successfully!')),
+                            const SnackBar(
+                                content: Text('Video shared successfully!')),
                           );
                         } else if (val == 'report') {
                           _showReportContentDialog(context);
@@ -2872,9 +2973,12 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                           value: 'share',
                           child: Row(
                             children: [
-                              Icon(Icons.share, color: Colors.white70, size: 18),
+                              Icon(Icons.share,
+                                  color: Colors.white70, size: 18),
                               SizedBox(width: 12),
-                              Text('Share', style: TextStyle(color: Colors.white, fontSize: 15)),
+                              Text('Share',
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 15)),
                             ],
                           ),
                         ),
@@ -2886,9 +2990,12 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                               Divider(height: 1, color: AppColors.borderLight),
                               Row(
                                 children: [
-                                  Icon(Icons.report_problem_outlined, color: Colors.white70, size: 18),
+                                  Icon(Icons.report_problem_outlined,
+                                      color: Colors.white70, size: 18),
                                   SizedBox(width: 12),
-                                  Text('Report an Issue', style: TextStyle(color: Colors.white, fontSize: 15)),
+                                  Text('Report an Issue',
+                                      style: TextStyle(
+                                          color: Colors.white, fontSize: 15)),
                                 ],
                               ),
                             ],
@@ -3007,9 +3114,11 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Row(
                       children: [
-                        _buildTabItem(setSheetState, 0, "Organizations", _selectedSourceTab == 0),
+                        _buildTabItem(setSheetState, 0, "Organizations",
+                            _selectedSourceTab == 0),
                         const SizedBox(width: 12),
-                        _buildTabItem(setSheetState, 1, "Experts", _selectedSourceTab == 1),
+                        _buildTabItem(setSheetState, 1, "Experts",
+                            _selectedSourceTab == 1),
                       ],
                     ),
                   ),
@@ -3018,7 +3127,8 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                   // Scrollable Content
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
                       child: _selectedSourceTab == 0
                           ? _buildOrganizationsTab(context, setSheetState)
                           : _buildExpertsTab(context, setSheetState),
@@ -3033,7 +3143,8 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
     );
   }
 
-  Widget _buildTabItem(StateSetter setSheetState, int tabIndex, String title, bool isActive) {
+  Widget _buildTabItem(
+      StateSetter setSheetState, int tabIndex, String title, bool isActive) {
     return GestureDetector(
       onTap: () {
         setSheetState(() {
@@ -3059,7 +3170,8 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
     );
   }
 
-  Widget _buildOrganizationsTab(BuildContext context, StateSetter setSheetState) {
+  Widget _buildOrganizationsTab(
+      BuildContext context, StateSetter setSheetState) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -3126,7 +3238,8 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
             color: const Color(0xFF1E1E21),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: _isHarvardExpanded ? const Color(0xFFE4A15D) : Colors.white10,
+              color:
+                  _isHarvardExpanded ? const Color(0xFFE4A15D) : Colors.white10,
               width: _isHarvardExpanded ? 1.0 : 0.5,
             ),
           ),
@@ -3141,7 +3254,8 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                 },
                 borderRadius: BorderRadius.circular(16),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -3154,7 +3268,9 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                         ),
                       ),
                       Icon(
-                        _isHarvardExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                        _isHarvardExpanded
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
                         color: Colors.white70,
                         size: 24,
                       ),
@@ -3211,7 +3327,8 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                               ),
                             ),
                             SizedBox(width: 4),
-                            Icon(Icons.north_east, color: Color(0xFFE4A15D), size: 13),
+                            Icon(Icons.north_east,
+                                color: Color(0xFFE4A15D), size: 13),
                           ],
                         ),
                       ),
@@ -3332,7 +3449,8 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                 },
                 borderRadius: BorderRadius.circular(16),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -3345,7 +3463,9 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                         ),
                       ),
                       Icon(
-                        _isApaExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                        _isApaExpanded
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
                         color: Colors.white70,
                         size: 24,
                       ),
@@ -3402,7 +3522,8 @@ class _StandaloneVideoCardState extends State<_StandaloneVideoCard> {
                               ),
                             ),
                             SizedBox(width: 4),
-                            Icon(Icons.north_east, color: Color(0xFFE4A15D), size: 13),
+                            Icon(Icons.north_east,
+                                color: Color(0xFFE4A15D), size: 13),
                           ],
                         ),
                       ),
@@ -3512,7 +3633,8 @@ class _MeditationCarouselState extends State<MeditationCarousel> {
                       onTap: () => _showSourcesBottomSheet(context),
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
                           color: Colors.transparent,
                           borderRadius: BorderRadius.circular(20),
@@ -3577,12 +3699,20 @@ class _MeditationCarouselState extends State<MeditationCarousel> {
         children: [
           const Text(
             "Step 3 - If your mind wanders, let the thought pass like a cloud",
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500, height: 1.4),
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                height: 1.4),
           ),
           const SizedBox(height: 10),
           const Text(
             "Step 4 - Gently bring your focus back to the present moment",
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500, height: 1.4),
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                height: 1.4),
           ),
           const SizedBox(height: 14),
           const Text(
@@ -3616,7 +3746,8 @@ class _MeditationCarouselState extends State<MeditationCarousel> {
               children: [
                 // Video thumbnail (our beautiful generated image)
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(16)),
                   child: Image.asset(
                     'assets/images/mindful_breathing.png',
                     fit: BoxFit.cover,
@@ -3669,7 +3800,8 @@ class _MeditationCarouselState extends State<MeditationCarousel> {
                     left: 0,
                     right: 0,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 8),
                       color: Colors.black54,
                       child: Row(
                         children: [
@@ -3679,14 +3811,16 @@ class _MeditationCarouselState extends State<MeditationCarousel> {
                                 _isVideoPlaying = false;
                               });
                             },
-                            child: const Icon(Icons.pause, color: Colors.white, size: 18),
+                            child: const Icon(Icons.pause,
+                                color: Colors.white, size: 18),
                           ),
                           const SizedBox(width: 10),
                           const Expanded(
                             child: LinearProgressIndicator(
                               value: 0.15,
                               backgroundColor: Colors.white24,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.red),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -3761,7 +3895,8 @@ class _MeditationCarouselState extends State<MeditationCarousel> {
                 ),
                 const SizedBox(width: 4),
                 PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, color: Colors.white54, size: 16),
+                  icon: const Icon(Icons.more_vert,
+                      color: Colors.white54, size: 16),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   color: const Color(0xFF1E1E21),
@@ -3773,7 +3908,8 @@ class _MeditationCarouselState extends State<MeditationCarousel> {
                   onSelected: (val) {
                     if (val == 'share') {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Video shared successfully!')),
+                        const SnackBar(
+                            content: Text('Video shared successfully!')),
                       );
                     } else if (val == 'report') {
                       _showReportContentDialog(context);
@@ -3786,7 +3922,9 @@ class _MeditationCarouselState extends State<MeditationCarousel> {
                         children: [
                           Icon(Icons.share, color: Colors.white70, size: 18),
                           SizedBox(width: 12),
-                          Text('Share', style: TextStyle(color: Colors.white, fontSize: 15)),
+                          Text('Share',
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 15)),
                         ],
                       ),
                     ),
@@ -3798,9 +3936,12 @@ class _MeditationCarouselState extends State<MeditationCarousel> {
                           Divider(height: 1, color: AppColors.borderLight),
                           Row(
                             children: [
-                              Icon(Icons.report_problem_outlined, color: Colors.white70, size: 18),
+                              Icon(Icons.report_problem_outlined,
+                                  color: Colors.white70, size: 18),
                               SizedBox(width: 12),
-                              Text('Report an Issue', style: TextStyle(color: Colors.white, fontSize: 15)),
+                              Text('Report an Issue',
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 15)),
                             ],
                           ),
                         ],
@@ -3825,12 +3966,20 @@ class _MeditationCarouselState extends State<MeditationCarousel> {
         children: [
           const Text(
             "Step 5 - Scan your body for any tension and consciously release it",
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500, height: 1.4),
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                height: 1.4),
           ),
           const SizedBox(height: 10),
           const Text(
             "Step 6 - Rest in the silence between your thoughts",
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500, height: 1.4),
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                height: 1.4),
           ),
           const SizedBox(height: 14),
           const Text(
@@ -3865,7 +4014,10 @@ class _MeditationCarouselState extends State<MeditationCarousel> {
                     const SizedBox(width: 10),
                     const Text(
                       "Forest Ambient Sounds",
-                      style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
@@ -3897,12 +4049,20 @@ class _MeditationCarouselState extends State<MeditationCarousel> {
         children: [
           const Text(
             "Step 7 - Gently bring your awareness back to the room",
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500, height: 1.4),
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                height: 1.4),
           ),
           const SizedBox(height: 10),
           const Text(
             "Step 8 - Open your eyes when you are ready, carrying this peace with you",
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500, height: 1.4),
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                height: 1.4),
           ),
           const SizedBox(height: 14),
           const Text(
@@ -3977,7 +4137,8 @@ void _showReportContentDialog(BuildContext context) {
                   _buildReportDialogOption(
                     index: 1,
                     title: "Court Order",
-                    subtitle: "Report content that a court decision has determined is unlawful",
+                    subtitle:
+                        "Report content that a court decision has determined is unlawful",
                     isSelected: selectedValue == 1,
                     onTap: () => setDialogState(() => selectedValue = 1),
                   ),
@@ -3985,7 +4146,8 @@ void _showReportContentDialog(BuildContext context) {
                   _buildReportDialogOption(
                     index: 2,
                     title: "Other",
-                    subtitle: "Report content for a legal reason not listed above (for example, content violating local anti-terrorism or hate speech laws)",
+                    subtitle:
+                        "Report content for a legal reason not listed above (for example, content violating local anti-terrorism or hate speech laws)",
                     isSelected: selectedValue == 2,
                     onTap: () => setDialogState(() => selectedValue = 2),
                   ),
@@ -3994,7 +4156,8 @@ void _showReportContentDialog(BuildContext context) {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30)),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       elevation: 0,
                     ),
@@ -4009,7 +4172,8 @@ void _showReportContentDialog(BuildContext context) {
                     },
                     child: const Text(
                       "Submit",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -4017,13 +4181,15 @@ void _showReportContentDialog(BuildContext context) {
                     style: TextButton.styleFrom(
                       backgroundColor: const Color(0xFF2C2C2E),
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30)),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     onPressed: () => Navigator.pop(context),
                     child: const Text(
                       "Cancel",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -4152,17 +4318,20 @@ void _showSourcesBottomSheet(BuildContext context) {
                 // Content
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                     child: selectedSourceTab == 0
                         ? _buildSourcesOrganizationsContent(
                             ctx2,
                             isHarvardExpanded,
-                            () => setSheetState(() => isHarvardExpanded = !isHarvardExpanded),
+                            () => setSheetState(
+                                () => isHarvardExpanded = !isHarvardExpanded),
                           )
                         : _buildSourcesExpertsContent(
                             ctx2,
                             isApaExpanded,
-                            () => setSheetState(() => isApaExpanded = !isApaExpanded),
+                            () => setSheetState(
+                                () => isApaExpanded = !isApaExpanded),
                           ),
                   ),
                 ),
@@ -4175,7 +4344,8 @@ void _showSourcesBottomSheet(BuildContext context) {
   );
 }
 
-Widget _buildSourcesTabItem(String title, bool isActive, VoidCallback onSelect) {
+Widget _buildSourcesTabItem(
+    String title, bool isActive, VoidCallback onSelect) {
   return GestureDetector(
     onTap: onSelect,
     child: Container(
@@ -4234,7 +4404,8 @@ Widget _buildSourcesOrganizationsContent(
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => const SourcesWebViewPage(title: "Forbes", url: "https://forbes.com"),
+            builder: (_) => const SourcesWebViewPage(
+                title: "Forbes", url: "https://forbes.com"),
           ),
         ),
         child: const Row(
@@ -4242,7 +4413,10 @@ Widget _buildSourcesOrganizationsContent(
           children: [
             Text(
               "Visit Website",
-              style: TextStyle(color: Color(0xFFE4A15D), fontSize: 14, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Color(0xFFE4A15D),
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold),
             ),
             SizedBox(width: 4),
             Icon(Icons.north_east, color: Color(0xFFE4A15D), size: 14),
@@ -4266,16 +4440,22 @@ Widget _buildSourcesOrganizationsContent(
               onTap: onHarvardToggle,
               borderRadius: BorderRadius.circular(16),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
                       "Harvard Medical School",
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold),
                     ),
                     Icon(
-                      isHarvardExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      isHarvardExpanded
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
                       color: Colors.white70,
                       size: 24,
                     ),
@@ -4292,12 +4472,16 @@ Widget _buildSourcesOrganizationsContent(
                   children: [
                     const Text(
                       "Extracted insight:",
-                      style: TextStyle(color: Colors.white38, fontSize: 13, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                          color: Colors.white38,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 6),
                     const Text(
                       "Clinical findings detailing how daily meditation physically lowers resting cortisol levels, shifting the body's baseline response from anxiety to clarity.",
-                      style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+                      style: TextStyle(
+                          color: Colors.white70, fontSize: 14, height: 1.5),
                     ),
                     const SizedBox(height: 16),
                     InkWell(
@@ -4315,10 +4499,14 @@ Widget _buildSourcesOrganizationsContent(
                         children: [
                           Text(
                             "View clinical summary",
-                            style: TextStyle(color: Color(0xFFE4A15D), fontSize: 14, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                color: Color(0xFFE4A15D),
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold),
                           ),
                           SizedBox(width: 4),
-                          Icon(Icons.north_east, color: Color(0xFFE4A15D), size: 13),
+                          Icon(Icons.north_east,
+                              color: Color(0xFFE4A15D), size: 13),
                         ],
                       ),
                     ),
@@ -4353,7 +4541,8 @@ Widget _buildSourcesExpertsContent(
       const SizedBox(height: 12),
       const Text(
         "Name",
-        style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+        style: TextStyle(
+            color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
       ),
       const SizedBox(height: 16),
       ClipRRect(
@@ -4374,7 +4563,8 @@ Widget _buildSourcesExpertsContent(
       const SizedBox(height: 20),
       const Text(
         "About Name:",
-        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+        style: TextStyle(
+            color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
       ),
       const SizedBox(height: 8),
       const Text(
@@ -4386,7 +4576,8 @@ Widget _buildSourcesExpertsContent(
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => const SourcesWebViewPage(title: "Expert Bio", url: "https://example.com/expert"),
+            builder: (_) => const SourcesWebViewPage(
+                title: "Expert Bio", url: "https://example.com/expert"),
           ),
         ),
         child: const Row(
@@ -4394,7 +4585,10 @@ Widget _buildSourcesExpertsContent(
           children: [
             Text(
               "Learn More",
-              style: TextStyle(color: Color(0xFFE4A15D), fontSize: 14, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Color(0xFFE4A15D),
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold),
             ),
             SizedBox(width: 4),
             Icon(Icons.north_east, color: Color(0xFFE4A15D), size: 13),
@@ -4418,16 +4612,22 @@ Widget _buildSourcesExpertsContent(
               onTap: onApaToggle,
               borderRadius: BorderRadius.circular(16),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
                       "American Psychological Association",
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold),
                     ),
                     Icon(
-                      isApaExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      isApaExpanded
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
                       color: Colors.white70,
                       size: 24,
                     ),
@@ -4444,12 +4644,16 @@ Widget _buildSourcesExpertsContent(
                   children: [
                     const Text(
                       "Extracted insight:",
-                      style: TextStyle(color: Colors.white38, fontSize: 13, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                          color: Colors.white38,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 6),
                     const Text(
                       "Research demonstrating how regular mindfulness meditation strengthens neural pathways, significantly improving the brain's ability to refocus attention after distractions",
-                      style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+                      style: TextStyle(
+                          color: Colors.white70, fontSize: 14, height: 1.5),
                     ),
                     const SizedBox(height: 16),
                     InkWell(
@@ -4467,10 +4671,14 @@ Widget _buildSourcesExpertsContent(
                         children: [
                           Text(
                             "Read full article",
-                            style: TextStyle(color: Color(0xFFE4A15D), fontSize: 14, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                color: Color(0xFFE4A15D),
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold),
                           ),
                           SizedBox(width: 4),
-                          Icon(Icons.north_east, color: Color(0xFFE4A15D), size: 13),
+                          Icon(Icons.north_east,
+                              color: Color(0xFFE4A15D), size: 13),
                         ],
                       ),
                     ),
@@ -4492,12 +4700,14 @@ class PreciseSearchLoadingWidget extends StatefulWidget {
   const PreciseSearchLoadingWidget({super.key, required this.onFinished});
 
   @override
-  State<PreciseSearchLoadingWidget> createState() => _PreciseSearchLoadingWidgetState();
+  State<PreciseSearchLoadingWidget> createState() =>
+      _PreciseSearchLoadingWidgetState();
 }
 
-class _PreciseSearchLoadingWidgetState extends State<PreciseSearchLoadingWidget> {
+class _PreciseSearchLoadingWidgetState
+    extends State<PreciseSearchLoadingWidget> {
   int _currentStep = 0;
-  
+
   @override
   void initState() {
     super.initState();
@@ -4531,7 +4741,8 @@ class _PreciseSearchLoadingWidgetState extends State<PreciseSearchLoadingWidget>
         if (_currentStep >= 0) _buildDivider(_currentStep >= 1),
         _buildStep("Extracting verified health routines...", _currentStep >= 1),
         if (_currentStep >= 1) _buildDivider(_currentStep >= 2),
-        _buildStep("Scanning neurobiology journals and clinical sleep data", _currentStep >= 2),
+        _buildStep("Scanning neurobiology journals and clinical sleep data",
+            _currentStep >= 2),
       ],
     );
   }
@@ -4543,7 +4754,7 @@ class _PreciseSearchLoadingWidgetState extends State<PreciseSearchLoadingWidget>
       child: Text(
         text,
         style: const TextStyle(
-          color: Colors.white70,
+          color: Colors.black54,
           fontSize: 15,
           fontWeight: FontWeight.w400,
         ),
@@ -4572,7 +4783,8 @@ class _PreciseSearchLoadingWidgetState extends State<PreciseSearchLoadingWidget>
 class AccordionWidget extends StatefulWidget {
   final String title;
   final Widget content;
-  const AccordionWidget({super.key, required this.title, required this.content});
+  const AccordionWidget(
+      {super.key, required this.title, required this.content});
 
   @override
   State<AccordionWidget> createState() => _AccordionWidgetState();
@@ -4604,7 +4816,7 @@ class _AccordionWidgetState extends State<AccordionWidget> {
                   Text(
                     widget.title,
                     style: const TextStyle(
-                      color: Colors.white54,
+                      color: Colors.black87,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),

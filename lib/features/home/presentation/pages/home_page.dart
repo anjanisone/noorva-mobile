@@ -200,12 +200,15 @@ class _HomePageState extends State<HomePage> {
       });
 
       // Mock AI response
-      String mockAiResponse = 'London. A city of infinite layers and constant motion. To plan a journey on such short notice often invites unnecessary noise. Before we look at the map, let us decide on the nature of this trip. Are we traveling to execute work, or to find a season of rest?';
-      
+      String mockAiResponse =
+          'London. A city of infinite layers and constant motion. To plan a journey on such short notice often invites unnecessary noise. Before we look at the map, let us decide on the nature of this trip. Are we traveling to execute work, or to find a season of rest?';
+
       final lowerText = text.toLowerCase();
       if (lowerText.contains('story')) {
-        mockAiResponse = 'There was once a young architect who sought to build a great sanctuary in the center of a loud, endless city.\n\nEvery day the merchants in the marketplace shouted at him. \'Build faster,\' they demanded. \'Add more rooms. Do not stop until the roof touches the sky.\' Hearing the constant noise, the young architect abandoned his careful blueprint. He began laying bricks frantically in all directions, terrified that if he paused to rest, he would fall behind the others.';
-      } else if (lowerText.contains('stop') || lowerText.contains('other time')) {
+        mockAiResponse =
+            'There was once a young architect who sought to build a great sanctuary in the center of a loud, endless city.\n\nEvery day the merchants in the marketplace shouted at him. \'Build faster,\' they demanded. \'Add more rooms. Do not stop until the roof touches the sky.\' Hearing the constant noise, the young architect abandoned his careful blueprint. He began laying bricks frantically in all directions, terrified that if he paused to rest, he would fall behind the others.';
+      } else if (lowerText.contains('stop') ||
+          lowerText.contains('other time')) {
         mockAiResponse = 'Sure, i will be waiting...';
       }
 
@@ -313,20 +316,25 @@ class _HomePageState extends State<HomePage> {
                                         AnimatedSwitcher(
                                           duration:
                                               const Duration(milliseconds: 500),
-                                            child: SingleChildScrollView(
-                                              child: Text(
-                                                _conversations.isNotEmpty && _currentCardPage >= 0 && _currentCardPage < _conversations.length
-                                                    ? _conversations[_currentCardPage]['welcomeMessage']!
-                                                    : 'You are all caught up!',
-                                                key: ValueKey(_currentCardPage),
+                                          child: SingleChildScrollView(
+                                            child: Text(
+                                              _conversations.isNotEmpty &&
+                                                      _currentCardPage >= 0 &&
+                                                      _currentCardPage <
+                                                          _conversations.length
+                                                  ? _conversations[
+                                                          _currentCardPage]
+                                                      ['welcomeMessage']!
+                                                  : 'You are all caught up!',
+                                              key: ValueKey(_currentCardPage),
                                               textAlign: TextAlign.center,
                                               style: const TextStyle(
                                                 color: Colors.white70,
                                                 fontSize: 16,
                                                 height: 1.4,
                                               ),
-                                                                                        ),
                                             ),
+                                          ),
                                         ),
                                       ],
                                     ],
@@ -386,7 +394,8 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         // Header
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 16),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -397,9 +406,12 @@ class _HomePageState extends State<HomePage> {
                                   decoration: BoxDecoration(
                                     color: Colors.transparent,
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                                    border: Border.all(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.1)),
                                   ),
-                                  child: const Icon(Icons.chevron_left, color: Colors.white, size: 24),
+                                  child: const Icon(Icons.chevron_left,
+                                      color: Colors.white, size: 24),
                                 ),
                               ),
                               GestureDetector(
@@ -413,10 +425,14 @@ class _HomePageState extends State<HomePage> {
                                   decoration: BoxDecoration(
                                     color: Colors.transparent,
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                                    border: Border.all(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.1)),
                                   ),
                                   child: Icon(
-                                    _showCaptions ? Icons.subtitles_outlined : Icons.subtitles_off_outlined,
+                                    _showCaptions
+                                        ? Icons.subtitles_outlined
+                                        : Icons.subtitles_off_outlined,
                                     color: Colors.white,
                                     size: 24,
                                   ),
@@ -442,24 +458,32 @@ class _HomePageState extends State<HomePage> {
                           Container(
                             width: double.infinity,
                             margin: const EdgeInsets.symmetric(horizontal: 24),
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 20),
                             decoration: BoxDecoration(
                               color: const Color(0xFF1A1A1E),
                               borderRadius: BorderRadius.circular(24),
-                              border: Border.all(color: const Color(0xFF007AFF).withValues(alpha: 0.8), width: 1.5),
+                              border: Border.all(
+                                  color: const Color(0xFF007AFF)
+                                      .withValues(alpha: 0.8),
+                                  width: 1.5),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF007AFF).withValues(alpha: 0.3),
+                                  color: const Color(0xFF007AFF)
+                                      .withValues(alpha: 0.3),
                                   blurRadius: 24,
                                   spreadRadius: 4,
                                 ),
                               ],
                             ),
                             child: Text(
-                              _isListening 
-                                  ? (_lastWords.isEmpty ? 'Listening...' : _lastWords)
-                                  : (_chatMessages.isNotEmpty && !_chatMessages.last['isUser'] 
-                                      ? _chatMessages.last['text'] 
+                              _isListening
+                                  ? (_lastWords.isEmpty
+                                      ? 'Listening...'
+                                      : _lastWords)
+                                  : (_chatMessages.isNotEmpty &&
+                                          !_chatMessages.last['isUser']
+                                      ? _chatMessages.last['text']
                                       : 'How can I help you today?'),
                               style: const TextStyle(
                                 color: Colors.white,
@@ -473,7 +497,8 @@ class _HomePageState extends State<HomePage> {
 
                         // Bottom Control Actions
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 32, vertical: 24),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -485,13 +510,16 @@ class _HomePageState extends State<HomePage> {
                                   decoration: BoxDecoration(
                                     color: Colors.transparent,
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                                    border: Border.all(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.1)),
                                   ),
                                   child: Icon(
-                                    _isListening ? Icons.mic_none : Icons.mic_off_outlined, 
-                                    color: Colors.white, 
-                                    size: 28
-                                  ),
+                                      _isListening
+                                          ? Icons.mic_none
+                                          : Icons.mic_off_outlined,
+                                      color: Colors.white,
+                                      size: 28),
                                 ),
                               ),
                               // Close button
@@ -502,9 +530,12 @@ class _HomePageState extends State<HomePage> {
                                   decoration: BoxDecoration(
                                     color: Colors.transparent,
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                                    border: Border.all(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.1)),
                                   ),
-                                  child: const Icon(Icons.close, color: Colors.white, size: 28),
+                                  child: const Icon(Icons.close,
+                                      color: Colors.white, size: 28),
                                 ),
                               ),
                             ],
@@ -588,7 +619,9 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              _isInputNotEmpty ? 'How can I help?' : 'Hey ${context.watch<AuthBloc>().state.user?.name ?? 'User'}',
+              _isInputNotEmpty
+                  ? 'How can I help?'
+                  : 'Hey ${context.watch<AuthBloc>().state.user?.name ?? 'User'}',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 24,
@@ -600,7 +633,9 @@ class _HomePageState extends State<HomePage> {
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 500),
                 child: Text(
-                  _conversations.isNotEmpty && _currentCardPage >= 0 && _currentCardPage < _conversations.length
+                  _conversations.isNotEmpty &&
+                          _currentCardPage >= 0 &&
+                          _currentCardPage < _conversations.length
                       ? _conversations[_currentCardPage]['welcomeMessage']!
                       : 'You are all caught up!',
                   key: ValueKey(_currentCardPage),
@@ -647,7 +682,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(height: 32),
-              
+
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -659,11 +694,13 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 20),
                       decoration: BoxDecoration(
                         color: Colors.transparent,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.1)),
                       ),
                       child: const Text(
                         'How do you plan to\nrecalibrate?',
@@ -680,16 +717,19 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
               const SizedBox(height: 32),
-              
-              _buildRecalibrateOption('I will step away and complete it immediately', () {
+
+              _buildRecalibrateOption(
+                  'I will step away and complete it immediately', () {
                 Navigator.pop(context);
                 _releaseTask();
               }),
-              _buildRecalibrateOption('Move this task to the end of my day.', () {
+              _buildRecalibrateOption('Move this task to the end of my day.',
+                  () {
                 Navigator.pop(context);
                 _showRescheduleDialog();
               }),
-              _buildRecalibrateOption('Let it go. We will try again tomorrow', () {
+              _buildRecalibrateOption('Let it go. We will try again tomorrow',
+                  () {
                 Navigator.pop(context);
                 _releaseTask();
               }),
@@ -740,7 +780,8 @@ class _HomePageState extends State<HomePage> {
                 decoration: BoxDecoration(
                   color: const Color(0xFF1C1C1E),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: 0.1)),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -768,15 +809,18 @@ class _HomePageState extends State<HomePage> {
                       decoration: BoxDecoration(
                         color: Colors.transparent,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.1)),
                       ),
                       child: const TextField(
                         style: TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                           hintText: 'Enter response',
-                          hintStyle: TextStyle(color: Colors.white54, fontSize: 15),
+                          hintStyle:
+                              TextStyle(color: Colors.white54, fontSize: 15),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 16),
                         ),
                       ),
                     ),
@@ -791,7 +835,8 @@ class _HomePageState extends State<HomePage> {
                               decoration: BoxDecoration(
                                 color: Colors.transparent,
                                 borderRadius: BorderRadius.circular(30),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                                border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.1)),
                               ),
                               child: const Center(
                                 child: Text(
@@ -860,7 +905,7 @@ class _HomePageState extends State<HomePage> {
         _currentCardPage = _conversations.length - 1;
       }
     });
-    
+
     // Show Snackbar
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -892,106 +937,107 @@ class _HomePageState extends State<HomePage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          gradient: isMissed 
-            ? const LinearGradient(
-                colors: [Color(0xFF8B4A4A), Color(0xFF5C3333)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
-            : null,
-          color: isMissed ? null : const Color(0xFF1C1C1E).withValues(alpha: 0.6),
+          gradient: isMissed
+              ? const LinearGradient(
+                  colors: [Color(0xFF8B4A4A), Color(0xFF5C3333)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color:
+              isMissed ? null : const Color(0xFF1C1C1E).withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(32),
           border: Border.all(color: const Color(0xFF3B3B3B)),
         ),
         child: SingleChildScrollView(
           physics: const ClampingScrollPhysics(),
           child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white24, width: 1),
-              ),
-              child: Text(
-                data['tag']!,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w400),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    data['title']!,
-                    style: const TextStyle(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white24, width: 1),
+                ),
+                child: Text(
+                  data['tag']!,
+                  style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w500,
-                      height: 1.2,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w400),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      data['title']!,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 19,
+                        fontWeight: FontWeight.w500,
+                        height: 1.2,
+                      ),
                     ),
                   ),
-                ),
-                if (!isMissed)
-                  const SizedBox(width: 12),
-                if (!isMissed)
-                  const Icon(Icons.north_east, color: Colors.white, size: 24),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              data['subtitle']!,
-              style: TextStyle(
-                color: isMissed ? const Color(0xFFFFA9A9) : Colors.white70,
-                fontSize: 14,
-                fontStyle: isMissed ? FontStyle.italic : FontStyle.normal,
-                fontWeight: FontWeight.w400,
-                height: 1.4,
+                  if (!isMissed) const SizedBox(width: 12),
+                  if (!isMissed)
+                    const Icon(Icons.north_east, color: Colors.white, size: 24),
+                ],
               ),
-            ),
-            if (isMissed) ...[
-              const SizedBox(height: 16),
-              GestureDetector(
-                onTap: _showRecalibrateBottomSheet,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Tap to recalibrate',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+              const SizedBox(height: 8),
+              Text(
+                data['subtitle']!,
+                style: TextStyle(
+                  color: isMissed ? const Color(0xFFFFA9A9) : Colors.white70,
+                  fontSize: 14,
+                  fontStyle: isMissed ? FontStyle.italic : FontStyle.normal,
+                  fontWeight: FontWeight.w400,
+                  height: 1.4,
+                ),
+              ),
+              if (isMissed) ...[
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: _showRecalibrateBottomSheet,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Tap to recalibrate',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
                 ),
+              ],
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  _conversations.length,
+                  (index) => _buildDot(isActive: _currentCardPage == index),
+                ),
               ),
+              const SizedBox(height: 8),
             ],
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                _conversations.length,
-                (index) => _buildDot(isActive: _currentCardPage == index),
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
+          ),
         ),
       ),
     );
@@ -1134,24 +1180,24 @@ class _HomePageState extends State<HomePage> {
           Row(
             children: [
               _buildInputIconButton(
-                icon: Icons.attach_file_rounded,
-                onTap: () {
-                _showOptionsBottomSheet(
-                  context,
-                  options: [
-                    {
-                      'title': 'Gallery',
-                      'icon': Icons.image_outlined,
-                      'onTap': () {},
-                    },
-                    {
-                      'title': 'Files',
-                      'icon': Icons.description_outlined,
-                      'onTap': () {},
-                    },
-                  ],
-                );
-              }),
+                  icon: Icons.attach_file_rounded,
+                  onTap: () {
+                    _showOptionsBottomSheet(
+                      context,
+                      options: [
+                        {
+                          'title': 'Gallery',
+                          'icon': Icons.image_outlined,
+                          'onTap': () {},
+                        },
+                        {
+                          'title': 'Files',
+                          'icon': Icons.description_outlined,
+                          'onTap': () {},
+                        },
+                      ],
+                    );
+                  }),
               if (!_isChatActive) ...[
                 const SizedBox(width: 8),
                 GestureDetector(
@@ -1168,19 +1214,20 @@ class _HomePageState extends State<HomePage> {
                         {
                           'title': 'Events',
                           'icon': Icons.calendar_today_outlined,
-                          'onTap': () =>
-                              Navigator.pushNamed(context, AppRoutes.interactiveEventCreation),
+                          'onTap': () => Navigator.pushNamed(
+                              context, AppRoutes.interactiveEventCreation),
                         },
                       ],
                     );
                   },
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.12)),
                     ),
                     child: Row(
                       children: [
@@ -1238,7 +1285,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildInputIconButton(
-      {String? assetPath, IconData? icon, VoidCallback? onTap, bool isActive = false}) {
+      {String? assetPath,
+      IconData? icon,
+      VoidCallback? onTap,
+      bool isActive = false}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1248,7 +1298,9 @@ class _HomePageState extends State<HomePage> {
           shape: BoxShape.circle,
         ),
         child: icon != null
-            ? Icon(icon, color: isActive ? AppColors.blueAccent : Colors.white54, size: 24)
+            ? Icon(icon,
+                color: isActive ? AppColors.blueAccent : Colors.white54,
+                size: 24)
             : Image.asset(
                 assetPath!,
                 width: 24,
