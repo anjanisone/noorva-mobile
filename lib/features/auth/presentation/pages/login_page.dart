@@ -10,6 +10,7 @@ import '../../../../core/widgets/social_button.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../widgets/auth_mascot.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -47,7 +48,13 @@ class _LoginPageState extends State<LoginPage> {
           case AuthStatus.loginSuccess:
           case AuthStatus.googleSignInSuccess:
           case AuthStatus.appleSignInSuccess:
-            Navigator.pushReplacementNamed(context, AppRoutes.home);
+            // Let the mascot finish: Thinking revers (1s) -> idle ->
+            // Login Success (1s) must play before leaving the page.
+            Future.delayed(const Duration(milliseconds: 2800), () {
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(context, AppRoutes.home);
+              }
+            });
             break;
           case AuthStatus.loginFailure:
             ScaffoldMessenger.of(context).showSnackBar(
@@ -81,13 +88,12 @@ class _LoginPageState extends State<LoginPage> {
             child: Stack(
               children: [
                 // Character Image peaking from top right
-                Positioned(
+                const Positioned(
                   top: 40,
                   right: -10,
-                  child: Image.asset(
-                    'assets/images/noorva_login.png',
+                  child: AuthMascot(
                     height: 200,
-                    fit: BoxFit.contain,
+                    fallbackAsset: 'assets/images/noorva_login.png',
                   ),
                 ),
 

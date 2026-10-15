@@ -5,6 +5,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/crystal_card.dart';
 import '../../../../core/widgets/noorva_button.dart';
+import '../../../../core/widgets/noorva_mascot.dart';
 
 class DeleteAccountPage extends StatefulWidget {
   const DeleteAccountPage({super.key});
@@ -213,14 +214,10 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
           ),
 
           // Peeking tiny wizard (Screenshot 1 & 2)
-          Positioned(
+          const Positioned(
             top: -30,
             left: 20,
-            child: Image.asset(
-              'assets/images/noorva_home.png',
-              height: 70,
-              fit: BoxFit.contain,
-            ),
+            child: NoorvaMascot(mood: MascotMood.sad, height: 70),
           ),
         ],
       ),
@@ -357,14 +354,10 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
           ),
 
           // Peeking tiny wizard
-          Positioned(
+          const Positioned(
             top: -30,
             left: 20,
-            child: Image.asset(
-              'assets/images/noorva_home.png',
-              height: 70,
-              fit: BoxFit.contain,
-            ),
+            child: NoorvaMascot(mood: MascotMood.sad, height: 70),
           ),
         ],
       ),
@@ -438,13 +431,9 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
           const SizedBox(height: 40),
 
           // Large sad wizard illustration centered below the warning (Screenshot 3)
-          Opacity(
+          const Opacity(
             opacity: 0.95,
-            child: Image.asset(
-              'assets/images/noorva_home.png',
-              height: 250,
-              fit: BoxFit.contain,
-            ),
+            child: NoorvaMascot(mood: MascotMood.sad, height: 250),
           ),
         ],
       ),
@@ -478,15 +467,11 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
           ),
 
           // Large waving wizard illustration
-          Expanded(
+          const Expanded(
             child: Center(
               child: Opacity(
                 opacity: 0.95,
-                child: Image.asset(
-                  'assets/images/noorva_home.png',
-                  height: 320,
-                  fit: BoxFit.contain,
-                ),
+                child: NoorvaMascot(mood: MascotMood.hello, height: 320),
               ),
             ),
           ),

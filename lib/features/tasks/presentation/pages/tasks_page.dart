@@ -6,6 +6,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/widgets/crystal_card.dart';
 import '../../../../core/widgets/thought_bubble.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../../core/widgets/noorva_mascot.dart';
 
 // ─── Data model ────────────────────────────────────────────────────────────────
 
@@ -789,8 +790,10 @@ class _TasksPageState extends State<TasksPage> {
                       _dot(7),
                     ]),
                     const SizedBox(height: 16),
-                    Image.asset('assets/images/noorva_onboard.png',
-                        height: 280, fit: BoxFit.contain),
+                    const NoorvaMascot(
+                        mood: MascotMood.explaining,
+                        height: 280,
+                        fallbackAsset: 'assets/images/noorva_onboard.png'),
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -838,20 +841,22 @@ class _TasksPageState extends State<TasksPage> {
         onTap: () => setState(() => _showCompletionOverlay = false),
         child: Container(
           color: Colors.black.withValues(alpha: 0.75),
-          child: Column(
+          child: const Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              const ThoughtBubble(
+              ThoughtBubble(
                 text:
                     'Your intentions for today are fulfilled. The day is complete. Go unplug',
                 dotsAlignment: ThoughtBubbleDotsAlignment.center,
                 maxWidth: 240,
                 minHeight: 100,
               ),
-              const SizedBox(height: 62),
-              Image.asset('assets/images/noorva_onboard.png',
-                  height: 280, fit: BoxFit.contain),
-              const SizedBox(height: 40),
+              SizedBox(height: 62),
+              NoorvaMascot(
+                  mood: MascotMood.success,
+                  height: 280,
+                  fallbackAsset: 'assets/images/noorva_onboard.png'),
+              SizedBox(height: 40),
             ],
           ),
         ),

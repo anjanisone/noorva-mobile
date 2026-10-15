@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../../core/widgets/noorva_mascot.dart';
 
 class InteractiveEventCreationPage extends StatefulWidget {
   const InteractiveEventCreationPage({super.key});
@@ -217,10 +218,7 @@ class _InteractiveEventCreationPageState
                   ],
                 ),
               ),
-              Image.asset(
-                'assets/images/noorva_home.png',
-                fit: BoxFit.contain,
-              ),
+              const NoorvaMascot(mood: MascotMood.explaining),
             ],
           ),
         ),
@@ -448,16 +446,12 @@ class _InteractiveEventCreationPageState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (showAvatar) ...[
-            Row(
+            const Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Image.asset(
-                  'assets/images/noorva_home.png',
-                  height: 72,
-                  fit: BoxFit.fitHeight,
-                ),
-                const Padding(
+                NoorvaMascot(height: 72),
+                Padding(
                   padding: EdgeInsets.only(top: 4),
                   child: Icon(Icons.volume_up_outlined,
                       color: Colors.white38, size: 22),

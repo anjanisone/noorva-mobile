@@ -4,6 +4,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/crystal_card.dart';
 import '../../../../core/widgets/noorva_button.dart';
+import '../../../../core/widgets/noorva_mascot.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
@@ -257,16 +258,12 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         child: Stack(
           children: [
             // Character Illustration peeking in bottom-right corner (Screenshot 4)
-            Positioned(
+            const Positioned(
               bottom: -40,
               right: -30,
               child: Opacity(
                 opacity: 0.9,
-                child: Image.asset(
-                  'assets/images/noorva_home.png',
-                  width: 200,
-                  fit: BoxFit.contain,
-                ),
+                child: NoorvaMascot(width: 200),
               ),
             ),
 

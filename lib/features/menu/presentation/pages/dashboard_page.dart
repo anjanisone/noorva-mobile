@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/crystal_card.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../../core/widgets/noorva_mascot.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -170,11 +171,10 @@ class _DashboardPageState extends State<DashboardPage> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Image.asset(
-                  'assets/images/white_dress_oldman.png',
+                const NoorvaMascot(
                   height: 90,
                   width: 70,
-                  fit: BoxFit.contain,
+                  fallbackAsset: 'assets/images/white_dress_oldman.png',
                 ),
                 const SizedBox(width: 16),
                 Expanded(

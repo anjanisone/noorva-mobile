@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/crystal_card.dart';
+import '../../../../core/widgets/noorva_mascot.dart';
 
 class RateNoorvaPage extends StatefulWidget {
   const RateNoorvaPage({super.key});
@@ -70,11 +71,7 @@ class _RateNoorvaPageState extends State<RateNoorvaPage> {
                   children: [
                     const SizedBox(height: 20),
                     // Character
-                    Image.asset(
-                      'assets/images/noorva_home.png',
-                      height: 280,
-                      fit: BoxFit.contain,
-                    ),
+                    const NoorvaMascot(mood: MascotMood.hello, height: 280),
                     const SizedBox(height: 32),
                     Text(
                       'Enjoying Noorva?',

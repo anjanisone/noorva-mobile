@@ -12,6 +12,7 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import 'image_viewer_page.dart';
 import 'sources_web_view_page.dart';
 import '../../../../core/widgets/radio_dot.dart';
+import '../../../../core/widgets/noorva_mascot.dart';
 
 class GoalChatArguments {
   final String goalId;
@@ -211,6 +212,19 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
     _speech.stop();
     super.dispose();
   }
+
+  // ── Mascot mood ────────────────────────────────────────────────────────────
+
+  MascotMood get _guideMood {
+    if (_isListening) return MascotMood.listening;
+    if (_isTyping) return MascotMood.thinking;
+    return MascotMood.explaining;
+  }
+
+  /// Only the newest character animates live; older ones rest in idle.
+  bool _isLatestCharacterMessage(ChatMessage message) => identical(
+      message,
+      _messages.lastWhere((m) => m.showCharacter, orElse: () => message));
 
   // ── Bot response helper ────────────────────────────────────────────────────
 
@@ -784,10 +798,10 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                 left: 0,
                 right: 0,
                 child: Center(
-                  child: Image.asset(
-                    'assets/images/forgot_password.png',
+                  child: NoorvaMascot(
+                    mood: MascotMood.hello,
                     height: size.height * 0.54,
-                    fit: BoxFit.contain,
+                    fallbackAsset: 'assets/images/forgot_password.png',
                   ),
                 ),
               ),
@@ -1391,10 +1405,12 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Image.asset(
-                  'assets/images/noorva_guide.png',
+                NoorvaMascot(
+                  mood: _isLatestCharacterMessage(message)
+                      ? _guideMood
+                      : MascotMood.idle,
                   height: size.height * 0.12,
-                  fit: BoxFit.contain,
+                  fallbackAsset: 'assets/images/noorva_guide.png',
                 ),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 20),

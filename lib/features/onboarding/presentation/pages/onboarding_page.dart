@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/noorva_button.dart';
+import '../../../../core/widgets/noorva_mascot.dart';
 
 class OnboardingSlide {
   final String title;
@@ -154,10 +155,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           return Transform.scale(
                             scale: 1.1,
                             alignment: Alignment.bottomCenter,
-                            child: Image.asset(
-                              _slides[index].image,
-                              fit: BoxFit.fitHeight,
+                            child: NoorvaMascot(
+                              mood: index == 1 || index == _slides.length - 1
+                                  ? MascotMood.hello
+                                  : MascotMood.explaining,
+                              fit: Fit.fitHeight,
                               alignment: Alignment.bottomCenter,
+                              fallbackAsset: _slides[index].image,
                             ),
                           );
                         },

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../../core/widgets/noorva_mascot.dart';
 
 class InteractiveAiPage extends StatefulWidget {
   const InteractiveAiPage({super.key});
@@ -108,9 +109,11 @@ class _InteractiveAiPageState extends State<InteractiveAiPage> {
                             'assets/images/blue circle_behind_oldman.png',
                             fit: BoxFit.contain,
                           ),
-                          Image.asset(
-                            'assets/images/white_dress_oldman.png',
-                            fit: BoxFit.contain,
+                          NoorvaMascot(
+                            mood: _isVoiceMode || _focusNode.hasFocus
+                                ? MascotMood.listening
+                                : MascotMood.hello,
+                            fallbackAsset: 'assets/images/white_dress_oldman.png',
                           ),
                         ],
                       ),

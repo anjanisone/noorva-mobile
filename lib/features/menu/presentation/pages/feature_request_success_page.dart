@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/widgets/noorva_mascot.dart';
 
 class FeatureRequestSuccessPage extends StatelessWidget {
   const FeatureRequestSuccessPage({super.key});
@@ -89,10 +90,10 @@ class FeatureRequestSuccessPage extends StatelessWidget {
               ),
              
               // Noorva Avatar
-              Image.asset(
-                'assets/images/personalization.png', // Assuming this is the wizard avatar
+              const NoorvaMascot(
+                mood: MascotMood.success,
                 height: 350,
-                fit: BoxFit.contain,
+                fallbackAsset: 'assets/images/personalization.png',
               ),
               const SizedBox(height: 40),
             ],

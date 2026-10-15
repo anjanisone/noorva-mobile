@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/crystal_card.dart';
 import '../../../../core/widgets/noorva_button.dart';
+import '../../../../core/widgets/noorva_mascot.dart';
 
 class OfflinePage extends StatelessWidget {
   const OfflinePage({super.key});
@@ -73,15 +74,11 @@ class OfflinePage extends StatelessWidget {
                   ),
 
                   // Noorva Character Image (Plug-disconnect simulation)
-                  Expanded(
+                  const Expanded(
                     child: Center(
                       child: Opacity(
                         opacity: 0.95,
-                        child: Image.asset(
-                          'assets/images/noorva_home.png',
-                          height: 260,
-                          fit: BoxFit.contain,
-                        ),
+                        child: NoorvaMascot(mood: MascotMood.sad, height: 260),
                       ),
                     ),
                   ),

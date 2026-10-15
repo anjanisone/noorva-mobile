@@ -8,6 +8,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/crystal_card.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../../core/widgets/noorva_mascot.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -246,10 +247,10 @@ class _HomePageState extends State<HomePage> {
                 height: _isFocused || _isInputNotEmpty
                     ? size.height * 0.45
                     : size.height * 0.72,
-                child: Image.asset(
-                  'assets/images/noorva_home.png',
-                  alignment: Alignment.center,
-                  fit: BoxFit.contain,
+                child: NoorvaMascot(
+                  mood: _isListening || _isFocused || _isInputNotEmpty
+                      ? MascotMood.listening
+                      : MascotMood.idle,
                 ),
               ),
             ),
@@ -446,9 +447,10 @@ class _HomePageState extends State<HomePage> {
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
-                            child: Image.asset(
-                              'assets/images/noorva_home.png',
-                              fit: BoxFit.contain,
+                            child: NoorvaMascot(
+                              mood: _isListening
+                                  ? MascotMood.listening
+                                  : MascotMood.explaining,
                             ),
                           ),
                         ),
@@ -686,11 +688,7 @@ class _HomePageState extends State<HomePage> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Image.asset(
-                    'assets/images/noorva_home.png',
-                    height: 80,
-                    fit: BoxFit.contain,
-                  ),
+                  const NoorvaMascot(mood: MascotMood.explaining, height: 80),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Container(
@@ -882,14 +880,10 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              Positioned(
+              const Positioned(
                 top: -60,
                 left: -20,
-                child: Image.asset(
-                  'assets/images/noorva_home.png',
-                  height: 120,
-                  fit: BoxFit.contain,
-                ),
+                child: NoorvaMascot(mood: MascotMood.explaining, height: 120),
               ),
             ],
           ),
@@ -1442,17 +1436,11 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              Image.asset(
-                'assets/images/noorva_home.png',
-                width: 60,
-                height: 60,
-                fit: BoxFit.contain,
-              ),
-              const Spacer(),
-              const Icon(Icons.volume_up_outlined,
-                  color: Colors.white70, size: 24),
+              NoorvaMascot(width: 60, height: 60),
+              Spacer(),
+              Icon(Icons.volume_up_outlined, color: Colors.white70, size: 24),
             ],
           ),
           const SizedBox(height: 12),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/widgets/noorva_mascot.dart';
 
 class SharedInquiriesPage extends StatefulWidget {
   const SharedInquiriesPage({super.key});
@@ -157,14 +158,10 @@ class _SharedInquiriesPageState extends State<SharedInquiriesPage> {
                               ],
                             ),
                           ),
-                          Positioned(
+                          const Positioned(
                             right: -10,
                             bottom: 0,
-                            child: Image.asset(
-                              'assets/images/personalization.png',
-                              height: 180,
-                              fit: BoxFit.contain,
-                            ),
+                            child: NoorvaMascot(height: 180, fallbackAsset: 'assets/images/personalization.png'),
                           ),
                         ],
                       ),
