@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../../core/widgets/noorva_mascot.dart';
+import '../../../../core/widgets/noorva_chat_input.dart';
 
 class InteractiveEventCreationPage extends StatefulWidget {
   const InteractiveEventCreationPage({super.key});
@@ -218,7 +219,8 @@ class _InteractiveEventCreationPageState
                   ],
                 ),
               ),
-              const NoorvaMascot(mood: MascotMood.explaining),
+              const NoorvaMascot(
+                  mood: MascotMood.explaining, reactToTyping: true),
             ],
           ),
         ),
@@ -626,111 +628,23 @@ class _InteractiveEventCreationPageState
   // ─── Bottom Input Bar ─────────────────────────────────────────────────────────
 
   Widget _buildBottomInput() {
-    // Show the submit arrow only when there's actionable text
-    final bool showSubmitArrow = _flowStep == 0 || _flowStep == 2;
     final bool isIdle = _flowStep >= 4 || _flowStep == 1;
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF141416),
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+    // Like the Guide page: send button only while there's text, otherwise
+    // the mic / voice buttons.
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: _inputController,
+      builder: (context, value, _) => NoorvaChatInput(
+        controller: _inputController,
+        focusNode: _focusNode,
+        readOnly: isIdle,
+        hintText: isIdle ? 'Ask Noorva Anything' : '',
+        onSubmitted: (_) => _submitMessage(),
+        showSend: !isIdle && value.text.trim().isNotEmpty,
+        onSend: _submitMessage,
+        pillIconAsset: 'assets/icons/schedules.png',
+        pillLabel: 'Events',
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: TextField(
-              controller: _inputController,
-              focusNode: _focusNode,
-              maxLines: null,
-              minLines: 1,
-              readOnly: isIdle,
-              keyboardType: TextInputType.multiline,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
-              decoration: InputDecoration(
-                hintText: isIdle ? 'Ask Noorva Anything' : '',
-                hintStyle: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.25),
-                  fontSize: 16,
-                ),
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 6),
-              ),
-              onSubmitted: (_) => _submitMessage(),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildIconButton(Icons.attach_file_rounded),
-
-              // Events pill
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.calendar_today_outlined,
-                        color: Colors.black, size: 16),
-                    SizedBox(width: 6),
-                    Text(
-                      'Events',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                    SizedBox(width: 4),
-                    Icon(Icons.keyboard_arrow_down,
-                        color: Colors.black, size: 16),
-                  ],
-                ),
-              ),
-
-              _buildIconButton(Icons.mic_none_rounded),
-
-              _buildIconButton(Icons.graphic_eq_rounded),
-              if (showSubmitArrow) ...[
-                GestureDetector(
-                  onTap: _submitMessage,
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.arrow_upward_rounded,
-                        color: Colors.black, size: 20),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIconButton(IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(icon, color: Colors.white60, size: 20),
     );
   }
 }

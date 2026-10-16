@@ -116,6 +116,25 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   child: Stack(
                     alignment: Alignment.bottomCenter,
                     children: [
+                      // Single persistent mascot: only its mood changes, so the
+                      // Rive animation doesn't restart on every slide.
+                      Positioned.fill(
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 300),
+                          opacity: _currentPage == 0 ? 0.0 : 1.0,
+                          child: NoorvaMascot(
+                            mood: _currentPage == 0
+                                ? MascotMood.idle
+                                : _currentPage == 1 ||
+                                        _currentPage == _slides.length - 1
+                                    ? MascotMood.hello
+                                    : MascotMood.explaining,
+                            fit: Fit.fitHeight,
+                            alignment: Alignment.bottomCenter,
+                            fallbackAsset: _slides[1].image,
+                          ),
+                        ),
+                      ),
                       PageView.builder(
                         controller: _pageController,
                         onPageChanged: (index) {
@@ -151,19 +170,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                               ),
                             );
                           }
-                          // Standard character slides
-                          return Transform.scale(
-                            scale: 1.1,
-                            alignment: Alignment.bottomCenter,
-                            child: NoorvaMascot(
-                              mood: index == 1 || index == _slides.length - 1
-                                  ? MascotMood.hello
-                                  : MascotMood.explaining,
-                              fit: Fit.fitHeight,
-                              alignment: Alignment.bottomCenter,
-                              fallbackAsset: _slides[index].image,
-                            ),
-                          );
+                          // Character slides are transparent; the shared
+                          // mascot behind the PageView shows through.
+                          return const SizedBox.expand();
                         },
                       ),
 

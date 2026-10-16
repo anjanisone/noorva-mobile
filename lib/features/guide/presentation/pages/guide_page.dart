@@ -13,6 +13,7 @@ import 'image_viewer_page.dart';
 import 'sources_web_view_page.dart';
 import '../../../../core/widgets/radio_dot.dart';
 import '../../../../core/widgets/noorva_mascot.dart';
+import '../../../../core/widgets/noorva_chat_input.dart';
 
 class GoalChatArguments {
   final String goalId;
@@ -218,6 +219,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
   MascotMood get _guideMood {
     if (_isListening) return MascotMood.listening;
     if (_isTyping) return MascotMood.thinking;
+    if (_isInputFocused || _isInputNotEmpty) return MascotMood.typing;
     return MascotMood.explaining;
   }
 
@@ -1772,7 +1774,10 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
         decoration: InputDecoration(
           hintText: 'Enter your choice',
           hintStyle: TextStyle(color: Colors.white38),
+          filled: false,
           border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
         ),
       ),
     );
@@ -1803,7 +1808,10 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                     decoration: const InputDecoration(
                       hintText: 'Enter your custom title for this goal',
                       hintStyle: TextStyle(color: Colors.white38, fontSize: 16),
+                      filled: false,
                       border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
                     ),
                     onSubmitted: (val) {
                       if (val.trim().isNotEmpty) {
@@ -2137,106 +2145,18 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
           ),
 
         // Main input container
-        Container(
-          margin: EdgeInsets.fromLTRB(
-              size.width * 0.04, 0, size.width * 0.04, size.height * 0.03),
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: AppColors.borderLight),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 8, bottom: 4),
-                child: TextField(
-                  controller: _messageController,
-                  focusNode: _inputFocusNode,
-                  onSubmitted: _handleSendMessage,
-                  maxLines: null,
-                  minLines: 1,
-                  keyboardType: TextInputType.multiline,
-                  style: const TextStyle(color: Colors.black, fontSize: 16),
-                  decoration: InputDecoration(
-                    hintText: 'Ask Noorva Anything',
-                    hintStyle:
-                        const TextStyle(color: Colors.black38, fontSize: 16),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    isDense: true,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  _buildInputIconButton('assets/icons/media.png'),
-                  const Spacer(),
-                  if (!_isInputNotEmpty) _buildGuidePill(),
-                  const Spacer(),
-                  if (_isInputNotEmpty)
-                    _buildSendButton()
-                  else ...[
-                    _buildInputIconButton('assets/icons/mike.png',
-                        onTap: _listen, isActive: _isListening),
-                    const SizedBox(width: 10),
-                    _buildInputIconButton('assets/icons/recording.png',
-                        onTap: _listen, isActive: _isListening),
-                  ],
-                ],
-              ),
-            ],
-          ),
+        NoorvaChatInput(
+          controller: _messageController,
+          focusNode: _inputFocusNode,
+          onSubmitted: _handleSendMessage,
+          showSend: _isInputNotEmpty,
+          onSend: () => _handleSendMessage(_messageController.text),
+          pillIconAsset: 'assets/icons/guide.png',
+          pillLabel: 'Guide',
+          onMicTap: _listen,
+          isListening: _isListening,
         ),
       ],
-    );
-  }
-
-  // ── Guide Pill ─────────────────────────────────────────────────────────────
-
-  Widget _buildGuidePill() {
-    return GestureDetector(
-      onTap: () {},
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.black38,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset('assets/icons/guide.png',
-                width: 15, height: 15, color: Colors.black),
-            const SizedBox(width: 5),
-            const Text(
-              'Guide',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.1,
-              ),
-            ),
-            const SizedBox(width: 3),
-            const Icon(Icons.keyboard_arrow_down,
-                color: Colors.black, size: 16),
-          ],
-        ),
-      ),
     );
   }
 
@@ -2261,42 +2181,6 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
             Text(label,
                 style: const TextStyle(color: Colors.black, fontSize: 14)),
           ],
-        ),
-      ),
-    );
-  }
-
-  // ── Send & Icon Buttons ────────────────────────────────────────────────────
-
-  Widget _buildSendButton() {
-    return GestureDetector(
-      onTap: () => _handleSendMessage(_messageController.text),
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: const BoxDecoration(
-          color: Colors.black,
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(Icons.arrow_upward, color: Colors.white, size: 20),
-      ),
-    );
-  }
-
-  Widget _buildInputIconButton(String assetPath,
-      {VoidCallback? onTap, bool isActive = false}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: isActive ? Colors.white24 : Colors.black38,
-          shape: BoxShape.circle,
-        ),
-        child: Image.asset(
-          assetPath,
-          width: 20,
-          height: 20,
-          color: isActive ? AppColors.blueAccent : Colors.black,
         ),
       ),
     );

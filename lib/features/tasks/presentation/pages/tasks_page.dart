@@ -15,10 +15,10 @@ class TaskItem {
   final String title;
   final String goal;
   final String timeText;
-  final String priority;     // 'high' | 'medium' | 'low'
+  final String priority; // 'high' | 'medium' | 'low'
   bool isCompleted;
   final bool isProject;
-  final String detailType;   // 'steps' | 'project'
+  final String detailType; // 'steps' | 'project'
   final String taskCategory; // 'goal' | 'event' | 'task'
   final String? linkedId;
 
@@ -80,8 +80,18 @@ class _TasksPageState extends State<TasksPage> {
 
   String get _monthYearLabel {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
     ];
     return '${months[_viewMonth - 1]} $_viewYear';
   }
@@ -92,7 +102,7 @@ class _TasksPageState extends State<TasksPage> {
   void initState() {
     super.initState();
     _selectedDate = _today;
-    _viewYear  = _today.year;
+    _viewYear = _today.year;
     _viewMonth = _today.month;
 
     _tasksData = {
@@ -252,8 +262,8 @@ class _TasksPageState extends State<TasksPage> {
       }
       // Clamp selected date to this month
       final lastDay = DateUtils.getDaysInMonth(_viewYear, _viewMonth);
-      _selectedDate = DateTime(
-          _viewYear, _viewMonth, _selectedDate.day.clamp(1, lastDay));
+      _selectedDate =
+          DateTime(_viewYear, _viewMonth, _selectedDate.day.clamp(1, lastDay));
       _checkDayCompletion();
     });
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToSelected());
@@ -268,8 +278,8 @@ class _TasksPageState extends State<TasksPage> {
         _viewMonth++;
       }
       final lastDay = DateUtils.getDaysInMonth(_viewYear, _viewMonth);
-      _selectedDate = DateTime(
-          _viewYear, _viewMonth, _selectedDate.day.clamp(1, lastDay));
+      _selectedDate =
+          DateTime(_viewYear, _viewMonth, _selectedDate.day.clamp(1, lastDay));
       _checkDayCompletion();
     });
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToSelected());
@@ -285,7 +295,7 @@ class _TasksPageState extends State<TasksPage> {
     );
     if (picked != null) {
       setState(() {
-        _viewYear  = picked.year;
+        _viewYear = picked.year;
         _viewMonth = picked.month;
         final lastDay = DateUtils.getDaysInMonth(_viewYear, _viewMonth);
         _selectedDate = DateTime(
@@ -302,8 +312,7 @@ class _TasksPageState extends State<TasksPage> {
     const pillWidth = _dayPillWidth + _dayPillSpacing * 2;
     final targetIndex = _selectedDate.day - 1;
     final offset = targetIndex * pillWidth;
-    final viewportHalf =
-        (_dateScrollController.position.viewportDimension) / 2;
+    final viewportHalf = (_dateScrollController.position.viewportDimension) / 2;
     final centred = (offset - viewportHalf + pillWidth / 2).clamp(
       0.0,
       _dateScrollController.position.maxScrollExtent,
@@ -368,10 +377,10 @@ class _TasksPageState extends State<TasksPage> {
 
   @override
   Widget build(BuildContext context) {
-    final tasks  = _dayTasks;
-    final high   = tasks.where((t) => t.priority == 'high').toList();
+    final tasks = _dayTasks;
+    final high = tasks.where((t) => t.priority == 'high').toList();
     final medium = tasks.where((t) => t.priority == 'medium').toList();
-    final low    = tasks.where((t) => t.priority == 'low').toList();
+    final low = tasks.where((t) => t.priority == 'low').toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -541,8 +550,8 @@ class _TasksPageState extends State<TasksPage> {
               itemBuilder: (_, i) {
                 final day = DateTime(_viewYear, _viewMonth, i + 1);
                 final isSelected = _dateKey(day) == _dateKey(_selectedDate);
-                final isToday   = _dateKey(day) == _dateKey(_today);
-                final isFuture  = day.isAfter(_today);
+                final isToday = _dateKey(day) == _dateKey(_today);
+                final isFuture = day.isAfter(_today);
                 final weekdayIndex = (day.weekday - 1) % 7; // 0=Mon…6=Sun
 
                 return GestureDetector(
@@ -556,7 +565,8 @@ class _TasksPageState extends State<TasksPage> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     width: _dayPillWidth,
-                    margin: const EdgeInsets.symmetric(horizontal: _dayPillSpacing),
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: _dayPillSpacing),
                     decoration: isSelected
                         ? BoxDecoration(
                             border: Border.all(
@@ -594,9 +604,8 @@ class _TasksPageState extends State<TasksPage> {
                                     ? Colors.white30
                                     : Colors.white70,
                             fontSize: 16,
-                            fontWeight: isSelected
-                                ? FontWeight.w600
-                                : FontWeight.w400,
+                            fontWeight:
+                                isSelected ? FontWeight.w600 : FontWeight.w400,
                           ),
                         ),
                         // Today dot
@@ -651,7 +660,7 @@ class _TasksPageState extends State<TasksPage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: CrystalCard(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.only(left: 8, right: 8, top: 12, bottom: 12),
         borderRadius: 24,
         borderColor: AppColors.borderLight,
         child: InkWell(
@@ -668,20 +677,16 @@ class _TasksPageState extends State<TasksPage> {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: task.isCompleted
-                          ? Colors.white
-                          : Colors.transparent,
+                      color:
+                          task.isCompleted ? Colors.white : Colors.transparent,
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
-                        color: task.isCompleted
-                            ? Colors.white
-                            : Colors.white24,
+                        color: task.isCompleted ? Colors.white : Colors.white24,
                         width: 1.5,
                       ),
                     ),
                     child: task.isCompleted
-                        ? const Icon(Icons.check,
-                            size: 16, color: Colors.black)
+                        ? const Icon(Icons.check, size: 16, color: Colors.black)
                         : null,
                   ),
                 ),
@@ -694,9 +699,7 @@ class _TasksPageState extends State<TasksPage> {
                     Text(
                       task.title,
                       style: GoogleFonts.outfit(
-                        color: task.isCompleted
-                            ? Colors.white38
-                            : Colors.white,
+                        color: task.isCompleted ? Colors.white38 : Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                         decoration: task.isCompleted
@@ -714,10 +717,10 @@ class _TasksPageState extends State<TasksPage> {
                       children: [
                         Text(task.timeText,
                             style: GoogleFonts.outfit(
-                                color: Colors.white38, fontSize: 12)),
+                                color: Colors.white38, fontSize: 11)),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 2),
+                              horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
                             color: task.isCompleted
                                 ? const Color(0xFF1E3F20)
@@ -882,8 +885,18 @@ class _MonthYearPickerDialog extends StatefulWidget {
 
 class _MonthYearPickerDialogState extends State<_MonthYearPickerDialog> {
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec'
   ];
 
   late int _year;
@@ -892,7 +905,7 @@ class _MonthYearPickerDialogState extends State<_MonthYearPickerDialog> {
   @override
   void initState() {
     super.initState();
-    _year  = widget.initialYear;
+    _year = widget.initialYear;
     _month = widget.initialMonth;
   }
 
@@ -965,12 +978,10 @@ class _MonthYearPickerDialogState extends State<_MonthYearPickerDialog> {
                     child: Text(
                       _months[i],
                       style: GoogleFonts.outfit(
-                        color:
-                            isSelected ? Colors.black : Colors.white70,
+                        color: isSelected ? Colors.black : Colors.white70,
                         fontSize: 13,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w400,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w400,
                       ),
                     ),
                   ),
@@ -991,8 +1002,8 @@ class _MonthYearPickerDialogState extends State<_MonthYearPickerDialog> {
                           borderRadius: BorderRadius.circular(20)),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    child: Text('Cancel',
-                        style: GoogleFonts.outfit(fontSize: 15)),
+                    child:
+                        Text('Cancel', style: GoogleFonts.outfit(fontSize: 15)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1029,8 +1040,7 @@ class _MonthYearPickerDialogState extends State<_MonthYearPickerDialog> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white.withValues(alpha: 0.08),
-            border:
-                Border.all(color: Colors.white.withValues(alpha: 0.12)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
           ),
           child: Icon(icon, color: Colors.white70, size: 20),
         ),

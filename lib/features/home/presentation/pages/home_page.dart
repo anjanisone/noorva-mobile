@@ -13,6 +13,9 @@ import '../../../../core/widgets/noorva_mascot.dart';
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
+  /// Route argument that makes the mascot greet the user, e.g. after login.
+  static const welcomeArgument = 'welcome';
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -34,11 +37,18 @@ class _HomePageState extends State<HomePage> {
   bool _isVoiceModeActive = false;
   bool _showCaptions = true;
 
+  // Intro when coming from login: mascot walks in, then welcomes, then idles;
+  // content eases in once he starts welcoming.
+  bool _routeArgsRead = false;
+  MascotMood? _introMood;
+  bool _contentVisible = false;
+  final List<Timer> _introTimers = [];
+
   final List<Map<String, dynamic>> _chatMessages = [];
 
   final List<Map<String, dynamic>> _conversations = [
     {
-      'tag': 'Toady\'s tasks',
+      'tag': 'Today\'s tasks',
       'title': 'The afternoon reset to overcome the fatigue',
       'subtitle': 'Scheduled for 1:30 PM',
       'welcomeMessage':
@@ -46,7 +56,7 @@ class _HomePageState extends State<HomePage> {
       'isMissed': false,
     },
     {
-      'tag': 'Toady\'s tasks',
+      'tag': 'Today\'s tasks',
       'title': 'Meditate for inner peace - Day 1: The Pause',
       'subtitle': 'Scheduled for 7AM Today',
       'welcomeMessage':
@@ -89,7 +99,66 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_routeArgsRead) return;
+    _routeArgsRead = true;
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args != HomePage.welcomeArgument) {
+      _contentVisible = true;
+      return;
+    }
+
+    final walkLength =
+        NoorvaMascot.animationDuration('Walking') ?? const Duration(seconds: 2);
+    final welcomeLength = NoorvaMascot.durationOf(MascotMood.welcome) ??
+        const Duration(seconds: 4);
+
+    _introMood = MascotMood.walk;
+    void at(Duration delay, VoidCallback step) {
+      _introTimers.add(Timer(delay, () {
+        if (mounted) setState(step);
+      }));
+    }
+
+    at(walkLength, () {
+      _introMood = MascotMood.welcome;
+      _contentVisible = true;
+    });
+    at(walkLength + welcomeLength, () => _introMood = null);
+  }
+
+  MascotMood get _homeMood {
+    if (_isListening) return MascotMood.listening;
+    if (_isInputNotEmpty) return MascotMood.typing;
+    return _introMood ?? MascotMood.idle;
+  }
+
+  /// Fades and lifts [child] into place once [_contentVisible] is set.
+  Widget _entrance(Widget child, {int delayMs = 0}) {
+    return AnimatedOpacity(
+      opacity: _contentVisible ? 1 : 0,
+      duration: Duration(milliseconds: 500 + delayMs),
+      curve: Curves.easeOut,
+      child: AnimatedSlide(
+        offset: _contentVisible ? Offset.zero : const Offset(0, 0.08),
+        duration: Duration(milliseconds: 500 + delayMs),
+        curve: Curves.easeOutCubic,
+        child: child,
+      ),
+    );
+  }
+
+  String get _firstName {
+    final name = context.watch<AuthBloc>().state.user?.name.trim() ?? '';
+    return name.isEmpty ? 'there' : name.split(RegExp(r'\s+')).first;
+  }
+
+  @override
   void dispose() {
+    for (final timer in _introTimers) {
+      timer.cancel();
+    }
     _timer?.cancel();
     _pageController.dispose();
     _inputController.dispose();
@@ -108,6 +177,15 @@ class _HomePageState extends State<HomePage> {
 
   void _startAutoSlider() {
     _timer = Timer.periodic(const Duration(seconds: 4), (Timer timer) {
+      // Only rotate while the cards are actually on screen, otherwise the
+      // welcome message keeps changing behind the chat/input/voice views.
+      if (_conversations.isEmpty ||
+          _isChatActive ||
+          _isFocused ||
+          _isInputNotEmpty ||
+          _isVoiceModeActive) {
+        return;
+      }
       if (_currentCardPage < _conversations.length - 1) {
         _currentCardPage++;
       } else {
@@ -236,33 +314,45 @@ class _HomePageState extends State<HomePage> {
       body: SafeArea(
         child: Stack(
           children: [
-            Positioned(
+            // Mascot moves and resizes together, and hides behind the chat.
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeOutCubic,
               left: 0,
               right: 0,
               top: _isFocused || _isInputNotEmpty
                   ? size.height * 0.15
                   : size.height * 0.26,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                height: _isFocused || _isInputNotEmpty
-                    ? size.height * 0.45
-                    : size.height * 0.72,
-                child: NoorvaMascot(
-                  mood: _isListening || _isFocused || _isInputNotEmpty
-                      ? MascotMood.listening
-                      : MascotMood.idle,
+              height: _isFocused || _isInputNotEmpty
+                  ? size.height * 0.45
+                  : size.height * 0.72,
+              child: IgnorePointer(
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 300),
+                  opacity: _isChatActive ? 0 : 1,
+                  child: NoorvaMascot(mood: _homeMood),
                 ),
               ),
             ),
 
-            // Thought Bubbles (Hidden when focused/typing)
-            if (!_isFocused && !_isInputNotEmpty)
-              Positioned(
-                top: size.height * 0.30,
-                left: -7,
-                right: -30,
-                child: _buildDecorativeDots(),
+            // Thought Bubbles (Hidden when focused/typing/chatting)
+            Positioned(
+              top: size.height * 0.30,
+              left: -7,
+              right: -30,
+              child: IgnorePointer(
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 250),
+                  opacity: !_isChatActive &&
+                          !_isFocused &&
+                          !_isInputNotEmpty &&
+                          _contentVisible
+                      ? 1
+                      : 0,
+                  child: _buildDecorativeDots(),
+                ),
               ),
+            ),
 
             // Main Content Scrollable
             Column(
@@ -280,44 +370,51 @@ class _HomePageState extends State<HomePage> {
                               _buildHomeHeader(),
                               const SizedBox(height: 20),
                               // Welcome Message (Changes style when focused)
-                              Center(
-                                child: CrystalCard(
-                                  width: (_isFocused || _isInputNotEmpty)
-                                      ? 180
-                                      : 320,
-                                  padding: (_isFocused || _isInputNotEmpty)
-                                      ? const EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 10)
-                                      : const EdgeInsets.all(24),
-                                  borderRadius: (_isFocused || _isInputNotEmpty)
-                                      ? 20
-                                      : 32,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  borderColor: const Color(0xFF3B3B3B),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
+                              _entrance(Center(
+                                child: AnimatedSize(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeOutCubic,
+                                  child: CrystalCard(
+                                    width: (_isFocused || _isInputNotEmpty)
+                                        ? 180
+                                        : 320,
+                                    padding: (_isFocused || _isInputNotEmpty)
+                                        ? const EdgeInsets.symmetric(
+                                            horizontal: 16, vertical: 10)
+                                        : const EdgeInsets.all(24),
+                                    borderRadius:
+                                        (_isFocused || _isInputNotEmpty)
+                                            ? 20
+                                            : 32,
                                     crossAxisAlignment:
                                         CrossAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        (_isFocused || _isInputNotEmpty)
-                                            ? 'How can I help?'
-                                            : 'Hey ${context.watch<AuthBloc>().state.user?.name ?? 'User'}',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize:
-                                              (_isFocused || _isInputNotEmpty)
-                                                  ? 16
-                                                  : 24,
-                                          fontWeight: FontWeight.w500,
+                                    borderColor: const Color(0xFF3B3B3B),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          (_isFocused || _isInputNotEmpty)
+                                              ? 'How can I help?'
+                                              : 'Hey $_firstName',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize:
+                                                (_isFocused || _isInputNotEmpty)
+                                                    ? 16
+                                                    : 24,
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
-                                      ),
-                                      if (!_isFocused && !_isInputNotEmpty) ...[
-                                        const SizedBox(height: 12),
-                                        AnimatedSwitcher(
-                                          duration:
-                                              const Duration(milliseconds: 500),
-                                          child: SingleChildScrollView(
+                                        if (!_isFocused &&
+                                            !_isInputNotEmpty) ...[
+                                          const SizedBox(height: 12),
+                                          // Key on the switcher's direct child so
+                                          // the message actually cross-fades.
+                                          AnimatedSwitcher(
+                                            duration: const Duration(
+                                                milliseconds: 500),
                                             child: Text(
                                               _conversations.isNotEmpty &&
                                                       _currentCardPage >= 0 &&
@@ -327,7 +424,8 @@ class _HomePageState extends State<HomePage> {
                                                           _currentCardPage]
                                                       ['welcomeMessage']!
                                                   : 'You are all caught up!',
-                                              key: ValueKey(_currentCardPage),
+                                              key: ValueKey(
+                                                  '$_currentCardPage-${_conversations.length}'),
                                               textAlign: TextAlign.center,
                                               style: const TextStyle(
                                                 color: Colors.white70,
@@ -336,12 +434,12 @@ class _HomePageState extends State<HomePage> {
                                               ),
                                             ),
                                           ),
-                                        ),
+                                        ],
                                       ],
-                                    ],
+                                    ),
                                   ),
                                 ),
-                              ),
+                              )),
                               const SizedBox(height: 40),
                             ],
                           ),
@@ -350,10 +448,13 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 5),
 
                 // Priority Card (Only visible in home state)
-                if (!_isChatActive && !_isFocused && !_isInputNotEmpty)
-                  Visibility(
-                    visible: true,
-                    child: Column(
+                if (!_isChatActive &&
+                    !_isFocused &&
+                    !_isInputNotEmpty &&
+                    _conversations.isNotEmpty)
+                  _entrance(
+                    delayMs: 200,
+                    Column(
                       children: [
                         SizedBox(
                           height: 280,
@@ -1245,12 +1346,12 @@ class _HomePageState extends State<HomePage> {
               if (_isInputNotEmpty)
                 _buildSendButton()
               else ...[
-                _buildInputIconButton(
-                  icon: Icons.mic_none,
-                  onTap: _openVoiceMode,
-                  isActive: _isVoiceModeActive,
-                ),
-                const SizedBox(width: 4),
+                // _buildInputIconButton(
+                //   icon: Icons.mic_none,
+                //   onTap: _openVoiceMode,
+                //   isActive: _isVoiceModeActive,
+                // ),
+                // const SizedBox(width: 4),
                 _buildInputIconButton(
                   assetPath: 'assets/icons/recording.png',
                   onTap: _openVoiceMode,

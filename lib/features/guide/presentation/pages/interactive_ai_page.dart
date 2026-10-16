@@ -110,9 +110,11 @@ class _InteractiveAiPageState extends State<InteractiveAiPage> {
                             fit: BoxFit.contain,
                           ),
                           NoorvaMascot(
-                            mood: _isVoiceMode || _focusNode.hasFocus
+                            mood: _isVoiceMode
                                 ? MascotMood.listening
-                                : MascotMood.hello,
+                                : _focusNode.hasFocus
+                                    ? MascotMood.typing
+                                    : MascotMood.hello,
                             fallbackAsset: 'assets/images/white_dress_oldman.png',
                           ),
                         ],
@@ -182,7 +184,10 @@ class _InteractiveAiPageState extends State<InteractiveAiPage> {
                               decoration: const InputDecoration(
                                 hintText: 'Enter response',
                                 hintStyle: TextStyle(color: Colors.white38, fontSize: 16),
+                                filled: false,
                                 border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
                                 contentPadding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                               ),
                             ),

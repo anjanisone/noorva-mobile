@@ -260,6 +260,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
                   child: Center(
                     child: NoorvaMascot(
                       mood: MascotMood.hello,
+                      reactToTyping: true,
                       height: _getStepImageHeight(0, size),
                       fallbackAsset: _stepImages[0],
                     ),
@@ -274,6 +275,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
                 child: IgnorePointer(
                   child: NoorvaMascot(
                     mood: MascotMood.explaining,
+                    reactToTyping: true,
                     height: _getStepImageHeight(_currentStep, size),
                     fallbackAsset: _stepImages[_currentStep],
                   ),
@@ -431,6 +433,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
                         ),
                         NoorvaMascot(
                           mood: MascotMood.explaining,
+                          reactToTyping: true,
                           height: size.height * 0.45,
                           fallbackAsset: 'assets/images/white_dress_oldman.png',
                         ),
@@ -821,6 +824,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
         children: [
           const NoorvaMascot(
             mood: MascotMood.explaining,
+            reactToTyping: true,
             height: 120,
             fallbackAsset: 'assets/images/personalization.png',
           ),
@@ -903,6 +907,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
         children: [
           const NoorvaMascot(
             mood: MascotMood.explaining,
+            reactToTyping: true,
             height: 120,
             fallbackAsset: 'assets/images/personalization.png',
           ),

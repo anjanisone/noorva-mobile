@@ -52,40 +52,44 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       context: context,
       barrierDismissible: true,
       builder: (context) {
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: CrystalCard(
-              padding: const EdgeInsets.all(24),
-              borderRadius: 24.0,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Update Required',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
+        // Material ancestor gives Text a default style (no red/yellow underline).
+        return Material(
+          type: MaterialType.transparency,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: CrystalCard(
+                padding: const EdgeInsets.all(24),
+                borderRadius: 24.0,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Update Required',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'You are using an older version of the application. Please update to the latest release to continue working securely',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
-                      height: 1.4,
+                    const SizedBox(height: 16),
+                    Text(
+                      'You are using an older version of the application. Please update to the latest release to continue working securely',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w400,
+                        height: 1.4,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  NoorvaButton(
-                    text: 'Update App',
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
+                    const SizedBox(height: 24),
+                    NoorvaButton(
+                      text: 'Update App',
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -99,71 +103,83 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       context: context,
       barrierDismissible: true,
       builder: (context) {
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: CrystalCard(
-              padding: const EdgeInsets.all(24),
-              borderRadius: 24.0,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Update Available',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
+        // Material ancestor gives Text a default style (no red/yellow underline).
+        return Material(
+          type: MaterialType.transparency,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: CrystalCard(
+                padding: const EdgeInsets.all(24),
+                borderRadius: 24.0,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Update Available',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'A new version is ready with performance improvements and minor fixes. Update to get the most out of your workspace',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
-                      height: 1.4,
+                    const SizedBox(height: 16),
+                    Text(
+                      'A new version is ready with performance improvements and minor fixes. Update to get the most out of your workspace',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w400,
+                        height: 1.4,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          ),
-                          child: Text(
-                            'Later',
-                            style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  width: 1.5),
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24)),
+                            ),
+                            child: Text(
+                              'Later',
+                              style: GoogleFonts.outfit(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            'Yes, Update',
-                            style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24)),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              'Yes, Update',
+                              style: GoogleFonts.outfit(
+                                  fontSize: 16, fontWeight: FontWeight.w600),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -177,71 +193,83 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       context: context,
       barrierDismissible: true,
       builder: (context) {
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: CrystalCard(
-              padding: const EdgeInsets.all(24),
-              borderRadius: 24.0,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Update Available',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
+        // Material ancestor gives Text a default style (no red/yellow underline).
+        return Material(
+          type: MaterialType.transparency,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: CrystalCard(
+                padding: const EdgeInsets.all(24),
+                borderRadius: 24.0,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Update Available',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'To ensure your daily anchors hold strong, the foundational architecture of this space must be updated before we can proceed. The process will be brief. Let us fortify the system together so you can safely return to your deep work',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
-                      height: 1.45,
+                    const SizedBox(height: 16),
+                    Text(
+                      'To ensure your daily anchors hold strong, the foundational architecture of this space must be updated before we can proceed. The process will be brief. Let us fortify the system together so you can safely return to your deep work',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w400,
+                        height: 1.45,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          ),
-                          child: Text(
-                            'Later',
-                            style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  width: 1.5),
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24)),
+                            ),
+                            child: Text(
+                              'Later',
+                              style: GoogleFonts.outfit(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            'Yes, Update',
-                            style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24)),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              'Yes, Update',
+                              style: GoogleFonts.outfit(
+                                  fontSize: 16, fontWeight: FontWeight.w600),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -259,11 +287,11 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           children: [
             // Character Illustration peeking in bottom-right corner (Screenshot 4)
             const Positioned(
-              bottom: -40,
-              right: -30,
+              bottom: -10,
+              right: -10,
               child: Opacity(
                 opacity: 0.9,
-                child: NoorvaMascot(width: 200),
+                child: NoorvaMascot(width: 130, reactToTyping: true),
               ),
             ),
 
@@ -272,7 +300,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               children: [
                 // Header Area
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
                     children: [
                       GestureDetector(
@@ -282,9 +311,11 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                           decoration: BoxDecoration(
                             color: Colors.transparent,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                            border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.1)),
                           ),
-                          child: const Icon(Icons.chevron_left, color: Colors.white, size: 24),
+                          child: const Icon(Icons.chevron_left,
+                              color: Colors.white, size: 24),
                         ),
                       ),
                       Expanded(
@@ -306,19 +337,26 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
                 // Simulator Trigger Panel
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     physics: const BouncingScrollPhysics(),
                     child: Row(
                       children: [
-                        _buildDevPill('Oops!! Offline', () => Navigator.pushNamed(context, AppRoutes.offline)),
+                        _buildDevPill(
+                            'Oops!! Offline',
+                            () => Navigator.pushNamed(
+                                context, AppRoutes.offline)),
                         const SizedBox(width: 8),
-                        _buildDevPill('Required Dialog', _showUpdateRequiredDialog),
+                        _buildDevPill(
+                            'Required Dialog', _showUpdateRequiredDialog),
                         const SizedBox(width: 8),
-                        _buildDevPill('Update Std', _showUpdateAvailableStandardDialog),
+                        _buildDevPill(
+                            'Update Std', _showUpdateAvailableStandardDialog),
                         const SizedBox(width: 8),
-                        _buildDevPill('Update Lit', _showUpdateAvailableLiteraryDialog),
+                        _buildDevPill(
+                            'Update Lit', _showUpdateAvailableLiteraryDialog),
                       ],
                     ),
                   ),
@@ -356,7 +394,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                                   label: 'New Password*',
                                   controller: _newPasswordController,
                                   obscured: _newPasswordObscured,
-                                  onToggle: () => setState(() => _newPasswordObscured = !_newPasswordObscured),
+                                  onToggle: () => setState(() =>
+                                      _newPasswordObscured =
+                                          !_newPasswordObscured),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return 'Please enter a new password';
@@ -374,7 +414,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                                   label: 'Confirm Password*',
                                   controller: _confirmPasswordController,
                                   obscured: _confirmPasswordObscured,
-                                  onToggle: () => setState(() => _confirmPasswordObscured = !_confirmPasswordObscured),
+                                  onToggle: () => setState(() =>
+                                      _confirmPasswordObscured =
+                                          !_confirmPasswordObscured),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return 'Please confirm your password';
@@ -395,7 +437,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 180), // Padding to prevent clipping characters
+                          const SizedBox(
+                              height:
+                                  180), // Padding to prevent clipping characters
                         ],
                       ),
                     ),
@@ -421,7 +465,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         ),
         child: Text(
           title,
-          style: GoogleFonts.outfit(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+          style: GoogleFonts.outfit(
+              color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
         ),
       ),
     );
@@ -463,7 +508,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             ),
             filled: true,
             fillColor: const Color(0xFF111113),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
@@ -494,7 +540,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             ),
             suffixIcon: IconButton(
               icon: Icon(
-                obscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                obscured
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
                 color: Colors.white.withValues(alpha: 0.4),
                 size: 20,
               ),

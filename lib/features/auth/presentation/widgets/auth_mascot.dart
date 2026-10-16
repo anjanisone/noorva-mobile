@@ -13,10 +13,12 @@ class AuthMascot extends StatefulWidget {
     super.key,
     required this.height,
     this.fallbackAsset = 'assets/images/forgot_password.png',
+    this.alignment = Alignment.center,
   });
 
   final double height;
   final String fallbackAsset;
+  final Alignment alignment;
 
   @override
   State<AuthMascot> createState() => _AuthMascotState();
@@ -69,7 +71,10 @@ class _AuthMascotState extends State<AuthMascot> {
       listener: _onState,
       child: NoorvaMascot(
         mood: _mood,
+        // Entry loop while the user types into any auth field.
+        reactToTyping: true,
         height: widget.height,
+        alignment: widget.alignment,
         fallbackAsset: widget.fallbackAsset,
       ),
     );
