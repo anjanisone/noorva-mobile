@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:rive/rive.dart';
@@ -9,6 +11,11 @@ export 'package:rive/rive.dart' show Fit;
 /// Most moods are driven by the `Number 1` input of `State Machine 1` in
 /// `old_men_v9.riv`. [welcome] and [sad] have no state in the state machine,
 /// so they play their timelines directly.
+///
+/// Note: the exported .riv originally routed `Number 1 == 7` from idle to
+/// `sad loop` (which only exits on 8), leaving the mascot stuck sad. The
+/// asset was patched to route 7 to `Walking`; fix the same transition in the
+/// Rive editor source before the next export.
 enum MascotMood {
   idle(0),
   listening(1),
@@ -47,9 +54,24 @@ class NoorvaMascot extends StatefulWidget {
     this.alignment = Alignment.center,
     this.fallbackAsset = 'assets/images/noorva_home.png',
     this.reactToTyping = false,
+    this.cycleIdle = false,
   });
 
   final MascotMood mood;
+
+  /// While [mood] is [MascotMood.idle], cycles through [idleCycle] instead of
+  /// holding one idle loop. The state machine plays the intro/reverse clips
+  /// between states, so each switch blends without a reset.
+  final bool cycleIdle;
+
+  /// Idle variations played in order when [cycleIdle] is set, then repeated.
+  // TODO: confirm the full list of idle actions with the animation team.
+  static const idleCycle = [
+    MascotMood.idle,
+    MascotMood.thinking,
+    MascotMood.walk,
+    MascotMood.hello,
+  ];
 
   /// Plays [MascotMood.typing] while any text field has focus, as long as
   /// [mood] is a resting one (idle, hello, explaining, welcome). Busy moods
@@ -169,10 +191,67 @@ class _NoorvaMascotState extends State<NoorvaMascot> {
     MascotMood.welcome,
   };
 
-  MascotMood get _effectiveMood =>
-      widget.reactToTyping && _typing && _typingOverrides.contains(widget.mood)
-          ? MascotMood.typing
-          : widget.mood;
+  // Position in [NoorvaMascot.idleCycle] and the timer that advances it.
+  int _idleStep = 0;
+  Timer? _idleTimer;
+
+  bool get _typingOverride =>
+      widget.reactToTyping && _typing && _typingOverrides.contains(widget.mood);
+
+  bool get _cycling =>
+      widget.cycleIdle && widget.mood == MascotMood.idle && !_typingOverride;
+
+  MascotMood get _effectiveMood {
+    if (_typingOverride) return MascotMood.typing;
+    if (_cycling) return NoorvaMascot.idleCycle[_idleStep];
+    return widget.mood;
+  }
+
+  /// How long [mood] is held before moving to the next idle variation.
+  ///
+  /// Every state change in the .riv is a 300ms blend, and leaving a loop
+  /// plays its reverse clip (e.g. `Thinking revers`) back to idle first, so
+  /// switching mid-loop never jumps. Walking returns to idle by itself once
+  /// it ends; its value must be cleared before then or idle re-enters it, so
+  /// it's held for one walk length (it starts after the previous reverse).
+  static Duration _idleHold(MascotMood mood) {
+    Duration clip(String name, Duration fallback) =>
+        NoorvaMascot.animationDuration(name) ?? fallback;
+    const s2 = Duration(seconds: 2);
+    switch (mood) {
+      case MascotMood.idle:
+        return const Duration(seconds: 3);
+      case MascotMood.thinking:
+        return clip('Thinking', s2) + const Duration(seconds: 4);
+      case MascotMood.walk:
+        return clip('Walking', const Duration(seconds: 4));
+      case MascotMood.hello:
+        return clip('Hello', s2) + const Duration(seconds: 3);
+      default:
+        return const Duration(seconds: 3);
+    }
+  }
+
+  /// Starts, continues or stops the idle cycle to match the current mood.
+  void _syncIdleCycle() {
+    if (!_cycling || _failed) {
+      _idleTimer?.cancel();
+      _idleTimer = null;
+      _idleStep = 0;
+      return;
+    }
+    if (_idleTimer?.isActive ?? false) return;
+    _idleTimer = Timer(_idleHold(NoorvaMascot.idleCycle[_idleStep]), () {
+      _idleTimer = null;
+      final file = NoorvaMascot._loader.fileSync;
+      if (!mounted || file == null || !_cycling) return;
+      setState(() {
+        _idleStep = (_idleStep + 1) % NoorvaMascot.idleCycle.length;
+        _apply(file);
+      });
+      _syncIdleCycle();
+    });
+  }
 
   @override
   void initState() {
@@ -181,9 +260,12 @@ class _NoorvaMascotState extends State<NoorvaMascot> {
     final file = NoorvaMascot._loader.fileSync;
     if (file != null) {
       _apply(file);
+      _syncIdleCycle();
     } else {
       NoorvaMascot._loader.file().then((file) {
-        if (mounted) setState(() => _apply(file));
+        if (!mounted) return;
+        setState(() => _apply(file));
+        _syncIdleCycle();
       }).catchError((Object e) {
         debugPrint('NoorvaMascot load failed: $e');
         if (mounted) setState(() => _failed = true);
@@ -205,8 +287,10 @@ class _NoorvaMascotState extends State<NoorvaMascot> {
     final typing = _textFieldFocused;
     if (typing == _typing || !mounted) return;
     _typing = typing;
+    _syncIdleCycle();
     final file = NoorvaMascot._loader.fileSync;
     if (file != null && !_failed) setState(() => _apply(file));
+    _syncIdleCycle();
   }
 
   /// Switches to [_effectiveMood] if it differs from what's showing.
@@ -278,13 +362,17 @@ class _NoorvaMascotState extends State<NoorvaMascot> {
         FocusManager.instance.removeListener(_onFocusChanged);
       }
     }
+    // Stop first so leaving idle resets the cycle to plain idle, then restart.
+    _syncIdleCycle();
     final file = NoorvaMascot._loader.fileSync;
     if (file == null || _failed) return;
     _apply(file);
+    _syncIdleCycle();
   }
 
   @override
   void dispose() {
+    _idleTimer?.cancel();
     FocusManager.instance.removeListener(_onFocusChanged);
     _disposeAnimation();
     _stateLog?.dispose();

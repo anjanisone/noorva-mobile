@@ -7,6 +7,7 @@ import '../../../../core/widgets/crystal_card.dart';
 import '../../../../core/widgets/thought_bubble.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../../core/widgets/noorva_mascot.dart';
+import '../../../goals/presentation/widgets/goal_ui.dart';
 
 // ─── Data model ────────────────────────────────────────────────────────────────
 
@@ -59,9 +60,8 @@ class _TasksPageState extends State<TasksPage> {
   // Scroll controller for the date strip
   final ScrollController _dateScrollController = ScrollController();
 
-  // Width of each day pill (must match the layout)
-  static const double _dayPillWidth = 52.0;
-  static const double _dayPillSpacing = 4.0;
+  // Width of each day slot; set by the strip's layout so seven fit across.
+  double _pillExtent = 52.0;
 
   // ─── Task database ─────────────────────────────────────────────────────────
 
@@ -309,7 +309,7 @@ class _TasksPageState extends State<TasksPage> {
   /// Smoothly scroll the strip so the selected day pill is centred.
   void _scrollToSelected() {
     if (!_dateScrollController.hasClients) return;
-    const pillWidth = _dayPillWidth + _dayPillSpacing * 2;
+    final pillWidth = _pillExtent;
     final targetIndex = _selectedDate.day - 1;
     final offset = targetIndex * pillWidth;
     final viewportHalf = (_dateScrollController.position.viewportDimension) / 2;
@@ -389,7 +389,7 @@ class _TasksPageState extends State<TasksPage> {
           children: [
             Column(
               children: [
-                _buildAppBar(),
+                const GoalAppBar(title: 'Tasks'),
                 const SizedBox(height: 8),
                 _buildCalendarStrip(),
                 const SizedBox(height: 16),
@@ -397,33 +397,19 @@ class _TasksPageState extends State<TasksPage> {
                   _buildEmptyState()
                 else
                   Expanded(
-                    child: ListView(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 8),
-                      children: [
-                        if (high.isNotEmpty) ...[
-                          _buildPriorityHeader(
-                              'High Priority', const Color(0xFF5A1E1E)),
-                          const SizedBox(height: 12),
-                          ...high.map(_buildTaskCard),
-                          const SizedBox(height: 24),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 220),
+                      child: ListView(
+                        key: ValueKey(_dateKey(_selectedDate)),
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                        children: [
+                          if (high.isNotEmpty) _buildPriorityGroup('high', high),
+                          if (medium.isNotEmpty)
+                            _buildPriorityGroup('medium', medium),
+                          if (low.isNotEmpty) _buildPriorityGroup('low', low),
                         ],
-                        if (medium.isNotEmpty) ...[
-                          _buildPriorityHeader(
-                              'Medium Priority', const Color(0xFF5A411E)),
-                          const SizedBox(height: 12),
-                          ...medium.map(_buildTaskCard),
-                          const SizedBox(height: 24),
-                        ],
-                        if (low.isNotEmpty) ...[
-                          _buildPriorityHeader(
-                              'Low Priority', const Color(0xFF1E3A5A)),
-                          const SizedBox(height: 12),
-                          ...low.map(_buildTaskCard),
-                          const SizedBox(height: 24),
-                        ],
-                      ],
+                      ),
                     ),
                   ),
               ],
@@ -435,220 +421,156 @@ class _TasksPageState extends State<TasksPage> {
     );
   }
 
-  // ── App bar ──────────────────────────────────────────────────────────────────
-
-  Widget _buildAppBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.borderLight),
-              ),
-              child: Center(
-                child: Image.asset('assets/icons/back_arrow.png',
-                    width: 20, height: 20, color: Colors.white),
-              ),
-            ),
-          ),
-          Text(
-            'Tasks',
-            style: GoogleFonts.outfit(
-                color: Colors.white, fontSize: 18, fontWeight: FontWeight.w500),
-          ),
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.borderLight),
-            ),
-            child: Center(
-              child: Image.asset('assets/icons/edit.png',
-                  width: 20, height: 20, color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // ── Calendar strip ───────────────────────────────────────────────────────────
 
   Widget _buildCalendarStrip() {
-    const dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.borderLight),
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(0, 6, 0, 12),
+      decoration: GoalUi.cardDecoration(),
       child: Column(
         children: [
           // ── Month / Year ──────────────────────────────────────────
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              GestureDetector(
-                onTap: _prevMonth,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  child:
-                      Icon(Icons.chevron_left, color: Colors.white70, size: 22),
-                ),
-              ),
+              _monthArrow(Icons.chevron_left_rounded, _prevMonth),
               GestureDetector(
                 onTap: _showMonthYearPicker,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _monthYearLabel,
-                      style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_down_rounded,
-                        color: Colors.white54, size: 18),
-                  ],
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    _monthYearLabel,
+                    style: const TextStyle(color: Colors.white, fontSize: 15),
+                  ),
                 ),
               ),
-              GestureDetector(
-                onTap: _nextMonth,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: Icon(Icons.chevron_right,
-                      color: Colors.white70, size: 22),
-                ),
-              ),
+              _monthArrow(Icons.chevron_right_rounded, _nextMonth),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 4),
 
-          // ── Scrollable day pills ──────────────────────────────────
-          SizedBox(
-            height: 68,
-            child: ListView.builder(
-              controller: _dateScrollController,
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: _daysInMonth,
-              itemBuilder: (_, i) {
-                final day = DateTime(_viewYear, _viewMonth, i + 1);
-                final isSelected = _dateKey(day) == _dateKey(_selectedDate);
-                final isToday = _dateKey(day) == _dateKey(_today);
-                final isFuture = day.isAfter(_today);
-                final weekdayIndex = (day.weekday - 1) % 7; // 0=Mon…6=Sun
+          // ── Scrollable day pills, seven visible at a time ─────────
+          LayoutBuilder(builder: (context, constraints) {
+            _pillExtent = (constraints.maxWidth - 16) / 7;
+            return SizedBox(
+              height: 50,
+              child: ListView.builder(
+                controller: _dateScrollController,
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                itemExtent: _pillExtent,
+                itemCount: _daysInMonth,
+                itemBuilder: (_, i) {
+                  final day = DateTime(_viewYear, _viewMonth, i + 1);
+                  final isSelected = _dateKey(day) == _dateKey(_selectedDate);
+                  final isToday = _dateKey(day) == _dateKey(_today);
 
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedDate = day;
-                      _checkDayCompletion();
-                    });
-                    _scrollToSelected();
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    width: _dayPillWidth,
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: _dayPillSpacing),
-                    decoration: isSelected
-                        ? BoxDecoration(
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.45),
-                              width: 1,
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            color: Colors.white.withValues(alpha: 0.09),
-                          )
-                        : null,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Day letter (Mon, Tue…)
-                        Text(
-                          dayNames[weekdayIndex],
-                          style: GoogleFonts.outfit(
-                            color: isSelected
-                                ? Colors.white70
-                                : isFuture
-                                    ? Colors.white24
-                                    : Colors.white38,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w400,
-                          ),
+                  return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      setState(() {
+                        _selectedDate = day;
+                        _checkDayCompletion();
+                      });
+                      _scrollToSelected();
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? const Color(0xFF2A2B2F)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFF4A4B50)
+                              : Colors.transparent,
                         ),
-                        const SizedBox(height: 4),
-                        // Day number
-                        Text(
-                          '${day.day}',
-                          style: GoogleFonts.outfit(
-                            color: isSelected
-                                ? Colors.white
-                                : isFuture
-                                    ? Colors.white30
-                                    : Colors.white70,
-                            fontSize: 16,
-                            fontWeight:
-                                isSelected ? FontWeight.w600 : FontWeight.w400,
-                          ),
-                        ),
-                        // Today dot
-                        const SizedBox(height: 4),
-                        if (isToday)
-                          Container(
-                            width: 4,
-                            height: 4,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '${day.day}',
+                            style: TextStyle(
+                              color: isSelected || isToday
+                                  ? Colors.white
+                                  : GoalUi.textMuted,
+                              fontSize: isSelected ? 16 : 14,
+                              fontWeight: isSelected
+                                  ? FontWeight.w500
+                                  : FontWeight.w400,
                             ),
-                          )
-                        else
-                          const SizedBox(height: 4),
-                      ],
+                          ),
+                          Text(
+                            dayNames[day.weekday - 1],
+                            style: TextStyle(
+                              color: isSelected
+                                  ? Colors.white
+                                  : GoalUi.textMuted,
+                              fontSize: isSelected ? 15 : 13,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-          ),
+                  );
+                },
+              ),
+            );
+          }),
         ],
       ),
     );
   }
 
-  // ── Priority header ───────────────────────────────────────────────────────────
+  Widget _monthArrow(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Icon(icon, color: Colors.white, size: 22),
+      ),
+    );
+  }
 
-  Widget _buildPriorityHeader(String label, Color color) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(label,
-            style: GoogleFonts.outfit(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w500)),
+  // ── Priority group ────────────────────────────────────────────────────────────
+
+  static const _priorityLabels = {
+    'high': 'High Priority',
+    'medium': 'Medium Priority',
+    'low': 'Low Priority',
+  };
+
+  Widget _buildPriorityGroup(String priority, List<TaskItem> tasks) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.fromLTRB(11, 11, 11, 11),
+      decoration: BoxDecoration(
+        color: const Color(0xFF151618),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: GoalUi.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: GoalTag.priority(_priorityLabels[priority]!),
+          ),
+          const SizedBox(height: 12),
+          for (var i = 0; i < tasks.length; i++) ...[
+            if (i > 0) const SizedBox(height: 16),
+            _buildTaskCard(tasks[i]),
+          ],
+        ],
       ),
     );
   }
@@ -657,94 +579,116 @@ class _TasksPageState extends State<TasksPage> {
 
   Widget _buildTaskCard(TaskItem task) {
     final checkboxEnabled = !_isUpcomingDate;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: CrystalCard(
-        padding: const EdgeInsets.only(left: 8, right: 8, top: 12, bottom: 12),
-        borderRadius: 24,
-        borderColor: AppColors.borderLight,
-        child: InkWell(
-          onTap: () => _onTaskTapped(task),
-          child: Row(
+    final (String status, (Color, Color) statusColors) = task.isCompleted
+        ? ('Completed', GoalUi.tagGreen)
+        : _isUpcomingDate
+            ? ('Upcoming', GoalUi.tagBlue)
+            : ('Pending', GoalUi.tagAmber);
+
+    return Material(
+      color: GoalUi.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFF3A3B40)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _onTaskTapped(task),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GestureDetector(
-                onTap:
-                    checkboxEnabled ? () => _toggleTaskCompletion(task) : null,
-                child: Opacity(
-                  opacity: checkboxEnabled ? 1.0 : 0.38,
-                  child: Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color:
-                          task.isCompleted ? Colors.white : Colors.transparent,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: task.isCompleted ? Colors.white : Colors.white24,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: task.isCompleted
-                        ? const Icon(Icons.check, size: 16, color: Colors.black)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Larger hit area than the box itself.
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: checkboxEnabled
+                        ? () => _toggleTaskCompletion(task)
                         : null,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      task.title,
-                      style: GoogleFonts.outfit(
-                        color: task.isCompleted ? Colors.white38 : Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        decoration: task.isCompleted
-                            ? TextDecoration.lineThrough
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(task.goal,
-                        style: GoogleFonts.outfit(
-                            color: Colors.white38, fontSize: 13)),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(task.timeText,
-                            style: GoogleFonts.outfit(
-                                color: Colors.white38, fontSize: 11)),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(2, 3, 10, 6),
+                      child: Opacity(
+                        opacity: checkboxEnabled ? 1.0 : 0.38,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 160),
+                          width: 20,
+                          height: 20,
                           decoration: BoxDecoration(
                             color: task.isCompleted
-                                ? const Color(0xFF1E3F20)
-                                : const Color(0xFF1E3F5A),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            task.isCompleted ? 'Completed' : 'Upcoming',
-                            style: GoogleFonts.outfit(
-                              color: task.isCompleted
-                                  ? const Color(0xFF6FF074)
-                                  : const Color(0xFF6FC8F0),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
+                                ? Colors.white
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(3),
+                            border: Border.all(
+                              color: const Color(0xFFE5E5E7),
+                              width: 1.6,
                             ),
+                          ),
+                          child: task.isCompleted
+                              ? const Icon(Icons.check_rounded,
+                                  size: 15, color: Colors.black)
+                              : null,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          task.title,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            height: 1.2,
+                            decoration: task.isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
+                            decorationColor: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          task.goal,
+                          style: const TextStyle(
+                            color: GoalUi.textBody,
+                            fontSize: 14,
+                            fontStyle: FontStyle.italic,
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 2, right: 2),
+                    child: Icon(Icons.north_east_rounded,
+                        color: Colors.white, size: 20),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              const Icon(Icons.north_east, color: Colors.white54, size: 18),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: Text(
+                        task.timeText,
+                        style: const TextStyle(
+                          color: Color(0xFF8E8E93),
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ),
+                  GoalTag(label: status, colors: statusColors),
+                ],
+              ),
             ],
           ),
         ),
@@ -805,19 +749,9 @@ class _TasksPageState extends State<TasksPage> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
-            child: ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, AppRoutes.guide),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                minimumSize: const Size(double.infinity, 56),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28)),
-                elevation: 0,
-              ),
-              child: Text('Go to Noorva Guide',
-                  style: GoogleFonts.outfit(
-                      fontSize: 16, fontWeight: FontWeight.w600)),
+            child: GoalPillButton(
+              label: 'Go to Noorva Guide',
+              onTap: () => Navigator.pushNamed(context, AppRoutes.guide),
             ),
           ),
         ],

@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/crystal_card.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../../core/widgets/noorva_mascot.dart';
+import '../../../../core/widgets/perched_mascot.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -46,6 +47,9 @@ class _HomePageState extends State<HomePage> {
   final List<Timer> _introTimers = [];
 
   final List<Map<String, dynamic>> _chatMessages = [];
+
+  // Chat list; Noorva stands on the input bar as it scrolls up.
+  final ScrollController _chatScrollController = ScrollController();
 
   final List<Map<String, dynamic>> _conversations = [
     {
@@ -162,6 +166,7 @@ class _HomePageState extends State<HomePage> {
     }
     _timer?.cancel();
     _pageController.dispose();
+    _chatScrollController.dispose();
     _inputController.dispose();
     _focusNode.dispose();
     _speech.stop();
@@ -304,6 +309,16 @@ class _HomePageState extends State<HomePage> {
     _inputController.clear();
     _focusNode.unfocus();
     _speech.stop();
+
+    // Show the newest message; this also tucks Noorva back behind the bar.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_chatScrollController.hasClients) return;
+      _chatScrollController.animateTo(
+        _chatScrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
+    });
   }
 
   /// All cards share one height: the tallest (missed-task card with its
@@ -338,31 +353,24 @@ class _HomePageState extends State<HomePage> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Mascot moves and resizes together, and hides behind the chat.
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 350),
-              curve: Curves.easeOutCubic,
-              left: _isFocused || _isInputNotEmpty ? 0 : 4,
-              right: _isFocused || _isInputNotEmpty ? 0 : size.width * 0.42,
-              top: _isFocused || _isInputNotEmpty
-                  ? size.height * 0.15
-                  : headerHeight,
-              height: _isFocused || _isInputNotEmpty
-                  ? size.height * 0.45
-                  : restingMascotHeight,
-              child: IgnorePointer(
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 300),
-                  opacity: _isChatActive ? 0 : 1,
-                  child: NoorvaMascot(
-                    mood: _homeMood,
-                    alignment: _isFocused || _isInputNotEmpty
-                        ? Alignment.center
-                        : Alignment.bottomCenter,
-                  ),
+            // Mascot moves and resizes together. Not shown behind the chat:
+            // there he stands on the input bar instead (see _buildChatContent).
+            if (!_isChatActive)
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeOutCubic,
+                left: 0,
+                right: 0,
+                top: _isFocused || _isInputNotEmpty
+                    ? size.height * 0.15
+                    : size.height * 0.26,
+                height: _isFocused || _isInputNotEmpty
+                    ? size.height * 0.45
+                    : size.height * 0.72,
+                child: IgnorePointer(
+                  child: NoorvaMascot(mood: _homeMood, cycleIdle: true),
                 ),
               ),
-            ),
 
             // Speech bubble beside the mascot (home resting state only)
             Positioned(
@@ -1525,17 +1533,30 @@ class _HomePageState extends State<HomePage> {
       children: [
         _buildChatHeader(),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            itemCount: _chatMessages.length,
-            itemBuilder: (context, index) {
-              final message = _chatMessages[index];
-              if (message['isUser']) {
-                return _buildUserMessage(message['text']);
-              } else {
-                return _buildNoorvaResponse(message['text']);
-              }
-            },
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned.fill(
+                child: ListView.builder(
+                  controller: _chatScrollController,
+                  // Bottom room so the latest message can always be scrolled
+                  // clear of Noorva standing on the input bar.
+                  padding: const EdgeInsets.fromLTRB(
+                      24, 16, 24, 16 + PerchedMascot.height),
+                  itemCount: _chatMessages.length,
+                  itemBuilder: (context, index) {
+                    final message = _chatMessages[index];
+                    if (message['isUser']) {
+                      return _buildUserMessage(message['text']);
+                    } else {
+                      return _buildNoorvaResponse(message['text']);
+                    }
+                  },
+                ),
+              ),
+              // The chat area ends 13px above the bar (spacer + bar margin).
+              PerchedMascot(controller: _chatScrollController, gapToBar: 13),
+            ],
           ),
         ),
       ],
@@ -1605,12 +1626,10 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
-            children: [
-              NoorvaMascot(width: 60, height: 60),
-              Spacer(),
-              Icon(Icons.volume_up_outlined, color: Colors.white70, size: 24),
-            ],
+          const Align(
+            alignment: Alignment.centerRight,
+            child:
+                Icon(Icons.volume_up_outlined, color: Colors.white70, size: 24),
           ),
           const SizedBox(height: 12),
           CrystalCard(

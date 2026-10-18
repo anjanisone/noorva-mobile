@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../../core/widgets/noorva_mascot.dart';
 import '../../../../core/widgets/noorva_chat_input.dart';
+import '../../../../core/widgets/perched_mascot.dart';
 
 class InteractiveEventCreationPage extends StatefulWidget {
   const InteractiveEventCreationPage({super.key});
@@ -219,8 +220,8 @@ class _InteractiveEventCreationPageState
                   ],
                 ),
               ),
-              const NoorvaMascot(
-                  mood: MascotMood.explaining, reactToTyping: true),
+              // Same as Home: cycles idle actions, typing pose while typing.
+              const NoorvaMascot(cycleIdle: true, reactToTyping: true),
             ],
           ),
         ),
@@ -231,9 +232,22 @@ class _InteractiveEventCreationPageState
   // ─── Chat State (Steps 1+) ───────────────────────────────────────────────────
 
   Widget _buildChatState() {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned.fill(child: _buildChatList()),
+        // The chat area ends 8px above the bar (the bar's top margin).
+        PerchedMascot(controller: _scrollController, gapToBar: 8),
+      ],
+    );
+  }
+
+  Widget _buildChatList() {
     return ListView(
       controller: _scrollController,
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+      // Bottom room so the latest message can always be scrolled clear of
+      // Noorva standing on the input bar.
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 8 + PerchedMascot.height),
       children: [
         // ── Step 1: User message + Noorva first response ──────────────────────
         if (_flowStep >= 1) ...[
@@ -448,17 +462,11 @@ class _InteractiveEventCreationPageState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (showAvatar) ...[
-            const Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                NoorvaMascot(height: 72),
-                Padding(
-                  padding: EdgeInsets.only(top: 4),
-                  child: Icon(Icons.volume_up_outlined,
-                      color: Colors.white38, size: 22),
-                ),
-              ],
+            // No mascot on message cards: Noorva stands on the input bar.
+            const Align(
+              alignment: Alignment.centerRight,
+              child: Icon(Icons.volume_up_outlined,
+                  color: Colors.white38, size: 22),
             ),
             const SizedBox(height: 10),
           ],
@@ -644,6 +652,7 @@ class _InteractiveEventCreationPageState
         onSend: _submitMessage,
         pillIconAsset: 'assets/icons/schedules.png',
         pillLabel: 'Events',
+        homeStyle: true,
       ),
     );
   }

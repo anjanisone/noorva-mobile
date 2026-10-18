@@ -42,8 +42,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
     final RenderBox overlay =
         Overlay.of(context).context.findRenderObject() as RenderBox;
 
-    final Offset buttonPos =
-        box.localToGlobal(Offset.zero, ancestor: overlay);
+    final Offset buttonPos = box.localToGlobal(Offset.zero, ancestor: overlay);
     final RelativeRect position = RelativeRect.fromLTRB(
       buttonPos.dx - 160, // menu opens to the left of the button
       buttonPos.dy + box.size.height + 4,

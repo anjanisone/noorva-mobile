@@ -8,12 +8,14 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../goals/data/models/goal_model.dart';
 import '../../../goals/presentation/bloc/goals_bloc.dart';
 import '../../../goals/presentation/bloc/goals_event.dart';
+import '../../../goals/presentation/widgets/goal_ui.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import 'image_viewer_page.dart';
 import 'sources_web_view_page.dart';
 import '../../../../core/widgets/radio_dot.dart';
 import '../../../../core/widgets/noorva_mascot.dart';
 import '../../../../core/widgets/noorva_chat_input.dart';
+import '../../../../core/widgets/perched_mascot.dart';
 
 class GoalChatArguments {
   final String goalId;
@@ -137,6 +139,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
         _goalId = args.goalId;
         _taskId = args.taskId;
         _showInitialWelcome = false;
+        // The generic starter prompts don't apply to a goal conversation.
+        _currentSuggestions = [];
 
         final goal = context.read<GoalsBloc>().state.getGoalById(_goalId!);
         if (goal != null) {
@@ -222,11 +226,6 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
     if (_isInputFocused || _isInputNotEmpty) return MascotMood.typing;
     return MascotMood.explaining;
   }
-
-  /// Only the newest character animates live; older ones rest in idle.
-  bool _isLatestCharacterMessage(ChatMessage message) => identical(
-      message,
-      _messages.lastWhere((m) => m.showCharacter, orElse: () => message));
 
   // ── Bot response helper ────────────────────────────────────────────────────
 
@@ -765,11 +764,11 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
         title: _conversationTitle != null
             ? Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
+                  color: GoalUi.card,
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: AppColors.borderLight),
+                  border: Border.all(color: GoalUi.cardBorder),
                 ),
                 child: Text(
                   _conversationTitle!,
@@ -778,6 +777,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
                   ),
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               )
@@ -832,41 +832,42 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
               children: [
                 if (!_showInitialWelcome)
                   Expanded(
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      padding: EdgeInsets.symmetric(
-                          horizontal: size.width * 0.04, vertical: 20),
-                      itemCount: _messages.length,
-                      itemBuilder: (context, index) {
-                        final message = _messages[index];
-                        if (message.type == MessageType.initial) {
-                          return const SizedBox.shrink();
-                        }
-                        return _buildMessageTile(message);
-                      },
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Positioned.fill(
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            // Bottom room so the latest message can always be
+                            // scrolled clear of Noorva standing on the bar.
+                            padding: EdgeInsets.fromLTRB(size.width * 0.04, 20,
+                                size.width * 0.04, 16 + PerchedMascot.height),
+                            itemCount: _messages.length + (_isTyping ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == _messages.length) {
+                                return _buildTypingIndicator();
+                              }
+                              final message = _messages[index];
+                              if (message.type == MessageType.initial) {
+                                return const SizedBox.shrink();
+                              }
+                              return _buildMessageTile(message);
+                            },
+                          ),
+                        ),
+                        // Only the input bar's top margin sits between the
+                        // chat area and the bar while chatting.
+                        if (_currentSuggestions.isEmpty)
+                          PerchedMascot(
+                            controller: _scrollController,
+                            gapToBar: 8,
+                            mood: _guideMood,
+                          ),
+                      ],
                     ),
                   )
                 else
                   const Spacer(),
-                if (_isTyping)
-                  const Padding(
-                    padding: EdgeInsets.only(left: 20, bottom: 10),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white54),
-                        ),
-                        SizedBox(width: 12),
-                        Text(
-                          "Noorva is thinking...",
-                          style: TextStyle(color: Colors.white54, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
                 _buildInputSection(),
               ],
             ),
@@ -923,53 +924,57 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildGoalTaskCard() {
-    if (_chatTask == null) return const SizedBox.shrink();
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildTypingIndicator() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: GoalUi.card,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: GoalUi.cardBorder),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _chatTask!.title,
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _chatTask!.subtitle,
-                    style: const TextStyle(
-                      color: Colors.white54,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
+              _buildAnimatedDots(),
+              const SizedBox(width: 6),
+              const Text(
+                "Noorva is thinking",
+                style: TextStyle(color: GoalUi.textMuted, fontSize: 13),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          const Divider(color: Colors.white10, height: 1),
-          const SizedBox(height: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoalTaskCard() {
+    if (_chatTask == null) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.fromLTRB(15, 14, 15, 16),
+      decoration: GoalUi.cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(_chatTask!.title, style: GoalUi.cardTitle),
+          const SizedBox(height: 4),
+          Text(
+            _chatTask!.subtitle,
+            style: const TextStyle(color: GoalUi.textBody, fontSize: 14),
+          ),
+          const SizedBox(height: 14),
+          const Divider(color: GoalUi.cardBorder, height: 1),
+          const SizedBox(height: 14),
           Text(
             _chatTask!.content,
             style: const TextStyle(
-              color: Colors.black,
-              fontSize: 15,
-              height: 1.55,
+              color: Color(0xFFE5E5E7),
+              fontSize: 16,
+              height: 1.5,
             ),
           ),
           if (_chatTask!.id == 1 && _goalId == 'inner-peace') ...[
@@ -1187,20 +1192,26 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    color: const Color(0x2610B981),
-                    shape: BoxShape.circle,
-                    border:
-                        Border.all(color: const Color(0xFF10B981), width: 3),
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.check,
-                      color: Color(0xFF10B981),
-                      size: 48,
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.6, end: 1),
+                  duration: const Duration(milliseconds: 450),
+                  curve: Curves.easeOutBack,
+                  builder: (context, scale, child) =>
+                      Transform.scale(scale: scale, child: child),
+                  child: Container(
+                    width: 90,
+                    height: 90,
+                    decoration: BoxDecoration(
+                      color: const Color(0x264CC35A),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: GoalUi.progressFill, width: 3),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.check_rounded,
+                        color: GoalUi.progressFill,
+                        size: 48,
+                      ),
                     ),
                   ),
                 ),
@@ -1210,32 +1221,19 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 22,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   'You are one step closer to your goal of\n"${_chatGoal?.title ?? ''}"',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.black54,
-                    fontSize: 15,
-                    height: 1.45,
-                  ),
+                  style: GoalUi.body.copyWith(height: 1.45),
                 ),
                 const SizedBox(height: 36),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 48, vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    elevation: 0,
-                  ),
-                  onPressed: () {
+                GoalPillButton(
+                  label: 'Back to Home',
+                  onTap: () {
                     if (_goalId != null && _taskId != null) {
                       context
                           .read<GoalsBloc>()
@@ -1243,13 +1241,6 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                     }
                     Navigator.pop(context);
                   },
-                  child: const Text(
-                    'Back to Home',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
                 ),
               ],
             ),
@@ -1316,29 +1307,15 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
   // ── Header Button ──────────────────────────────────────────────────────────
 
   Widget _buildHeaderButton(String assetPath, {VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Theme.of(context).colorScheme.surface,
-          border: Border.all(color: AppColors.borderLight),
-        ),
-        child: Center(
-          child: Image.asset(assetPath,
-              width: 22, height: 22, color: Colors.black),
-        ),
-      ),
+    return Align(
+      alignment: Alignment.center,
+      child: GoalCircleButton(asset: assetPath, onTap: onTap),
     );
   }
 
   // ── Message Tile ───────────────────────────────────────────────────────────
 
   Widget _buildMessageTile(ChatMessage message) {
-    final size = MediaQuery.of(context).size;
-
     if (message.type == MessageType.goalTaskCard) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 24),
@@ -1378,15 +1355,24 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
             Flexible(
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.borderLight),
+                  color: GoalUi.secondaryButton,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                    bottomLeft: Radius.circular(20),
+                    bottomRight: Radius.circular(6),
+                  ),
+                  border: Border.all(color: const Color(0xFF3A3B40)),
                 ),
                 child: Text(
                   message.text,
-                  style: const TextStyle(color: Colors.black, fontSize: 16),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    height: 1.4,
+                  ),
                 ),
               ),
             ),
@@ -1399,39 +1385,22 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Character avatar row
+        // Noorva stands on the input bar now; keep just the read-aloud icon.
         if (message.showCharacter)
           Padding(
-            padding: const EdgeInsets.only(bottom: 0, left: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                NoorvaMascot(
-                  mood: _isLatestCharacterMessage(message)
-                      ? _guideMood
-                      : MascotMood.idle,
-                  height: size.height * 0.12,
-                  fallbackAsset: 'assets/images/noorva_guide.png',
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: Image.asset('assets/icons/audio.png',
-                      width: 24, height: 24, color: Colors.white),
-                ),
-              ],
+            padding: const EdgeInsets.only(bottom: 10, right: 4),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Image.asset('assets/icons/audio.png',
+                  width: 22, height: 22, color: Colors.white70),
             ),
           ),
 
         // Message card
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.borderLight),
-          ),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+          decoration: GoalUi.cardDecoration(radius: 22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1440,9 +1409,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: GoalUi.inset,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.borderLight),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1478,7 +1446,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                                         child: Text(
                                           point.trim(),
                                           style: const TextStyle(
-                                            color: Colors.black,
+                                            color: GoalUi.textBody,
                                             fontSize: 14,
                                             height: 1.55,
                                           ),
@@ -1499,9 +1467,9 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                   Text(
                     message.text,
                     style: const TextStyle(
-                      color: Colors.black54,
+                      color: Color(0xFFE5E5E7),
                       fontSize: 16,
-                      height: 1.55,
+                      height: 1.5,
                     ),
                   ),
               ],
@@ -1521,9 +1489,9 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                 Text(
                   message.secondaryText!,
                   style: const TextStyle(
-                    color: Colors.black54,
+                    color: GoalUi.textBody,
                     fontSize: 16,
-                    height: 1.55,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -1588,65 +1556,24 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
               if (message.type == MessageType.emailDraft) ...[
                 _buildEmailDraftCard(message),
                 const SizedBox(height: 20),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30)),
-                  ),
-                  onPressed: () => _handleOptionSelected("Looks good, send it"),
-                  child: const SizedBox(
-                    width: double.infinity,
-                    child: Center(
-                      child: Text("Looks good, send it",
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
+                GoalPillButton(
+                  label: "Looks good, send it",
+                  height: 52,
+                  onTap: () => _handleOptionSelected("Looks good, send it"),
                 ),
                 const SizedBox(height: 12),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF262629),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30)),
-                  ),
-                  onPressed: () =>
-                      _handleOptionSelected("Let's tweak the tone"),
-                  child: const SizedBox(
-                    width: double.infinity,
-                    child: Center(
-                      child: Text("Let's tweak the tone",
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
+                GoalPillButton(
+                  label: "Let's tweak the tone",
+                  primary: false,
+                  height: 52,
+                  onTap: () => _handleOptionSelected("Let's tweak the tone"),
                 ),
                 const SizedBox(height: 12),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF262629),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30)),
-                  ),
-                  onPressed: () => _handleOptionSelected("Save it for later"),
-                  child: const SizedBox(
-                    width: double.infinity,
-                    child: Center(
-                      child: Text("Save it for later",
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
+                GoalPillButton(
+                  label: "Save it for later",
+                  primary: false,
+                  height: 52,
+                  onTap: () => _handleOptionSelected("Save it for later"),
                 ),
               ],
             ],
@@ -1740,21 +1667,25 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
   // ── Option Button ──────────────────────────────────────────────────────────
 
   Widget _buildOptionButton(String text) {
-    return InkWell(
-      onTap: () => _handleOptionSelected(text),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 18),
-        decoration: BoxDecoration(
-          color: AppColors.selection,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderLight),
-        ),
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.white, fontSize: 16),
+    return Material(
+      color: GoalUi.secondaryButton,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFF3A3B40)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _handleOptionSelected(text),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: SizedBox(
+            width: double.infinity,
+            child: Text(
+              text,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ),
         ),
       ),
     );
@@ -1866,25 +1797,9 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 18),
-            elevation: 0,
-          ),
-          onPressed: () => _handleTrialPromptSelected("Let me try it"),
-          child: const Text(
-            "Let me try it",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
-          ),
+        GoalPillButton(
+          label: "Let me try it",
+          onTap: () => _handleTrialPromptSelected("Let me try it"),
         ),
         const SizedBox(height: 12),
         InkWell(
@@ -2105,20 +2020,24 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                     width: 20, height: 20, color: Colors.white54),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: InkWell(
-                    onTap: () => _handleSendMessage(_currentSuggestions.first),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.borderLight),
-                      ),
-                      child: Text(
-                        _currentSuggestions.first,
-                        style:
-                            const TextStyle(color: Colors.black, fontSize: 14),
+                  child: Material(
+                    color: GoalUi.card,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: const BorderSide(color: GoalUi.cardBorder),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: () =>
+                          _handleSendMessage(_currentSuggestions.first),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        child: Text(
+                          _currentSuggestions.first,
+                          style: const TextStyle(
+                              color: GoalUi.textBody, fontSize: 14),
+                        ),
                       ),
                     ),
                   ),
@@ -2155,6 +2074,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
           pillLabel: 'Guide',
           onMicTap: _listen,
           isListening: _isListening,
+          homeStyle: true,
         ),
       ],
     );
@@ -2163,24 +2083,26 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
   // ── Quick Action Buttons ───────────────────────────────────────────────────
 
   Widget _buildQuickActionButton(IconData icon, String label) {
-    return InkWell(
-      onTap: () {},
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderLight),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: Colors.black54, size: 18),
-            const SizedBox(width: 8),
-            Text(label,
-                style: const TextStyle(color: Colors.black, fontSize: 14)),
-          ],
+    return Material(
+      color: GoalUi.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: GoalUi.cardBorder),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {},
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: GoalUi.textBody, size: 18),
+              const SizedBox(width: 8),
+              Text(label,
+                  style: const TextStyle(color: Colors.white, fontSize: 14)),
+            ],
+          ),
         ),
       ),
     );
@@ -4654,7 +4576,7 @@ class _PreciseSearchLoadingWidgetState
       child: Text(
         text,
         style: const TextStyle(
-          color: Colors.black54,
+          color: Colors.white,
           fontSize: 15,
           fontWeight: FontWeight.w400,
         ),

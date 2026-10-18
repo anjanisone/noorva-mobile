@@ -19,7 +19,7 @@ class _DashboardPageState extends State<DashboardPage> {
   
   // Accordion expansion states
   bool _isTasksExpanded = false;
-  bool _isActiveGoalsExpanded = true;
+  bool _isActiveGoalsExpanded = false;
   bool _isUpcomingEventsExpanded = false;
 
   // Carousel indices
@@ -43,14 +43,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   children: [
                     const SizedBox(height: 16),
                     _buildGuidanceCard(),
-                    const SizedBox(height: 24),
-                    _buildPeriodSelector(),
-                    const SizedBox(height: 24),
-                    _buildMetricGrid(),
-                    const SizedBox(height: 24),
-                    _buildTimeSpentCard(),
-                    const SizedBox(height: 24),
-                    _buildAccordions(),
+                    const SizedBox(height: 16),
+                    _buildStatsContainer(),
                   ],
                 ),
               ),
@@ -161,10 +155,10 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: CrystalCard(
-        padding: const EdgeInsets.all(20),
-        borderRadius: 24,
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+        borderRadius: 16,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -190,20 +184,15 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Progress',
-                  style: GoogleFonts.outfit(
-                    color: Colors.white54,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
+            const SizedBox(height: 16),
+            Text(
+              'Progress',
+              style: GoogleFonts.outfit(
+                color: Colors.white60,
+                fontSize: 12,
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Row(
               children: [
                 Expanded(
@@ -211,8 +200,8 @@ class _DashboardPageState extends State<DashboardPage> {
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
                       value: progressValue,
-                      backgroundColor: Colors.white10,
-                      valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF81C784)),
+                      backgroundColor: const Color(0xFF3A3A3D),
+                      valueColor: const AlwaysStoppedAnimation<Color>(_green),
                       minHeight: 6,
                     ),
                   ),
@@ -221,8 +210,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 Text(
                   progressText,
                   style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 13,
+                    color: _green,
+                    fontSize: 12,
                     fontWeight: FontWeight.w400,
                     fontStyle: FontStyle.italic,
                   ),
@@ -234,7 +223,7 @@ class _DashboardPageState extends State<DashboardPage> {
               Text(
                 progressSubtitle,
                 style: GoogleFonts.outfit(
-                  color: Colors.white38,
+                  color: Colors.white.withValues(alpha: 0.85),
                   fontSize: 12,
                   fontStyle: FontStyle.italic,
                 ),
@@ -246,14 +235,50 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildPeriodSelector() {
+  static const Color _green = Color(0xFF6BD36B);
+  static const Color _red = Color(0xFFF07B7B);
+  static const Color _tileColor = Color(0xFF1B1B1E);
+
+  BoxDecoration _tileDecoration({double radius = 12}) {
+    return BoxDecoration(
+      color: _tileColor,
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+    );
+  }
+
+  Widget _buildStatsContainer() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.all(4),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      // Bottom padding comes from the last accordion's margin
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       decoration: BoxDecoration(
         color: const Color(0xFF151517),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildPeriodSelector(),
+          const SizedBox(height: 16),
+          _buildMetricGrid(),
+          const SizedBox(height: 16),
+          _buildTimeSpentCard(),
+          const SizedBox(height: 16),
+          _buildAccordions(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPeriodSelector() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: _tileColor,
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: Row(
         children: [
@@ -277,21 +302,23 @@ class _DashboardPageState extends State<DashboardPage> {
           _isUpcomingEventsExpanded = false;
         }),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isActive ? const Color(0xFF1C1C1E) : Colors.transparent,
+            color: isActive ? const Color(0xFF232326) : Colors.transparent,
             borderRadius: BorderRadius.circular(26),
-            border: isActive
-                ? Border.all(color: Colors.white.withValues(alpha: 0.15))
-                : null,
+            border: Border.all(
+              color: isActive
+                  ? Colors.white.withValues(alpha: 0.35)
+                  : Colors.transparent,
+            ),
           ),
           child: Center(
             child: Text(
               period,
               style: GoogleFonts.outfit(
-                color: isActive ? Colors.white : Colors.white60,
-                fontSize: 15,
-                fontWeight: isActive ? FontWeight.w500 : FontWeight.w400,
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
               ),
             ),
           ),
@@ -301,64 +328,61 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildMetricGrid() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetricTile('Ongoing\nChats', _getOngoingChats(), hasArrow: true),
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildMetricTile('Ongoing\nChats', _getOngoingChats(), hasArrow: true),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildMetricTile('Total\nChats', _getTotalChats(), hasArrow: true),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildMetricTile(
+                'Missed\nTasks',
+                _getMissedTasks(),
+                hasArrow: true,
+                valueColor: _red,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildMetricTile('Total\nChats', _getTotalChats(), hasArrow: true),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildMetricTile(
+                'Completed\nTasks',
+                _getCompletedTasks(),
+                hasArrow: true,
+                valueColor: _green,
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetricTile(
-                  'Missed\nTasks', 
-                  _getMissedTasks(), 
-                  hasArrow: true, 
-                  valueColor: const Color(0xFFE57373),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildMetricTile(
-                  'Completed\nTasks', 
-                  _getCompletedTasks(), 
-                  hasArrow: true, 
-                  valueColor: const Color(0xFF81C784),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetricTile('New\nGoals', '0', hasArrow: true),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildMetricTile('New\nEvents', '0', hasArrow: true),
-              ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildMetricTile('New\nGoals', '0', hasArrow: true),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildMetricTile('New\nEvents', '0', hasArrow: true),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
   Widget _buildMetricTile(String label, String value, {required bool hasArrow, Color? valueColor}) {
-    return CrystalCard(
-      padding: const EdgeInsets.all(20),
-      borderRadius: 24,
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+      decoration: _tileDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -369,7 +393,7 @@ class _DashboardPageState extends State<DashboardPage> {
               Text(
                 label,
                 style: GoogleFonts.outfit(
-                  color: Colors.white70,
+                  color: Colors.white,
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                   height: 1.2,
@@ -378,18 +402,18 @@ class _DashboardPageState extends State<DashboardPage> {
               if (hasArrow)
                 const Icon(
                   Icons.north_east,
-                  color: Colors.white70,
-                  size: 16,
+                  color: Colors.white,
+                  size: 18,
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           Text(
             value,
             style: GoogleFonts.outfit(
               color: valueColor ?? Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.w600,
+              fontSize: 20,
+              fontWeight: FontWeight.w400,
             ),
           ),
         ],
@@ -401,86 +425,84 @@ class _DashboardPageState extends State<DashboardPage> {
     final double generalRatio = _getGeneralRatio();
     final double guidedRatio = 1.0 - generalRatio;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: CrystalCard(
-        padding: const EdgeInsets.all(20),
-        borderRadius: 24,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Total Time spent',
-                  style: GoogleFonts.outfit(
-                    color: Colors.white70,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                  ),
+    const generalColor = Color(0xFF55A0E6);
+    const guidedColor = Color(0xFFD97706);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: _tileDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Total Time spent',
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
                 ),
-                Text(
-                  _getTimeSpent(),
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w500,
-                  ),
+              ),
+              Text(
+                _getTimeSpent(),
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
                 ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                if (!_hasData) {
-                  return Container(
-                    width: 14,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF4A90E2),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                  );
-                }
-                final totalWidth = constraints.maxWidth;
-                const gap = 8.0;
-                final availableWidth = totalWidth - gap;
-                final blueWidth = availableWidth * generalRatio;
-                final orangeWidth = availableWidth * guidedRatio;
-                return Row(
-                  children: [
-                    Container(
-                      width: blueWidth,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF4A90E2),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    const SizedBox(width: gap),
-                    Container(
-                      width: orangeWidth,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD06B0B),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                  ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (!_hasData) {
+                return Container(
+                  width: 14,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: generalColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 );
-              },
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                _buildLegendItem(const Color(0xFF4A90E2), 'General'),
-                const SizedBox(width: 16),
-                _buildLegendItem(const Color(0xFFD06B0B), 'Guided charts'),
-              ],
-            ),
-          ],
-        ),
+              }
+              // Bars occupy ~75% of the card width, split by ratio (as in design)
+              const gap = 4.0;
+              final availableWidth = constraints.maxWidth * 0.75 - gap;
+              return Row(
+                children: [
+                  Container(
+                    width: availableWidth * generalRatio,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: generalColor,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(width: gap),
+                  Container(
+                    width: availableWidth * guidedRatio,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: guidedColor,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _buildLegendItem(generalColor, 'General'),
+              const SizedBox(width: 10),
+              _buildLegendItem(guidedColor, 'Guided charts'),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -496,11 +518,11 @@ class _DashboardPageState extends State<DashboardPage> {
             shape: BoxShape.circle,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 4),
         Text(
           label,
           style: GoogleFonts.outfit(
-            color: Colors.white60,
+            color: Colors.white,
             fontSize: 13,
           ),
         ),
@@ -523,8 +545,8 @@ class _DashboardPageState extends State<DashboardPage> {
       tasksSubtitle = _hasData ? '4/40 Tasks completed' : '0/40 Tasks completed';
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+    return SizedBox(
+      width: double.infinity,
       child: Column(
         children: [
           _buildAccordionSection(
@@ -562,21 +584,16 @@ class _DashboardPageState extends State<DashboardPage> {
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xCC18191D),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      decoration: _tileDecoration(radius: 20).copyWith(
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
       ),
       child: Column(
         children: [
           GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: onTap,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              decoration: BoxDecoration(
-                color: isExpanded ? Colors.white.withValues(alpha: 0.02) : Colors.transparent,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -587,8 +604,8 @@ class _DashboardPageState extends State<DashboardPage> {
                         title,
                         style: GoogleFonts.outfit(
                           color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                       if (!isExpanded) ...[
@@ -596,9 +613,10 @@ class _DashboardPageState extends State<DashboardPage> {
                         Text(
                           subtitle,
                           style: GoogleFonts.outfit(
-                            color: Colors.white54,
-                            fontSize: 13,
+                            color: Colors.white.withValues(alpha: 0.75),
+                            fontSize: 12,
                             fontWeight: FontWeight.w400,
+                            fontStyle: FontStyle.italic,
                           ),
                         ),
                       ],
@@ -606,7 +624,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   Icon(
                     isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                    color: Colors.white60,
+                    color: Colors.white,
                     size: 24,
                   ),
                 ],
