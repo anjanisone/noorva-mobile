@@ -1,4 +1,3 @@
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -24,6 +23,8 @@ class _HomePageState extends State<HomePage> {
   final PageController _pageController = PageController();
   final TextEditingController _inputController = TextEditingController();
   int _currentCardPage = 0;
+  final GlobalKey _bottomKey = GlobalKey();
+  double _bottomHeight = 380;
   Timer? _timer;
 
   // Speech to text
@@ -305,9 +306,32 @@ class _HomePageState extends State<HomePage> {
     _speech.stop();
   }
 
+  /// All cards share one height: the tallest (missed-task card with its
+  /// "Tap to recalibrate" button) sets it.
+  static const double _cardPagerHeight = 224;
+
+  /// Height of the card + input block, so the mascot can fill exactly the
+  /// space between the header and that block.
+  void _measureBottom() {
+    final box = _bottomKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return;
+    if ((box.size.height - _bottomHeight).abs() > 1) {
+      setState(() => _bottomHeight = box.size.height);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final safe = MediaQuery.of(context).padding;
+    final areaHeight = size.height - safe.top - safe.bottom;
+    // Header (16 + 48 + 16) sits above the mascot.
+    const headerHeight = 80.0;
+    final restingMascotHeight =
+        (areaHeight - headerHeight - _bottomHeight - 20).clamp(120.0, 600.0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _measureBottom();
+    });
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -318,28 +342,33 @@ class _HomePageState extends State<HomePage> {
             AnimatedPositioned(
               duration: const Duration(milliseconds: 350),
               curve: Curves.easeOutCubic,
-              left: 0,
-              right: 0,
+              left: _isFocused || _isInputNotEmpty ? 0 : 4,
+              right: _isFocused || _isInputNotEmpty ? 0 : size.width * 0.42,
               top: _isFocused || _isInputNotEmpty
                   ? size.height * 0.15
-                  : size.height * 0.26,
+                  : headerHeight,
               height: _isFocused || _isInputNotEmpty
                   ? size.height * 0.45
-                  : size.height * 0.72,
+                  : restingMascotHeight,
               child: IgnorePointer(
                 child: AnimatedOpacity(
                   duration: const Duration(milliseconds: 300),
                   opacity: _isChatActive ? 0 : 1,
-                  child: NoorvaMascot(mood: _homeMood),
+                  child: NoorvaMascot(
+                    mood: _homeMood,
+                    alignment: _isFocused || _isInputNotEmpty
+                        ? Alignment.center
+                        : Alignment.bottomCenter,
+                  ),
                 ),
               ),
             ),
 
-            // Thought Bubbles (Hidden when focused/typing/chatting)
+            // Speech bubble beside the mascot (home resting state only)
             Positioned(
-              top: size.height * 0.30,
-              left: -7,
-              right: -30,
+              top: headerHeight + restingMascotHeight * 0.12,
+              left: size.width * 0.5,
+              right: 24,
               child: IgnorePointer(
                 child: AnimatedOpacity(
                   duration: const Duration(milliseconds: 250),
@@ -349,7 +378,7 @@ class _HomePageState extends State<HomePage> {
                           _contentVisible
                       ? 1
                       : 0,
-                  child: _buildDecorativeDots(),
+                  child: _buildSpeechBubble(),
                 ),
               ),
             ),
@@ -370,119 +399,145 @@ class _HomePageState extends State<HomePage> {
                               _buildHomeHeader(),
                               const SizedBox(height: 20),
                               // Welcome Message (Changes style when focused)
-                              _entrance(Center(
-                                child: AnimatedSize(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeOutCubic,
-                                  child: CrystalCard(
-                                    width: (_isFocused || _isInputNotEmpty)
-                                        ? 180
-                                        : 320,
-                                    padding: (_isFocused || _isInputNotEmpty)
-                                        ? const EdgeInsets.symmetric(
-                                            horizontal: 16, vertical: 10)
-                                        : const EdgeInsets.all(24),
-                                    borderRadius:
-                                        (_isFocused || _isInputNotEmpty)
-                                            ? 20
-                                            : 32,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    borderColor: const Color(0xFF3B3B3B),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
+                              if (_isFocused || _isInputNotEmpty)
+                                _entrance(Center(
+                                  child: AnimatedSize(
+                                    duration: const Duration(milliseconds: 300),
+                                    curve: Curves.easeOutCubic,
+                                    child: CrystalCard(
+                                      width: (_isFocused || _isInputNotEmpty)
+                                          ? 180
+                                          : 320,
+                                      padding: (_isFocused || _isInputNotEmpty)
+                                          ? const EdgeInsets.symmetric(
+                                              horizontal: 16, vertical: 10)
+                                          : const EdgeInsets.all(24),
+                                      borderRadius:
+                                          (_isFocused || _isInputNotEmpty)
+                                              ? 20
+                                              : 32,
                                       crossAxisAlignment:
                                           CrossAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          (_isFocused || _isInputNotEmpty)
-                                              ? 'How can I help?'
-                                              : 'Hey $_firstName',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize:
-                                                (_isFocused || _isInputNotEmpty)
-                                                    ? 16
-                                                    : 24,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                        if (!_isFocused &&
-                                            !_isInputNotEmpty) ...[
-                                          const SizedBox(height: 12),
-                                          // Key on the switcher's direct child so
-                                          // the message actually cross-fades.
-                                          AnimatedSwitcher(
-                                            duration: const Duration(
-                                                milliseconds: 500),
-                                            child: Text(
-                                              _conversations.isNotEmpty &&
-                                                      _currentCardPage >= 0 &&
-                                                      _currentCardPage <
-                                                          _conversations.length
-                                                  ? _conversations[
-                                                          _currentCardPage]
-                                                      ['welcomeMessage']!
-                                                  : 'You are all caught up!',
-                                              key: ValueKey(
-                                                  '$_currentCardPage-${_conversations.length}'),
-                                              textAlign: TextAlign.center,
-                                              style: const TextStyle(
-                                                color: Colors.white70,
-                                                fontSize: 16,
-                                                height: 1.4,
-                                              ),
+                                      borderColor: const Color(0xFF3B3B3B),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            (_isFocused || _isInputNotEmpty)
+                                                ? 'How can I help?'
+                                                : 'Hey $_firstName',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: (_isFocused ||
+                                                      _isInputNotEmpty)
+                                                  ? 16
+                                                  : 24,
+                                              fontWeight: FontWeight.w500,
                                             ),
                                           ),
+                                          if (!_isFocused &&
+                                              !_isInputNotEmpty) ...[
+                                            const SizedBox(height: 12),
+                                            // Key on the switcher's direct child so
+                                            // the message actually cross-fades.
+                                            AnimatedSwitcher(
+                                              duration: const Duration(
+                                                  milliseconds: 500),
+                                              child: Text(
+                                                _conversations.isNotEmpty &&
+                                                        _currentCardPage >= 0 &&
+                                                        _currentCardPage <
+                                                            _conversations
+                                                                .length
+                                                    ? _conversations[
+                                                            _currentCardPage]
+                                                        ['welcomeMessage']!
+                                                    : 'You are all caught up!',
+                                                key: ValueKey(
+                                                    '$_currentCardPage-${_conversations.length}'),
+                                                textAlign: TextAlign.center,
+                                                style: const TextStyle(
+                                                  color: Colors.white70,
+                                                  fontSize: 16,
+                                                  height: 1.4,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ],
-                                      ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              )),
+                                )),
                               const SizedBox(height: 40),
                             ],
                           ),
                         ),
                 ),
                 const SizedBox(height: 5),
-
-                // Priority Card (Only visible in home state)
-                if (!_isChatActive &&
-                    !_isFocused &&
-                    !_isInputNotEmpty &&
-                    _conversations.isNotEmpty)
-                  _entrance(
-                    delayMs: 200,
-                    Column(
+                NotificationListener<SizeChangedLayoutNotification>(
+                  onNotification: (_) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) _measureBottom();
+                    });
+                    return false;
+                  },
+                  child: SizeChangedLayoutNotifier(
+                    child: Column(
+                      key: _bottomKey,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        SizedBox(
-                          height: 280,
-                          child: PageView.builder(
-                            controller: _pageController,
-                            onPageChanged: (index) {
-                              setState(() {
-                                _currentCardPage = index;
-                              });
-                            },
-                            itemCount: _conversations.length,
-                            itemBuilder: (context, index) {
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 12),
-                                child: _buildConversationCard(
-                                    _conversations[index]),
-                              );
-                            },
+                        // Priority Card (Only visible in home state)
+                        if (!_isChatActive &&
+                            !_isFocused &&
+                            !_isInputNotEmpty &&
+                            _conversations.isNotEmpty)
+                          _entrance(
+                            delayMs: 200,
+                            Column(
+                              children: [
+                                SizedBox(
+                                  height: _cardPagerHeight,
+                                  child: PageView.builder(
+                                    controller: _pageController,
+                                    onPageChanged: (index) {
+                                      setState(() {
+                                        _currentCardPage = index;
+                                      });
+                                    },
+                                    itemCount: _conversations.length,
+                                    itemBuilder: (context, index) {
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 6),
+                                        child: _buildConversationCard(
+                                            _conversations[index]),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: List.generate(
+                                    _conversations.length,
+                                    (index) => _buildDot(
+                                        isActive: _currentCardPage == index),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
+
+                        // Bottom Input Area
+                        _buildInputSection(),
                       ],
                     ),
                   ),
-
-                // Bottom Input Area
-                _buildInputSection(),
+                ),
               ],
             ),
 
@@ -1122,15 +1177,6 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ],
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  _conversations.length,
-                  (index) => _buildDot(isActive: _currentCardPage == index),
-                ),
-              ),
-              const SizedBox(height: 8),
             ],
           ),
         ),
@@ -1276,6 +1322,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               _buildInputIconButton(
                   icon: Icons.attach_file_rounded,
+                  filled: true,
                   onTap: () {
                     _showOptionsBottomSheet(
                       context,
@@ -1346,14 +1393,16 @@ class _HomePageState extends State<HomePage> {
               if (_isInputNotEmpty)
                 _buildSendButton()
               else ...[
-                // _buildInputIconButton(
-                //   icon: Icons.mic_none,
-                //   onTap: _openVoiceMode,
-                //   isActive: _isVoiceModeActive,
-                // ),
-                // const SizedBox(width: 4),
+                _buildInputIconButton(
+                  icon: Icons.mic_none,
+                  filled: true,
+                  onTap: _listen,
+                  isActive: _isListening && !_isVoiceModeActive,
+                ),
+                const SizedBox(width: 8),
                 _buildInputIconButton(
                   assetPath: 'assets/icons/recording.png',
+                  filled: true,
                   onTap: _openVoiceMode,
                   isActive: _isVoiceModeActive,
                 ),
@@ -1383,13 +1432,18 @@ class _HomePageState extends State<HomePage> {
       {String? assetPath,
       IconData? icon,
       VoidCallback? onTap,
+      bool filled = false,
       bool isActive = false}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: EdgeInsets.all(filled ? 12 : 10),
         decoration: BoxDecoration(
-          color: isActive ? Colors.white10 : Colors.transparent,
+          color: isActive
+              ? Colors.white10
+              : (filled
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.transparent),
           shape: BoxShape.circle,
         ),
         child: icon != null
@@ -1406,29 +1460,43 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildDecorativeDots() {
-    return Column(
-      children: [
-        // Top Circle (Shifted right)
-        Padding(
-          padding: const EdgeInsets.only(left: 52),
-          child: Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()..rotateZ(0.5),
-            child: const _CrystalDot(size: 20),
+  Widget _buildSpeechBubble() {
+    final hasMessage =
+        _currentCardPage >= 0 && _currentCardPage < _conversations.length;
+    final message = hasMessage
+        ? _conversations[_currentCardPage]['welcomeMessage'] as String
+        : 'You are all caught up!';
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1E),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _WaveformBars(),
+          const SizedBox(height: 10),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 500),
+            layoutBuilder: (current, previous) => Stack(
+              alignment: Alignment.topLeft,
+              children: [...previous, if (current != null) current],
+            ),
+            child: Text(
+              'Hey $_firstName! ${message.replaceAll('\n', ' ')}',
+              key: ValueKey('$_currentCardPage-$_firstName'),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12.5,
+                height: 1.4,
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: 6),
-        // Bottom Circle (Shifted left)
-        Padding(
-          padding: const EdgeInsets.only(right: .5),
-          child: Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()..rotateZ(-0.5),
-            child: const _CrystalDot(size: 12),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -1575,43 +1643,31 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class _CrystalDot extends StatelessWidget {
-  final double size;
+/// Static audio-waveform glyph shown at the top of the speech bubble.
+class _WaveformBars extends StatelessWidget {
+  const _WaveformBars();
 
-  const _CrystalDot({required this.size});
+  static const _heights = <double>[
+    4, 8, 14, 9, 18, 12, 6, 15, 20, 11, 5, 13, 17, 8, 12, 6, 10, 4, //
+  ];
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(size, size),
-      painter: _CrystalDotPainter(),
-    );
-  }
-}
-
-class _CrystalDotPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final borderPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    borderPaint.shader = ui.Gradient.linear(
-      Offset(size.width * 0.5, 0),
-      Offset(size.width * 0.6, size.height),
-      [
-        Colors.white.withValues(alpha: 0.4),
-        Colors.white.withValues(alpha: 0.4),
-        Colors.white.withValues(alpha: 0.0001),
-        Colors.white.withValues(alpha: 0.4),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        for (final h in _heights)
+          Container(
+            width: 2.5,
+            height: h,
+            margin: const EdgeInsets.only(right: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFF3B9BFF),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
       ],
-      [0.0482, 0.3808, 0.5668, 0.951],
     );
-
-    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
-    canvas.drawOval(rect, borderPaint);
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

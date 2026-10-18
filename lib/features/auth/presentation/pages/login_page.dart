@@ -40,6 +40,7 @@ class _LoginPageState extends State<LoginPage> {
       listenWhen: (previous, current) =>
           current.status == AuthStatus.loginSuccess ||
           current.status == AuthStatus.loginFailure ||
+          current.status == AuthStatus.accountNotFound ||
           current.status == AuthStatus.googleSignInSuccess ||
           current.status == AuthStatus.googleSignInFailure ||
           current.status == AuthStatus.appleSignInSuccess ||
@@ -61,12 +62,30 @@ class _LoginPageState extends State<LoginPage> {
               }
             });
             break;
+          case AuthStatus.accountNotFound:
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                    state.errorMessage ?? 'No account found. Please sign up.'),
+              ),
+            );
+            Navigator.pushNamed(context, AppRoutes.register);
+            break;
           case AuthStatus.loginFailure:
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                    state.errorMessage ?? 'Login failed. Please try again.'),
+                  (state.errorMessage ?? '').contains('invalid-credential')
+                      ? 'Incorrect email or password, or no account exists yet.'
+                      : (state.errorMessage ?? 'Login failed. Please try again.'),
+                ),
                 backgroundColor: Colors.redAccent,
+                action: SnackBarAction(
+                  label: 'Sign up',
+                  textColor: Colors.white,
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.register),
+                ),
               ),
             );
             break;

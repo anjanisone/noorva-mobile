@@ -41,6 +41,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final user = await _repository.login(event.email, event.password);
       emit(state.copyWith(isLoading: false, user: user, status: AuthStatus.loginSuccess));
+    } on AccountNotFoundException catch (e) {
+      emit(state.copyWith(isLoading: false, errorMessage: e.toString(), status: AuthStatus.accountNotFound));
     } catch (e) {
       final message = e.toString().contains('Exception: ')
           ? e.toString().replaceAll('Exception: ', '')
@@ -53,8 +55,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onGoogleSignInRequested(AuthGoogleSignInRequested event, Emitter<AuthState> emit) async {
     emit(state.copyWith(isGoogleLoading: true, clearError: true, status: AuthStatus.initial));
     try {
-      final user = await _repository.signInWithGoogle();
+      final user = await _repository.signInWithGoogle(isSignUp: event.isSignUp);
       emit(state.copyWith(isGoogleLoading: false, user: user, status: AuthStatus.googleSignInSuccess));
+    } on AccountNotFoundException catch (e) {
+      emit(state.copyWith(isGoogleLoading: false, errorMessage: e.toString(), status: AuthStatus.accountNotFound));
     } catch (e) {
       final message = e.toString().contains('Exception: ')
           ? e.toString().replaceAll('Exception: ', '')

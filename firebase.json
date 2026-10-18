@@ -1,0 +1,25 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "noorva-companion-510918",
+          "appId": "1:474080234687:android:20e73220ed77ee13b60a0a",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "noorva-companion-510918",
+          "configurations": {
+            "android": "1:474080234687:android:20e73220ed77ee13b60a0a",
+            "ios": "1:474080234687:ios:c10cd5108f740689b60a0a"
+          }
+        }
+      }
+    }
+  }
+}
