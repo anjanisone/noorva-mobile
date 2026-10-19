@@ -6,6 +6,7 @@ import '../../data/models/goal_model.dart';
 import '../bloc/goals_bloc.dart';
 import '../bloc/goals_event.dart';
 import '../bloc/goals_state.dart';
+import '../widgets/goal_ui.dart';
 import '../../../guide/presentation/pages/guide_page.dart';
 
 class GoalTrackingPage extends StatefulWidget {
@@ -50,21 +51,33 @@ class _GoalTrackingPageState extends State<GoalTrackingPage> {
           body: SafeArea(
             child: Column(
               children: [
-                _buildAppBar(context),
+                const GoalAppBar(),
                 Expanded(
                   child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
                     physics: const BouncingScrollPhysics(),
                     children: [
                       _buildHeader(goal, progress),
-                      const SizedBox(height: 24),
-                      _buildSegmentControl(),
-                      const SizedBox(height: 24),
-                      if (_selectedTabIndex == 0)
-                        _buildCompletedTasksTab(completedTasks)
-                      else
-                        _buildPendingTasksTab(context, goal, pendingTasks),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 18),
+                      GoalSegmentControl(
+                        labels: const ['Completed tasks', 'Pending tasks'],
+                        selectedIndex: _selectedTabIndex,
+                        onChanged: (i) => setState(() {
+                          _selectedTabIndex = i;
+                          _expandedTaskId = null;
+                        }),
+                      ),
+                      const SizedBox(height: 16),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 220),
+                        child: KeyedSubtree(
+                          key: ValueKey(_selectedTabIndex),
+                          child: _selectedTabIndex == 0
+                              ? _buildCompletedTasksTab(completedTasks)
+                              : _buildPendingTasksTab(
+                                  context, goal, pendingTasks),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -76,52 +89,6 @@ class _GoalTrackingPageState extends State<GoalTrackingPage> {
     );
   }
 
-  Widget _buildAppBar(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.borderLight),
-              ),
-              child: Center(
-                child: Image.asset(
-                  'assets/icons/back_arrow.png',
-                  width: 20,
-                  height: 20,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.borderLight),
-            ),
-            child: Center(
-              child: Image.asset(
-                'assets/icons/edit.png',
-                width: 20,
-                height: 20,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildHeader(Goal goal, int progress) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,136 +97,113 @@ class _GoalTrackingPageState extends State<GoalTrackingPage> {
           goal.title,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 12),
-        Text(
-          goal.description,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 15,
-            height: 1.4,
-          ),
-        ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 8),
+        Text(goal.description, style: GoalUi.body.copyWith(height: 1.35)),
+        const SizedBox(height: 16),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Goal Tracking',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+            const Expanded(
+              child: Text('Goal Tracking', style: GoalUi.cardTitle),
             ),
             Text(
               '$progress%',
               style: TextStyle(
-                color: progress == 100 ? const Color(0xFF65C466) : Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+                color: progress == 100 ? GoalUi.progressFill : Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        Container(
-          height: 6,
-          decoration: BoxDecoration(
-            color: Colors.white10,
-            borderRadius: BorderRadius.circular(3),
-          ),
-          child: FractionallySizedBox(
-            alignment: Alignment.centerLeft,
-            widthFactor: progress / 100,
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF65C466),
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-          ),
-        ),
+        if (progress > 0) ...[
+          const SizedBox(height: 10),
+          GoalProgressBar(progress: progress),
+        ],
       ],
     );
   }
 
-  Widget _buildSegmentControl() {
+  /// Collapsible day card shared by both tabs.
+  Widget _buildTaskCard({
+    required GoalTask task,
+    required List<Widget> expandedChildren,
+  }) {
+    final isExpanded = _expandedTaskId == task.id;
+
     return Container(
-      height: 48,
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: Row(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: GoalUi.cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() {
-                _selectedTabIndex = 0;
-                _expandedTaskId = null;
-              }),
-              child: Container(
-                margin: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: _selectedTabIndex == 0
-                      ? AppColors.borderLight
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
-                  border: _selectedTabIndex == 0
-                      ? Border.all(color: Colors.white30)
-                      : null,
-                ),
-                child: Center(
-                  child: Text(
-                    'Completed tasks',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: _selectedTabIndex == 0
-                          ? FontWeight.w500
-                          : FontWeight.w400,
+          GestureDetector(
+            onTap: () => setState(() {
+              _expandedTaskId = isExpanded ? null : task.id;
+            }),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(15, 12, 15, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(task.title, style: GoalUi.cardTitle),
+                        const SizedBox(height: 4),
+                        Text(
+                          task.subtitle,
+                          style: const TextStyle(
+                            color: GoalUi.textBody,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
+                  AnimatedRotation(
+                    turns: isExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 220),
+                    child: const Padding(
+                      padding: EdgeInsets.only(right: 4),
+                      child: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() {
-                _selectedTabIndex = 1;
-                _expandedTaskId = null;
-              }),
-              child: Container(
-                margin: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: _selectedTabIndex == 1
-                      ? AppColors.borderLight
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
-                  border: _selectedTabIndex == 1
-                      ? Border.all(color: Colors.white30)
-                      : null,
-                ),
-                child: Center(
-                  child: Text(
-                    'Pending tasks',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: _selectedTabIndex == 1
-                          ? FontWeight.w500
-                          : FontWeight.w400,
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: isExpanded
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(15, 4, 15, 15),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          task.content,
+                          style: const TextStyle(
+                            color: Color(0xFFE5E5E7),
+                            fontSize: 16,
+                            height: 1.5,
+                          ),
+                        ),
+                        ...expandedChildren,
+                      ],
                     ),
-                  ),
-                ),
-              ),
-            ),
+                  )
+                : const SizedBox(width: double.infinity),
           ),
         ],
       ),
@@ -273,119 +217,38 @@ class _GoalTrackingPageState extends State<GoalTrackingPage> {
 
     return Column(
       children: completedTasks.map((task) {
-        final isExpanded = _expandedTaskId == task.id;
-
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: AppColors.card,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.borderLight),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Card Header
-              GestureDetector(
-                onTap: () => setState(() {
-                  _expandedTaskId = isExpanded ? null : task.id;
-                }),
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20.0,
-                    vertical: 18.0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            task.title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            task.subtitle,
-                            style: const TextStyle(
-                              color: Colors.white54,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Icon(
-                        isExpanded ? Icons.expand_less : Icons.expand_more,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ],
-                  ),
-                ),
+        return _buildTaskCard(
+          task: task,
+          expandedChildren: [
+            const SizedBox(height: 20),
+            Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: const Color(0x1A4CC35A),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: const Color(0x4D4CC35A)),
               ),
-              // Expanded content
-              if (isExpanded) ...[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Divider(color: Colors.white10, height: 1),
-                      const SizedBox(height: 16),
-                      Text(
-                        task.content,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 15,
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      // Completed badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0x1A65C466),
-                          borderRadius: BorderRadius.circular(30),
-                          border:
-                              Border.all(color: const Color(0x4D65C466)),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              color: Color(0xFF65C466),
-                              size: 16,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Completed',
-                              style: TextStyle(
-                                color: Color(0xFF65C466),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.check_circle_rounded,
+                    color: GoalUi.progressFill,
+                    size: 18,
                   ),
-                ),
-              ],
-            ],
-          ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Completed',
+                    style: TextStyle(
+                      color: GoalUi.progressFill,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         );
       }).toList(),
     );
@@ -508,184 +371,59 @@ class _GoalTrackingPageState extends State<GoalTrackingPage> {
 
     return Column(
       children: pendingTasks.map((task) {
-        final taskId = task.id;
-        final isExpanded = _expandedTaskId == taskId;
-
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: AppColors.card,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.borderLight),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Card Header
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _expandedTaskId = isExpanded ? null : taskId;
-                  });
-                },
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 18.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            task.title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+        return _buildTaskCard(
+          task: task,
+          expandedChildren: [
+            // YouTube video mockup for Day 1 Inner Peace
+            if (task.id == 1 && goal.id == 'inner-peace') ...[
+              const SizedBox(height: 20),
+              _buildYouTubeVideoMockup(),
+              const SizedBox(height: 12),
+              _buildVideoPageIndicators(),
+            ],
+            const SizedBox(height: 20),
+            GoalPillButton(
+              label: 'Mark as Done',
+              onTap: () {
+                context.read<GoalsBloc>().add(GoalTaskCompleted(goal.id, task.id));
+                setState(() => _expandedTaskId = null);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(Icons.check_circle, color: Colors.black),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${task.title} marked completed!',
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w600,
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            task.subtitle,
-                            style: const TextStyle(
-                              color: Colors.white54,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Icon(
-                        isExpanded ? Icons.expand_less : Icons.expand_more,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
+                    backgroundColor: GoalUi.progressFill,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            GoalPillButton(
+              label: 'Chat With Noorva',
+              primary: false,
+              onTap: () => Navigator.pushNamed(
+                context,
+                AppRoutes.guide,
+                arguments: GoalChatArguments(
+                  goalId: goal.id,
+                  taskId: task.id,
                 ),
               ),
-              // Card Expanded Content
-              if (isExpanded) ...[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Divider(color: Colors.white10, height: 1),
-                      const SizedBox(height: 16),
-                      Text(
-                        task.content,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 15,
-                          height: 1.5,
-                        ),
-                      ),
-                      
-                      // YouTube video mockup for Day 1 Inner Peace
-                      if (taskId == 1 && goal.id == 'inner-peace') ...[
-                        const SizedBox(height: 20),
-                        _buildYouTubeVideoMockup(),
-                        const SizedBox(height: 12),
-                        _buildVideoPageIndicators(),
-                      ],
-                      
-                      const SizedBox(height: 24),
-                      
-                      // Two stacked capsule buttons
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF65C466),
-                          foregroundColor: const Color(0xFF1E3D1E),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        onPressed: () {
-                          // Complete task in bloc
-                          context.read<GoalsBloc>().add(GoalTaskCompleted(goal.id, task.id));
-                          setState(() {
-                            _expandedTaskId = null; // collapse
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Row(
-                                children: [
-                                  const Icon(Icons.check_circle, color: Colors.black),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '${task.title} marked completed!',
-                                    style: const TextStyle(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              backgroundColor: const Color(0xFF65C466),
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8)),
-                            ),
-                          );
-                        },
-                        child: const SizedBox(
-                          width: double.infinity,
-                          child: Center(
-                            child: Text(
-                              'Done',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF262629), // Dark gray
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        onPressed: () {
-                          // Navigate to /guide with GoalChatArguments
-                          Navigator.pushNamed(
-                            context,
-                            AppRoutes.guide,
-                            arguments: GoalChatArguments(
-                              goalId: goal.id,
-                              taskId: task.id,
-                            ),
-                          );
-                        },
-                        child: const SizedBox(
-                          width: double.infinity,
-                          child: Center(
-                            child: Text(
-                              'Resume With Noorva',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
+            ),
+          ],
         );
       }).toList(),
     );

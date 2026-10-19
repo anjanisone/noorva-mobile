@@ -9,6 +9,7 @@ import '../../../../core/widgets/noorva_text_field.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../widgets/auth_mascot.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -31,17 +32,19 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      resizeToAvoidBottomInset: false, // Prevents the image from being pushed up by the keyboard
+      resizeToAvoidBottomInset:
+          false, // Prevents the image from being pushed up by the keyboard
       body: Stack(
         children: [
           // Stationary Character Image at bottom right
-          Positioned(
+          const Positioned(
             bottom: 0,
             right: -20,
-            child: Image.asset(
-              'assets/images/forgot_password.png',
-              height: 350,
-              fit: BoxFit.contain,
+            child: IgnorePointer(
+              child: AuthMascot(
+                height: 300,
+                alignment: Alignment.bottomRight,
+              ),
             ),
           ),
 
@@ -59,8 +62,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     Padding(
                       padding: const EdgeInsets.only(left: 20, top: 10),
                       child: GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: const Color(0xFF111113),
@@ -123,19 +126,32 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                               const SizedBox(height: 40),
                               BlocConsumer<AuthBloc, AuthState>(
                                 listenWhen: (previous, current) =>
-                                    current.status == AuthStatus.passwordResetOtpSent ||
-                                    current.status == AuthStatus.passwordResetOtpFailure,
+                                    current.status ==
+                                        AuthStatus.passwordResetOtpSent ||
+                                    current.status ==
+                                        AuthStatus.passwordResetOtpFailure,
                                 listener: (context, state) {
-                                  if (state.status == AuthStatus.passwordResetOtpSent) {
-                                    Navigator.pushNamed(
-                                      context,
-                                      AppRoutes.otpVerification,
-                                      arguments: 'forgotPassword',
-                                    );
-                                  } else if (state.status == AuthStatus.passwordResetOtpFailure) {
+                                  if (state.status ==
+                                      AuthStatus.passwordResetOtpSent) {
+                                    FocusScope.of(context).unfocus();
+                                    // Let the mascot finish: Thinking revers (1s) ->
+                                    // idle -> success (1s) must play before leaving.
+                                    Future.delayed(
+                                        const Duration(milliseconds: 2800), () {
+                                      if (context.mounted) {
+                                        Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.otpVerification,
+                                          arguments: 'forgotPassword',
+                                        );
+                                      }
+                                    });
+                                  } else if (state.status ==
+                                      AuthStatus.passwordResetOtpFailure) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text(state.errorMessage ?? 'Failed to send reset code.'),
+                                        content: Text(state.errorMessage ??
+                                            'Failed to send reset code.'),
                                         backgroundColor: Colors.redAccent,
                                       ),
                                     );
@@ -145,8 +161,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                   if (state.isOtpLoading || state.isLoading) {
                                     return const Center(
                                       child: Padding(
-                                        padding: EdgeInsets.symmetric(vertical: 12),
-                                        child: CircularProgressIndicator(color: Colors.white),
+                                        padding:
+                                            EdgeInsets.symmetric(vertical: 12),
+                                        child: CircularProgressIndicator(
+                                            color: Colors.white),
                                       ),
                                     );
                                   }
@@ -155,7 +173,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                     onPressed: () {
                                       if (_formKey.currentState!.validate()) {
                                         context.read<AuthBloc>().add(
-                                              AuthPasswordResetOtpRequested(_emailController.text),
+                                              AuthPasswordResetOtpRequested(
+                                                  _emailController.text),
                                             );
                                       }
                                     },
@@ -168,7 +187,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       ),
                     ),
                     // Space for keyboard when scrolled
-                    SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 20),
+                    SizedBox(
+                        height: MediaQuery.of(context).viewInsets.bottom + 20),
                   ],
                 ),
               ),

@@ -10,6 +10,7 @@ import '../../../../core/widgets/noorva_text_field.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../widgets/auth_mascot.dart';
 
 class ResetPasswordPage extends StatefulWidget {
   const ResetPasswordPage({super.key});
@@ -71,15 +72,11 @@ class _ResetPasswordPageState extends State<ResetPasswordPage>
       body: Stack(
         children: [
           // Fixed Character Image
-          Positioned(
+          const Positioned(
             bottom: 0,
             right: -10,
             child: IgnorePointer(
-              child: Image.asset(
-                'assets/images/forgot_password.png',
-                height: 310,
-                fit: BoxFit.contain,
-              ),
+              child: AuthMascot(height: 310),
             ),
           ),
 

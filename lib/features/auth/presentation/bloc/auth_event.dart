@@ -22,7 +22,13 @@ class AuthLoginRequested extends AuthEvent {
 }
 
 class AuthGoogleSignInRequested extends AuthEvent {
-  const AuthGoogleSignInRequested();
+  /// True when triggered from the sign-up screen (creates the account if new).
+  final bool isSignUp;
+
+  const AuthGoogleSignInRequested({this.isSignUp = false});
+
+  @override
+  List<Object?> get props => [isSignUp];
 }
 
 class AuthAppleSignInRequested extends AuthEvent {

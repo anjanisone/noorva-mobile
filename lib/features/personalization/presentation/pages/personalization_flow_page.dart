@@ -6,6 +6,7 @@ import '../../../../core/widgets/crystal_card.dart';
 import '../../../../core/widgets/noorva_button.dart';
 import '../../../../core/widgets/radio_dot.dart';
 import '../../../../core/widgets/thought_bubble.dart';
+import '../../../../core/widgets/noorva_mascot.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PersonalizationFlowPage
@@ -257,10 +258,11 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
                 right: 0,
                 child: IgnorePointer(
                   child: Center(
-                    child: Image.asset(
-                      _stepImages[0],
+                    child: NoorvaMascot(
+                      mood: MascotMood.hello,
+                      reactToTyping: true,
                       height: _getStepImageHeight(0, size),
-                      fit: BoxFit.contain,
+                      fallbackAsset: _stepImages[0],
                     ),
                   ),
                 ),
@@ -271,10 +273,11 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
                 bottom: 0,
                 right: _getStepImageRight(_currentStep),
                 child: IgnorePointer(
-                  child: Image.asset(
-                    _stepImages[_currentStep],
+                  child: NoorvaMascot(
+                    mood: MascotMood.explaining,
+                    reactToTyping: true,
                     height: _getStepImageHeight(_currentStep, size),
-                    fit: BoxFit.contain,
+                    fallbackAsset: _stepImages[_currentStep],
                   ),
                 ),
               ),
@@ -428,10 +431,11 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
                           height: size.height * 0.40,
                           fit: BoxFit.contain,
                         ),
-                        Image.asset(
-                          'assets/images/white_dress_oldman.png',
+                        NoorvaMascot(
+                          mood: MascotMood.explaining,
+                          reactToTyping: true,
                           height: size.height * 0.45,
-                          fit: BoxFit.contain,
+                          fallbackAsset: 'assets/images/white_dress_oldman.png',
                         ),
                       ],
                     ),
@@ -818,10 +822,11 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Image.asset(
-            'assets/images/personalization.png',
+          const NoorvaMascot(
+            mood: MascotMood.explaining,
+            reactToTyping: true,
             height: 120,
-            fit: BoxFit.contain,
+            fallbackAsset: 'assets/images/personalization.png',
           ),
           const SizedBox(height: 20),
           Text(
@@ -900,10 +905,11 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Image.asset(
-            'assets/images/personalization.png',
+          const NoorvaMascot(
+            mood: MascotMood.explaining,
+            reactToTyping: true,
             height: 120,
-            fit: BoxFit.contain,
+            fallbackAsset: 'assets/images/personalization.png',
           ),
           const SizedBox(height: 20),
           Text(

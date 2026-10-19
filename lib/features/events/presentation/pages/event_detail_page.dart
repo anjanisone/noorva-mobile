@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/noorva_delete_dialog.dart';
+import '../../../goals/presentation/widgets/goal_ui.dart';
 import '../../data/models/event_model.dart';
 import '../bloc/events_bloc.dart';
 import '../bloc/events_event.dart';
@@ -37,8 +38,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
           );
         }
 
-        final progress = event.progressPercentage;
-        final progressPct = (progress * 100).toInt();
+        final progressPct =
+            (event.progressPercentage.clamp(0.0, 1.0) * 100).round();
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -48,104 +49,90 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 _buildAppBar(context, event),
                 Expanded(
                   child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     physics: const BouncingScrollPhysics(),
                     children: [
-                      // Banner Image
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Image.asset(
-                          event.imageUrl,
-                          height: 180,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              height: 180,
-                              color: Colors.white10,
+                        borderRadius: BorderRadius.circular(16),
+                        child: AspectRatio(
+                          aspectRatio: 358 / 180,
+                          child: Image.asset(
+                            event.imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                              color: GoalUi.inset,
                               child: const Center(
-                                child: Icon(Icons.image, color: Colors.white30, size: 50),
+                                child: Icon(Icons.image_outlined,
+                                    color: Colors.white30, size: 44),
                               ),
-                            );
-                          },
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      // Priority Pill
-                      _buildPriorityPill(event.priority),
-                      const SizedBox(height: 16),
-
-                      // Description
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: GoalTag(
+                          label: _priorityLabel(event.priority),
+                          colors: _priorityColors(event.priority),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
                       Text(
                         event.description,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                          height: 1.4,
+                          fontSize: 17,
+                          height: 1.3,
                         ),
                       ),
-                      const SizedBox(height: 16),
-
-                      // Progress Bar & Percent Indicator
+                      const SizedBox(height: 18),
                       Row(
                         children: [
                           Expanded(
-                            child: Container(
-                              height: 6,
-                              decoration: BoxDecoration(
-                                color: Colors.white10,
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                              child: FractionallySizedBox(
-                                alignment: Alignment.centerLeft,
-                                widthFactor: progress,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF65C466),
-                                    borderRadius: BorderRadius.circular(3),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
+                              child: GoalProgressBar(progress: progressPct)),
+                          const SizedBox(width: 30),
                           Text(
                             '$progressPct%',
                             style: const TextStyle(
-                              color: AppColors.textSecondary,
+                              color: GoalUi.textMuted,
                               fontSize: 13,
-                              fontWeight: FontWeight.w500,
+                              fontStyle: FontStyle.italic,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 24),
-
-                      // Tasks List Title
                       const Text(
                         'Tasks List',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 17),
                       ),
                       const SizedBox(height: 16),
-
-                      // Task List items
-                      ...event.tasks.map((task) => _buildTaskItem(context, event.id, task)),
-                      
-                      // Extra bottom padding so scroll doesn't block the floating button
-                      const SizedBox(height: 20),
+                      for (final task in event.tasks)
+                        _buildTaskItem(context, event.id, task),
                     ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: GoalPillButton(
+                    label: 'Chat With Noorva',
+                    height: 50,
+                    onTap: () {
+                      // Placeholder callback
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Starting chat with Noorva...'),
+                          backgroundColor: GoalUi.card,
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
             ),
           ),
-          bottomNavigationBar: _buildBottomChatButton(context),
         );
       },
     );
@@ -153,297 +140,187 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   Widget _buildAppBar(BuildContext context, Event event) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Back button
-          GestureDetector(
+          GoalCircleButton(
+            asset: 'assets/icons/back_arrow.png',
+            size: 36,
             onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.borderLight),
-              ),
-              child: Center(
-                child: Image.asset(
-                  'assets/icons/back_arrow.png',
-                  width: 20,
-                  height: 20,
-                  color: Colors.white,
-                ),
-              ),
-            ),
           ),
-          
-          // Event Title
           Expanded(
-            child: Text(
-              event.title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                event.title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
-          
-          // Trash/Delete Button
           GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: () => _showDeleteConfirmation(context, event.id),
             child: Container(
-              width: 44,
-              height: 44,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.borderLight),
+                color: GoalUi.card,
+                border: Border.all(color: GoalUi.cardBorder),
               ),
-              child: const Center(
-                child: Icon(
-                  Icons.delete_outline,
-                  color: Color(0xFFEF5350), // Premium soft red
-                  size: 22,
-                ),
+              child: const Icon(
+                Icons.delete_outline_rounded,
+                color: GoalUi.danger,
+                size: 20,
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildPriorityPill(EventPriority priority) {
-    String text;
-    Color bg;
-    Color textCol;
-
-    switch (priority) {
-      case EventPriority.high:
-        text = 'High Priority';
-        bg = const Color(0xFF381A1A);
-        textCol = const Color(0xFFFF8A8A);
-        break;
-      case EventPriority.medium:
-        text = 'Medium Priority';
-        bg = const Color(0xFF382A1A);
-        textCol = const Color(0xFFFFC58A);
-        break;
-      case EventPriority.low:
-        text = 'Low Priority';
-        bg = const Color(0xFF1A2A38);
-        textCol = const Color(0xFF8AC5FF);
-        break;
-    }
-
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: textCol,
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
       ),
     );
   }
 
   Widget _buildTaskItem(BuildContext context, String eventId, EventTask task) {
     final isExpanded = _expandedTaskIds.contains(task.id);
+    void toggleDone() =>
+        context.read<EventsBloc>().add(EventTaskToggled(eventId, task.id));
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: GoalUi.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: const Color(0xFF3A3B40)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header (Tappable area to expand/collapse)
-          InkWell(
-            onTap: () {
-              setState(() {
-                if (isExpanded) {
-                  _expandedTaskIds.remove(task.id);
-                } else {
-                  _expandedTaskIds.add(task.id);
-                }
-              });
-            },
-            borderRadius: BorderRadius.circular(16),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() {
+              if (isExpanded) {
+                _expandedTaskIds.remove(task.id);
+              } else {
+                _expandedTaskIds.add(task.id);
+              }
+            }),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(8, 8, 14, 8),
               child: Row(
                 children: [
-                  // Circular/Rounded Checked State Checkbox
+                  // Larger hit area than the box itself.
                   GestureDetector(
-                    onTap: () {
-                      context.read<EventsBloc>().add(EventTaskToggled(eventId, task.id));
-                    },
-                    child: Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: task.isCompleted ? const Color(0xFF424244) : Colors.transparent,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: task.isCompleted ? const Color(0xFF424244) : AppColors.borderLight,
-                          width: 2,
+                    behavior: HitTestBehavior.opaque,
+                    onTap: toggleDone,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 160),
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: task.isCompleted
+                              ? const Color(0xFF6B6B70)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(3),
+                          border: Border.all(
+                            color: task.isCompleted
+                                ? const Color(0xFF6B6B70)
+                                : const Color(0xFFE5E5E7),
+                            width: 1.6,
+                          ),
                         ),
+                        child: task.isCompleted
+                            ? const Icon(Icons.check_rounded,
+                                size: 14, color: Color(0xFF1A1B1E))
+                            : null,
                       ),
-                      child: task.isCompleted
-                          ? const Center(
-                              child: Icon(
-                                Icons.check,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            )
-                          : null,
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  
-                  // Task Name
+                  const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       task.name,
                       style: TextStyle(
-                        color: task.isCompleted ? AppColors.textTertiary : Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                        color: Colors.white,
+                        fontSize: 17,
+                        decoration: task.isCompleted
+                            ? TextDecoration.lineThrough
+                            : null,
+                        decorationColor: Colors.white,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: 12),
-                  
-                  // Dynamic Arrow Icon
-                  Icon(
-                    isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                    color: Colors.white60,
-                    size: 24,
+                  AnimatedRotation(
+                    turns: isExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 220),
+                    child: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
                   ),
                 ],
               ),
             ),
           ),
-          
-          // Expanded Content Area
-          AnimatedCrossFade(
-            firstChild: const SizedBox.shrink(),
-            secondChild: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Task details text
-                  Text(
-                    task.description,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Action Button ("Done" green or "Mark as Done" white)
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        context.read<EventsBloc>().add(EventTaskToggled(eventId, task.id));
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: task.isCompleted ? const Color(0xFF65C466) : Colors.white,
-                        foregroundColor: task.isCompleted ? Colors.white : Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        task.isCompleted ? 'Done' : 'Mark as Done',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          AnimatedSize(
             duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: isExpanded
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          task.description,
+                          style: const TextStyle(
+                            color: Color(0xFFE5E5E7),
+                            fontSize: 16,
+                            height: 1.25,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        GoalPillButton(
+                          label: task.isCompleted
+                              ? 'Mark as Not Done'
+                              : 'Mark as Done',
+                          primary: !task.isCompleted,
+                          onTap: toggleDone,
+                        ),
+                      ],
+                    ),
+                  )
+                : const SizedBox(width: double.infinity),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildBottomChatButton(BuildContext context) {
-    return Container(
-      color: AppColors.background,
-      padding: EdgeInsets.fromLTRB(20, 12, 20, 12 + MediaQuery.of(context).padding.bottom),
-      child: Container(
-        width: double.infinity,
-        height: 54,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(27),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
-        ),
-        child: InkWell(
-          onTap: () {
-            // Placeholder callback
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Starting chat with Noorva...'),
-                backgroundColor: AppColors.card,
-              ),
-            );
-          },
-          borderRadius: BorderRadius.circular(27),
-          child: const Center(
-            child: Text(
-              'Chat With Noorva',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  String _priorityLabel(EventPriority priority) => switch (priority) {
+        EventPriority.high => 'High Priority',
+        EventPriority.medium => 'Medium Priority',
+        EventPriority.low => 'Low Priority',
+      };
+
+  (Color, Color) _priorityColors(EventPriority priority) => switch (priority) {
+        EventPriority.high => GoalUi.tagRed,
+        EventPriority.medium => GoalUi.tagAmber,
+        EventPriority.low => GoalUi.tagBlue,
+      };
 
   void _showDeleteConfirmation(BuildContext context, String eventId) {
     showDialog(

@@ -5,6 +5,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../data/models/goal_model.dart';
 import '../bloc/goals_bloc.dart';
 import '../bloc/goals_state.dart';
+import '../widgets/goal_ui.dart';
 
 class TargetBoardPainter extends CustomPainter {
   @override
@@ -102,38 +103,49 @@ class _GoalsPageState extends State<GoalsPage> {
           body: SafeArea(
             child: Column(
               children: [
-                _buildAppBar(),
-                const SizedBox(height: 16),
-                _buildSegmentControl(),
-                const SizedBox(height: 24),
+                const GoalAppBar(title: 'Goals'),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: GoalSegmentControl(
+                    labels: const ['Ongoing', 'Completed'],
+                    selectedIndex: _selectedTabIndex,
+                    onChanged: (i) => setState(() => _selectedTabIndex = i),
+                  ),
+                ),
+                const SizedBox(height: 18),
                 Expanded(
-                  child: currentGoals.isEmpty
-                      ? _buildEmptyState()
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: currentGoals.length,
-                          itemBuilder: (context, index) {
-                            final goal = currentGoals[index];
-                            return Column(
-                              children: [
-                                _buildGoalCard(
-                                  title: goal.title,
-                                  description: goal.description,
-                                  progress: goal.progressPercentage,
-                                  priority: goal.priority,
-                                  onTap: () => Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.goalDetail,
-                                    arguments: goal.id,
-                                  ),
-                                  bottomWidget: _buildBottomWidget(goal),
-                                ),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 220),
+                    child: currentGoals.isEmpty
+                        ? KeyedSubtree(
+                            key: ValueKey('empty_$_selectedTabIndex'),
+                            child: _buildEmptyState(),
+                          )
+                        : ListView.separated(
+                            key: ValueKey('list_$_selectedTabIndex'),
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: currentGoals.length,
+                            separatorBuilder: (_, __) =>
                                 const SizedBox(height: 16),
-                              ],
-                            );
-                          },
-                        ),
+                            itemBuilder: (context, index) {
+                              final goal = currentGoals[index];
+                              return _buildGoalCard(
+                                title: goal.title,
+                                description: goal.description,
+                                progress: goal.progressPercentage,
+                                priority: goal.priority,
+                                onTap: () => Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.goalDetail,
+                                  arguments: goal.id,
+                                ),
+                                bottomWidget: _buildBottomWidget(goal),
+                              );
+                            },
+                          ),
+                  ),
                 ),
               ],
             ),
@@ -143,19 +155,11 @@ class _GoalsPageState extends State<GoalsPage> {
     );
   }
 
+  static const _bottomTextStyle = GoalUi.body;
+
   Widget _buildBottomWidget(Goal goal) {
-    if (goal.isCompleted) {
-      return Text(
-        goal.bottomText ?? '',
-        style: const TextStyle(color: Colors.white70, fontSize: 14),
-      );
-    }
-    
-    if (goal.progressPercentage == 0) {
-      return Text(
-        goal.bottomText ?? '',
-        style: const TextStyle(color: Colors.white70, fontSize: 14),
-      );
+    if (goal.isCompleted || goal.progressPercentage == 0) {
+      return Text(goal.bottomText ?? '', style: _bottomTextStyle);
     }
 
     return Column(
@@ -163,13 +167,10 @@ class _GoalsPageState extends State<GoalsPage> {
       children: [
         const Text(
           'Current Progress',
-          style: TextStyle(color: Colors.white38, fontSize: 12),
+          style: TextStyle(color: Color(0xFFA5A5A8), fontSize: 13),
         ),
-        const SizedBox(height: 4),
-        Text(
-          goal.bottomText ?? '',
-          style: const TextStyle(color: Colors.white70, fontSize: 14),
-        ),
+        const SizedBox(height: 6),
+        Text(goal.bottomText ?? '', style: _bottomTextStyle),
       ],
     );
   }
@@ -199,126 +200,6 @@ class _GoalsPageState extends State<GoalsPage> {
     );
   }
 
-  Widget _buildAppBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.borderLight),
-              ),
-              child: Center(
-                child: Image.asset(
-                  'assets/icons/back_arrow.png',
-                  width: 20,
-                  height: 20,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-          const Text(
-            'Goals',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.borderLight),
-            ),
-            child: Center(
-              child: Image.asset(
-                'assets/icons/edit.png',
-                width: 20,
-                height: 20,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSegmentControl() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      height: 48,
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _selectedTabIndex = 0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: _selectedTabIndex == 0
-                      ? AppColors.borderLight
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Center(
-                  child: Text(
-                    'Ongoing goals',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: _selectedTabIndex == 0
-                          ? FontWeight.w500
-                          : FontWeight.w400,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _selectedTabIndex = 1),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: _selectedTabIndex == 1
-                      ? AppColors.borderLight
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Center(
-                  child: Text(
-                    'Completed',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: _selectedTabIndex == 1
-                          ? FontWeight.w500
-                          : FontWeight.w400,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildGoalCard({
     required String title,
     required String description,
@@ -329,103 +210,42 @@ class _GoalsPageState extends State<GoalsPage> {
   }) {
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderLight),
-        ),
+        padding: const EdgeInsets.fromLTRB(15, 16, 15, 16),
+        decoration: GoalUi.cardDecoration(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (priority != null) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: priority.toLowerCase() == 'high priority'
-                      ? const Color(0x26EF5350)
-                      : const Color(0x26FFA726),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  priority,
-                  style: TextStyle(
-                    color: priority.toLowerCase() == 'high priority'
-                        ? const Color(0xFFEF5350)
-                        : const Color(0xFFFFA726),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
+              GoalTag.priority(priority),
+              const SizedBox(height: 10),
             ],
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  child: Text(title, style: GoalUi.cardTitle),
                 ),
                 const SizedBox(width: 12),
-                const Icon(
-                  Icons.north_east,
-                  color: Colors.white,
-                  size: 20,
+                const Padding(
+                  padding: EdgeInsets.only(right: 4),
+                  child: Icon(
+                    Icons.north_east_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               description,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 14,
-                height: 1.4,
-              ),
+              style: GoalUi.body.copyWith(height: 1.15),
             ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: Colors.white10,
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                    child: FractionallySizedBox(
-                      alignment: Alignment.centerLeft,
-                      widthFactor: progress / 100,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(
-                              0xFF65C466), // Bright green matching the design
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  '$progress%',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
+            GoalProgressRow(progress: progress),
+            const SizedBox(height: 18),
             bottomWidget,
           ],
         ),

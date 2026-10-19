@@ -66,7 +66,9 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           children: [
             _buildAppBar(),
             Expanded(
-              child: _detailType == 'project' ? _buildProjectLayout() : _buildStepsLayout(),
+              child: _detailType == 'project'
+                  ? _buildProjectLayout()
+                  : _buildStepsLayout(),
             ),
           ],
         ),
@@ -282,7 +284,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
                         color: const Color(0xFF5A1E1E),
                         borderRadius: BorderRadius.circular(12),
@@ -348,7 +351,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: CrystalCard(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
                       borderRadius: 16,
                       borderColor: AppColors.borderLight,
                       child: Row(
@@ -359,10 +363,14 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                               width: 20,
                               height: 20,
                               decoration: BoxDecoration(
-                                color: sub.isCompleted ? Colors.white : Colors.transparent,
+                                color: sub.isCompleted
+                                    ? Colors.white
+                                    : Colors.transparent,
                                 borderRadius: BorderRadius.circular(5),
                                 border: Border.all(
-                                  color: sub.isCompleted ? Colors.white : Colors.white24,
+                                  color: sub.isCompleted
+                                      ? Colors.white
+                                      : Colors.white24,
                                   width: 1.5,
                                 ),
                               ),
@@ -380,14 +388,19 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                             child: Text(
                               sub.title,
                               style: GoogleFonts.outfit(
-                                color: sub.isCompleted ? Colors.white38 : Colors.white,
+                                color: sub.isCompleted
+                                    ? Colors.white38
+                                    : Colors.white,
                                 fontSize: 15,
-                                decoration: sub.isCompleted ? TextDecoration.lineThrough : null,
+                                decoration: sub.isCompleted
+                                    ? TextDecoration.lineThrough
+                                    : null,
                               ),
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 2),
                             decoration: BoxDecoration(
                               color: sub.isCompleted
                                   ? const Color(0xFF1E3F20)
@@ -397,7 +410,9 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                             child: Text(
                               sub.isCompleted ? 'Completed' : 'Pending',
                               style: GoogleFonts.outfit(
-                                color: sub.isCompleted ? const Color(0xFF6FF074) : const Color(0xFFF0BD6F),
+                                color: sub.isCompleted
+                                    ? const Color(0xFF6FF074)
+                                    : const Color(0xFFF0BD6F),
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
                               ),

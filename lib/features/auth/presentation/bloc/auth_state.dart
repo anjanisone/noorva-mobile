@@ -5,6 +5,7 @@ enum AuthStatus {
   initial,
   loginSuccess,
   loginFailure,
+  accountNotFound,
   googleSignInSuccess,
   googleSignInFailure,
   appleSignInSuccess,

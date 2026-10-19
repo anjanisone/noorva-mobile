@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../goals/presentation/widgets/goal_ui.dart';
 import '../../data/models/event_model.dart';
 import '../bloc/events_bloc.dart';
 import '../bloc/events_state.dart';
@@ -16,7 +17,8 @@ class EventsPage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            _buildAppBar(context),
+            const GoalAppBar(title: 'Events', showEdit: false),
+            const SizedBox(height: 16),
             Expanded(
               child: BlocBuilder<EventsBloc, EventsState>(
                 builder: (context, state) {
@@ -25,19 +27,17 @@ class EventsPage extends StatelessWidget {
                     return const Center(
                       child: Text(
                         'No events scheduled',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 16,
-                        ),
+                        style: TextStyle(color: GoalUi.textBody, fontSize: 16),
                       ),
                     );
                   }
 
                   return ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                     physics: const BouncingScrollPhysics(),
                     itemCount: events.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 20),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 16),
                     itemBuilder: (context, index) {
                       return _buildEventCard(context, events[index]);
                     },
@@ -51,51 +51,12 @@ class EventsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildAppBar(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.borderLight),
-              ),
-              child: Center(
-                child: Image.asset(
-                  'assets/icons/back_arrow.png',
-                  width: 20,
-                  height: 20,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-          const Text(
-            'Events',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          // Empty placeholder to balance centering of title
-          const SizedBox(width: 44),
-        ],
-      ),
-    );
-  }
-
   Widget _buildEventCard(BuildContext context, Event event) {
-    final progress = event.progressPercentage;
-    final progressPct = (progress * 100).toInt();
+    final progress = event.progressPercentage.clamp(0.0, 1.0);
+    final progressPct = (progress * 100).round();
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () {
         Navigator.pushNamed(
           context,
@@ -104,43 +65,36 @@ class EventsPage extends StatelessWidget {
         );
       },
       child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.borderLight),
-        ),
+        padding: const EdgeInsets.fromLTRB(15, 15, 15, 16),
+        decoration: GoalUi.cardDecoration(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image Banner with loading skeletons and error fallbacks
             ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.asset(
-                event.imageUrl,
-                height: 140,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 140,
-                    color: Colors.white10,
+              borderRadius: BorderRadius.circular(14),
+              child: AspectRatio(
+                aspectRatio: 326 / 104,
+                child: Image.asset(
+                  event.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: GoalUi.inset,
                     child: const Center(
-                      child: Icon(Icons.image, color: Colors.white30, size: 40),
+                      child: Icon(Icons.image_outlined,
+                          color: Colors.white30, size: 36),
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 16),
-
-            // Priority Pill
-            _buildPriorityPill(event.priority),
+            GoalTag(
+              label: _priorityLabel(event.priority),
+              colors: _priorityColors(event.priority),
+            ),
             const SizedBox(height: 12),
-
-            // Title and navigation arrow row
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: Text(
@@ -148,68 +102,59 @@ class EventsPage extends StatelessWidget {
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                      height: 1.25,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                const Icon(
-                  Icons.north_east,
-                  color: Colors.white,
-                  size: 20,
+                const SizedBox(width: 12),
+                const Padding(
+                  padding: EdgeInsets.only(top: 2, right: 4),
+                  child: Icon(Icons.north_east_rounded,
+                      color: Colors.white, size: 20),
                 ),
               ],
             ),
-            const SizedBox(height: 4),
-
-            // Time subtitle (italic style)
+            const SizedBox(height: 2),
             Text(
               'In ${event.daysRemaining} days',
               style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 13,
+                color: GoalUi.textBody,
+                fontSize: 14,
                 fontStyle: FontStyle.italic,
               ),
             ),
             const SizedBox(height: 16),
 
-            // Sub tasks bar
+            // Sub tasks count
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                color: const Color(0xFF2A2B2F),
+                borderRadius: BorderRadius.circular(18),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Sub tasks',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
+                  const Expanded(
+                    child: Text(
+                      'Sub tasks',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ),
-                  RichText(
-                    text: TextSpan(
+                  Text.rich(
+                    TextSpan(
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w500,
+                      ),
                       children: [
                         TextSpan(
                           text: '${event.completedTasksCount}',
-                          style: const TextStyle(
-                            color: Color(0xFF65C466),
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: const TextStyle(color: GoalUi.progressFill),
                         ),
                         TextSpan(
                           text: '/${event.tasks.length}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: const TextStyle(color: Colors.white),
                         ),
                       ],
                     ),
@@ -217,37 +162,18 @@ class EventsPage extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 18),
 
-            // Progress bar and percentage text
             Row(
               children: [
-                Expanded(
-                  child: Container(
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: Colors.white10,
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                    child: FractionallySizedBox(
-                      alignment: Alignment.centerLeft,
-                      widthFactor: progress,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF65C466),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
+                Expanded(child: GoalProgressBar(progress: progressPct)),
+                const SizedBox(width: 30),
                 Text(
                   '$progressPct%',
                   style: const TextStyle(
-                    color: AppColors.textSecondary,
+                    color: GoalUi.textMuted,
                     fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
               ],
@@ -258,43 +184,15 @@ class EventsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildPriorityPill(EventPriority priority) {
-    String text;
-    Color bg;
-    Color textCol;
+  String _priorityLabel(EventPriority priority) => switch (priority) {
+        EventPriority.high => 'High Priority',
+        EventPriority.medium => 'Medium Priority',
+        EventPriority.low => 'Low Priority',
+      };
 
-    switch (priority) {
-      case EventPriority.high:
-        text = 'High Priority';
-        bg = const Color(0xFF381A1A);
-        textCol = const Color(0xFFFF8A8A);
-        break;
-      case EventPriority.medium:
-        text = 'Medium Priority';
-        bg = const Color(0xFF382A1A);
-        textCol = const Color(0xFFFFC58A);
-        break;
-      case EventPriority.low:
-        text = 'Low Priority';
-        bg = const Color(0xFF1A2A38);
-        textCol = const Color(0xFF8AC5FF);
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: textCol,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
+  (Color, Color) _priorityColors(EventPriority priority) => switch (priority) {
+        EventPriority.high => GoalUi.tagRed,
+        EventPriority.medium => GoalUi.tagAmber,
+        EventPriority.low => GoalUi.tagBlue,
+      };
 }

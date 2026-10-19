@@ -18,11 +18,15 @@ class NotificationsPage extends StatefulWidget {
 
 class _NotificationsPageState extends State<NotificationsPage> {
   void _toggleSelectionMode(NotificationState state) {
-    context.read<NotificationBloc>().add(NotificationSelectionModeToggled(!state.isSelectionMode));
+    context
+        .read<NotificationBloc>()
+        .add(NotificationSelectionModeToggled(!state.isSelectionMode));
   }
 
   void _selectAll() {
-    context.read<NotificationBloc>().add(const NotificationSelectAllToggled(true));
+    context
+        .read<NotificationBloc>()
+        .add(const NotificationSelectAllToggled(true));
   }
 
   void _showDeleteConfirmation() {
@@ -31,9 +35,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
       builder: (context) {
         return NoorvaDeleteDialog(
           title: 'Delete notifications',
-          content: 'This action will permanently delete the notifications from your feed',
+          content:
+              'This action will permanently delete the notifications from your feed',
           onConfirm: () {
-            context.read<NotificationBloc>().add(const NotificationsDeleteSelectedRequested());
+            context
+                .read<NotificationBloc>()
+                .add(const NotificationsDeleteSelectedRequested());
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Notifications deleted successfully'),
@@ -56,45 +63,50 @@ class _NotificationsPageState extends State<NotificationsPage> {
       ),
       builder: (context) {
         return SafeArea(
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(2),
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Simulate Push Notifications',
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
+                  const SizedBox(height: 20),
+                  Text(
+                    'Simulate Push Notifications',
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Trigger Figma spec designs with custom actions & wizard icon',
-                  style: GoogleFonts.outfit(
-                    color: Colors.white54,
-                    fontSize: 14,
+                  const SizedBox(height: 6),
+                  Text(
+                    'Trigger Figma spec designs with custom actions & wizard icon',
+                    style: GoogleFonts.outfit(
+                      color: Colors.white54,
+                      fontSize: 14,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                _buildSimulateItem(0, 'Break Reminder', 'Time for a break! Stand up!'),
-                _buildSimulateItem(1, 'Meeting Alert', 'Call with Sumanth'),
-                _buildSimulateItem(2, 'Workday Report', 'End of workday! Check your stats'),
-                _buildSimulateItem(3, 'Missed Intention', 'You missed a task, reschedule now'),
-              ],
+                  const SizedBox(height: 20),
+                  _buildSimulateItem(
+                      0, 'Break Reminder', 'Time for a break! Stand up!'),
+                  _buildSimulateItem(1, 'Meeting Alert', 'Call with Sumanth'),
+                  _buildSimulateItem(
+                      2, 'Workday Report', 'End of workday! Check your stats'),
+                  _buildSimulateItem(3, 'Missed Intention',
+                      'You missed a task, reschedule now'),
+                ],
+              ),
             ),
           ),
         );
@@ -108,7 +120,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
       child: InkWell(
         onTap: () {
           Navigator.pop(context);
-          context.read<NotificationBloc>().add(NotificationSimulateRequested(index));
+          context
+              .read<NotificationBloc>()
+              .add(NotificationSimulateRequested(index));
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(
@@ -168,15 +182,19 @@ class _NotificationsPageState extends State<NotificationsPage> {
               SnackBar(
                 content: Text(
                   state.lastActionResponse!,
-                  style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w500),
+                  style: GoogleFonts.outfit(
+                      color: Colors.white, fontWeight: FontWeight.w500),
                 ),
                 backgroundColor: const Color(0xFF2C2C2E),
                 duration: const Duration(seconds: 3),
                 behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
             );
-            context.read<NotificationBloc>().add(const NotificationActionResponseCleared());
+            context
+                .read<NotificationBloc>()
+                .add(const NotificationActionResponseCleared());
           }
         });
 
@@ -194,12 +212,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           children: [
                             if (today.isNotEmpty) ...[
                               _buildSectionHeader('Today'),
-                              ...today.map((n) => _buildNotificationCard(n, state)),
+                              ...today
+                                  .map((n) => _buildNotificationCard(n, state)),
                             ],
                             if (week.isNotEmpty) ...[
                               const SizedBox(height: 24),
                               _buildSectionHeader('This Week'),
-                              ...week.map((n) => _buildNotificationCard(n, state)),
+                              ...week
+                                  .map((n) => _buildNotificationCard(n, state)),
                             ],
                             const SizedBox(height: 100), // Space for bottom bar
                           ],
@@ -274,7 +294,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 color: Colors.white10,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+              child:
+                  const Icon(Icons.arrow_back, color: Colors.white, size: 20),
             ),
           ),
           const Spacer(),
@@ -308,14 +329,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  Widget _buildNotificationCard(NotificationModel item, NotificationState state) {
+  Widget _buildNotificationCard(
+      NotificationModel item, NotificationState state) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
           if (state.isSelectionMode) ...[
             GestureDetector(
-              onTap: () => context.read<NotificationBloc>().add(NotificationSelectionToggled(item.id)),
+              onTap: () => context
+                  .read<NotificationBloc>()
+                  .add(NotificationSelectionToggled(item.id)),
               child: Container(
                 margin: const EdgeInsets.only(right: 12),
                 width: 24,
@@ -338,9 +362,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
             child: GestureDetector(
               onTap: () {
                 if (state.isSelectionMode) {
-                  context.read<NotificationBloc>().add(NotificationSelectionToggled(item.id));
+                  context
+                      .read<NotificationBloc>()
+                      .add(NotificationSelectionToggled(item.id));
                 } else {
-                  context.read<NotificationBloc>().add(NotificationMarkedAsRead(item.id));
+                  context
+                      .read<NotificationBloc>()
+                      .add(NotificationMarkedAsRead(item.id));
                 }
               },
               child: CrystalCard(
@@ -434,7 +462,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
               ),
               child: Text(
                 'Delete',
-                style: GoogleFonts.outfit(color: const Color(0xFFFF8A8A), fontSize: 16),
+                style: GoogleFonts.outfit(
+                    color: const Color(0xFFFF8A8A), fontSize: 16),
               ),
             ),
           ),

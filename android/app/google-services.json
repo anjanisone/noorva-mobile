@@ -1,42 +1,49 @@
 {
   "project_info": {
-    "project_number": "875117978323",
-    "project_id": "noorva-companion-mlp",
-    "storage_bucket": "noorva-companion-mlp.firebasestorage.app"
+    "project_number": "474080234687",
+    "project_id": "noorva-companion-510918",
+    "storage_bucket": "noorva-companion-510918.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:875117978323:android:ad1222882bb72c4f482a26",
+        "mobilesdk_app_id": "1:474080234687:android:20e73220ed77ee13b60a0a",
         "android_client_info": {
           "package_name": "com.noorva.app.noorva_app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "875117978323-st3q7dj4tqetsphqcjsi0t0vn7qu1cha.apps.googleusercontent.com",
+          "client_id": "474080234687-tjvv56260itcmshchl5jaebph6bsfvp1.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.noorva.app.noorva_app",
-            "certificate_hash": "15298b1ae08575a208d11edcce26c4455780d6d3"
+            "certificate_hash": "4bb609dc7df907ea67afe4b6082c2d512ffd25a5"
           }
         },
         {
-          "client_id": "875117978323-4oui4q3rec1jnt4juhp34gifanp7hpf6.apps.googleusercontent.com",
+          "client_id": "474080234687-8qks2g0kvij0uag0vag2ndfvmgbqikh8.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCTsvhwz07EtUP4uChzZ8hjnUgwOUcAmlI"
+          "current_key": "AIzaSyDXtTKcaKwNnJWVprOceG3FFfcqOVUZWZ0"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "875117978323-4oui4q3rec1jnt4juhp34gifanp7hpf6.apps.googleusercontent.com",
+              "client_id": "474080234687-8qks2g0kvij0uag0vag2ndfvmgbqikh8.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "474080234687-npnbfdrlbg1cmsp8o5j76req54145d51.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.noorva.app.noorvaApp"
+              }
             }
           ]
         }

@@ -10,6 +10,7 @@ import '../../../../core/widgets/noorva_button.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../widgets/auth_mascot.dart';
 
 class OtpVerificationPage extends StatefulWidget {
   const OtpVerificationPage({super.key});
@@ -180,14 +181,10 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
           body: Stack(
             children: [
               // Stationary Character Image at bottom right
-              Positioned(
+              const Positioned(
                 bottom: 0,
                 right: -20,
-                child: Image.asset(
-                  'assets/images/forgot_password.png',
-                  height: 350,
-                  fit: BoxFit.contain,
-                ),
+                child: AuthMascot(height: 350),
               ),
               // Scrollable content
               SingleChildScrollView(

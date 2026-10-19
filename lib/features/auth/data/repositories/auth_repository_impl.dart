@@ -52,6 +52,10 @@ class AuthRepositoryImpl implements AuthRepository {
         gender: genderVal,
         occupation: occupationVal,
       );
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Firebase Login Error: $e');
+      if (e.code == 'user-not-found') throw const AccountNotFoundException();
+      rethrow;
     } catch (e) {
       debugPrint('Firebase Login Error: $e');
       rethrow;
@@ -118,7 +122,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<UserEntity> signInWithGoogle() async {
+  Future<UserEntity> signInWithGoogle({bool isSignUp = false}) async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) throw Exception('Google Sign-In Cancelled');
@@ -133,6 +137,19 @@ class AuthRepositoryImpl implements AuthRepository {
       final User? user = userCredential.user;
 
       if (user == null) throw Exception('Firebase Google Sign-In failed');
+
+      // Sign-in (not sign-up) must not create accounts: if Firebase just
+      // created this one, undo it and send the user to sign up instead.
+      if (!isSignUp && (userCredential.additionalUserInfo?.isNewUser ?? false)) {
+        try {
+          await user.delete();
+        } catch (deleteError) {
+          debugPrint('Could not delete just-created account: $deleteError');
+        }
+        await _firebaseAuth.signOut();
+        await _googleSignIn.signOut();
+        throw const AccountNotFoundException();
+      }
 
       String nameVal = user.displayName ?? googleUser.displayName ?? 'Google User';
       String? dobVal;
@@ -174,6 +191,7 @@ class AuthRepositoryImpl implements AuthRepository {
         occupation: occupationVal,
       );
     } catch (e) {
+      if (e is AccountNotFoundException) rethrow;
       debugPrint('Google Sign-In failed: $e');
       // Mock Fallback for Developer Error (Code 10) or other config issues
       if (e.toString().contains('10') ||

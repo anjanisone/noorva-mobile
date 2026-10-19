@@ -1,9 +1,19 @@
 import '../entities/user_entity.dart';
 import '../../../../core/services/otp_service.dart';
 
+/// Thrown when a sign-in is attempted for an account that does not exist yet.
+class AccountNotFoundException implements Exception {
+  const AccountNotFoundException();
+
+  @override
+  String toString() => 'No account found. Please sign up first.';
+}
+
 abstract class AuthRepository {
   Future<UserEntity> login(String email, String password);
-  Future<UserEntity> signInWithGoogle();
+  /// With [isSignUp] false, a Google account that has no Noorva account yet
+  /// throws [AccountNotFoundException] instead of being created.
+  Future<UserEntity> signInWithGoogle({bool isSignUp = false});
   Future<UserEntity> signInWithApple();
   Future<void> logout();
   Future<void> forgotPassword(String email);

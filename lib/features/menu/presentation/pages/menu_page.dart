@@ -16,36 +16,32 @@ class MenuPage extends StatelessWidget {
           children: [
             // App Bar area
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
               child: Row(
                 children: [
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
-                      width: 48,
-                      height: 48,
+                      width: 36,
+                      height: 36,
                       decoration: BoxDecoration(
+                        color: _cardColor,
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.borderLight),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.1)),
                       ),
-                      child: Center(
-                        child: Image.asset(
-                          'assets/icons/back_arrow.png',
-                          width: 24,
-                          height: 24,
-                          color: Colors.white,
-                        ),
-                      ),
+                      child: const Icon(Icons.chevron_left,
+                          color: Colors.white, size: 20),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 14),
                   const Text(
                     'Menu',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
+                      letterSpacing: -0.3,
                     ),
                   ),
                 ],
@@ -56,14 +52,14 @@ class MenuPage extends StatelessWidget {
             Expanded(
               child: ListView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.only(bottom: 40.0),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
                 children: [
                   _buildMenuGroup(
                     'My Workspace',
                     [
                       _buildMenuItem('Dashboard', 'assets/icons/dashboard.png',
-                          onTap: () =>
-                              Navigator.pushNamed(context, AppRoutes.dashboard)),
+                          onTap: () => Navigator.pushNamed(
+                              context, AppRoutes.dashboard)),
                       _buildMenuItem('Goals', 'assets/icons/goals.png',
                           onTap: () =>
                               Navigator.pushNamed(context, AppRoutes.goals)),
@@ -88,7 +84,7 @@ class MenuPage extends StatelessWidget {
                           onTap: () => Navigator.pushNamed(
                               context, AppRoutes.ongoingConversations)),
                       _buildMenuItem('Media', 'assets/icons/media_menu.png',
-                          isLast: true), // try media_menu.png or media.png
+                          isLast: true),
                     ],
                   ),
                   _buildMenuGroup(
@@ -116,8 +112,8 @@ class MenuPage extends StatelessWidget {
                           onTap: () => Navigator.pushNamed(
                               context, AppRoutes.rateNoorva)),
                       _buildMenuItem('Tutorials', 'assets/icons/rate.png',
-                          onTap: () => Navigator.pushNamed(
-                              context, AppRoutes.tutorials),
+                          onTap: () =>
+                              Navigator.pushNamed(context, AppRoutes.tutorials),
                           isLast: true),
                     ],
                   ),
@@ -130,26 +126,37 @@ class MenuPage extends StatelessWidget {
     );
   }
 
+  static const Color _cardColor = Color(0xFF1B1B1E);
+
   Widget _buildMenuGroup(String title, List<Widget> items) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-      padding: const EdgeInsets.all(20.0),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.fromLTRB(8, 14, 8, 8),
       decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(24.0),
-        border: Border.all(color: AppColors.borderLight),
+        // Soft top-lit surface, as in the design.
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF26262A), Color(0xFF202023)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 14,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              title,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.6),
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 4),
           ...items,
         ],
       ),
@@ -158,36 +165,35 @@ class MenuPage extends StatelessWidget {
 
   Widget _buildMenuItem(String title, String iconPath,
       {bool isLast = false, VoidCallback? onTap}) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.only(bottom: isLast ? 0 : 24.0),
-        child: Row(
-          children: [
-            Image.asset(
-              iconPath,
-              width: 20,
-              height: 20,
-              color: Colors.white,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+          child: Row(
+            children: [
+              Image.asset(
+                iconPath,
+                width: 19,
+                height: 19,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
               ),
-            ),
-            Image.asset(
-              'assets/icons/forward_arrow.png',
-              width: 24,
-              height: 24,
-              color: Colors.white,
-            ),
-          ],
+              const Icon(Icons.chevron_right, color: Colors.white, size: 24),
+            ],
+          ),
         ),
       ),
     );

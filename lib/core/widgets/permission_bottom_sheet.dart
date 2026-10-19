@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'noorva_mascot.dart';
 
 class PermissionBottomSheet extends StatelessWidget {
   final String title;
@@ -58,10 +59,10 @@ class PermissionBottomSheet extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Image.asset(
-                imagePath,
+              NoorvaMascot(
+                mood: MascotMood.explaining,
                 height: 120,
-                fit: BoxFit.contain,
+                fallbackAsset: imagePath,
               ),
               const SizedBox(width: 20),
               Expanded(
