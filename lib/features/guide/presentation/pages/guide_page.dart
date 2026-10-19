@@ -226,8 +226,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
   MascotMood get _guideMood {
     if (_isListening) return MascotMood.listening;
     if (_isTyping) return MascotMood.thinking;
-    if (_isInputFocused || _isInputNotEmpty) return MascotMood.typing;
-    return MascotMood.explaining;
+    return MascotMood.chatting;
   }
 
   // ── Bot response helper ────────────────────────────────────────────────────
