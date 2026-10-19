@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class NoorvaTextField extends StatelessWidget {
@@ -11,6 +12,8 @@ class NoorvaTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
   final bool isRequired;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
 
   const NoorvaTextField({
     super.key,
@@ -23,6 +26,8 @@ class NoorvaTextField extends StatelessWidget {
     this.validator,
     this.onChanged,
     this.isRequired = false,
+    this.keyboardType,
+    this.inputFormatters,
   });
 
   @override
@@ -44,6 +49,8 @@ class NoorvaTextField extends StatelessWidget {
           obscureText: obscureText,
           validator: validator,
           onChanged: onChanged,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
           cursorColor: Colors.white,
           style: GoogleFonts.outfit(
             color: Colors.white,

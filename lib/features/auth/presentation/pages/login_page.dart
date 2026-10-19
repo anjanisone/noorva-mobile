@@ -7,9 +7,11 @@ import '../../../../core/widgets/crystal_card.dart';
 import '../../../../core/widgets/noorva_button.dart';
 import '../../../../core/widgets/noorva_text_field.dart';
 import '../../../../core/widgets/social_button.dart';
+import '../../../home/presentation/pages/home_page.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../widgets/auth_mascot.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -38,6 +40,8 @@ class _LoginPageState extends State<LoginPage> {
       listenWhen: (previous, current) =>
           current.status == AuthStatus.loginSuccess ||
           current.status == AuthStatus.loginFailure ||
+          current.status == AuthStatus.accountNotFound ||
+          current.status == AuthStatus.emailNotVerified ||
           current.status == AuthStatus.googleSignInSuccess ||
           current.status == AuthStatus.googleSignInFailure ||
           current.status == AuthStatus.appleSignInSuccess ||
@@ -47,24 +51,69 @@ class _LoginPageState extends State<LoginPage> {
           case AuthStatus.loginSuccess:
           case AuthStatus.googleSignInSuccess:
           case AuthStatus.appleSignInSuccess:
-            Navigator.pushReplacementNamed(context, AppRoutes.home);
+            // Let the mascot finish: Thinking revers (1s) -> idle ->
+            // Login Success (1s) must play before leaving the page.
+            Future.delayed(const Duration(milliseconds: 2800), () {
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(
+                  context,
+                  AppRoutes.home,
+                  arguments: HomePage.welcomeArgument,
+                );
+              }
+            });
+            break;
+          case AuthStatus.accountNotFound:
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                    state.errorMessage ?? 'No account found. Please sign up.'),
+              ),
+            );
+            Navigator.pushNamed(context, AppRoutes.register);
+            break;
+          case AuthStatus.emailNotVerified:
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.errorMessage ??
+                    'Please verify your email before logging in.'),
+              ),
+            );
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.verifyEmail,
+              (route) => false,
+              arguments: 'login',
+            );
             break;
           case AuthStatus.loginFailure:
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.errorMessage ?? 'Login failed. Please try again.'),
+                content: Text(
+                  (state.errorMessage ?? '').contains('invalid-credential')
+                      ? 'Incorrect email or password, or no account exists yet.'
+                      : (state.errorMessage ?? 'Login failed. Please try again.'),
+                ),
                 backgroundColor: Colors.redAccent,
+                action: SnackBarAction(
+                  label: 'Sign up',
+                  textColor: Colors.white,
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.register),
+                ),
               ),
             );
             break;
           case AuthStatus.googleSignInFailure:
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Google Sign-In failed. Please try again.')),
+              const SnackBar(
+                  content: Text('Google Sign-In failed. Please try again.')),
             );
             break;
           case AuthStatus.appleSignInFailure:
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Apple Sign-In failed. Please try again.')),
+              const SnackBar(
+                  content: Text('Apple Sign-In failed. Please try again.')),
             );
             break;
           default:
@@ -81,13 +130,12 @@ class _LoginPageState extends State<LoginPage> {
             child: Stack(
               children: [
                 // Character Image peaking from top right
-                Positioned(
+                const Positioned(
                   top: 40,
                   right: -10,
-                  child: Image.asset(
-                    'assets/images/noorva_login.png',
+                  child: AuthMascot(
                     height: 200,
-                    fit: BoxFit.contain,
+                    fallbackAsset: 'assets/images/noorva_login.png',
                   ),
                 ),
 
@@ -130,10 +178,12 @@ class _LoginPageState extends State<LoginPage> {
                                       _isPasswordVisible
                                           ? Icons.visibility
                                           : Icons.visibility_off,
-                                      color: Colors.white.withValues(alpha: 0.4),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.4),
                                     ),
                                     onPressed: () => setState(() =>
-                                        _isPasswordVisible = !_isPasswordVisible),
+                                        _isPasswordVisible =
+                                            !_isPasswordVisible),
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
@@ -166,8 +216,10 @@ class _LoginPageState extends State<LoginPage> {
                                     if (state.isLoading) {
                                       return const Center(
                                         child: Padding(
-                                          padding: EdgeInsets.symmetric(vertical: 12),
-                                          child: CircularProgressIndicator(color: Colors.white),
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 12),
+                                          child: CircularProgressIndicator(
+                                              color: Colors.white),
                                         ),
                                       );
                                     }
@@ -198,7 +250,8 @@ class _LoginPageState extends State<LoginPage> {
                                     iconPath: 'assets/images/google_icon.png',
                                     isLoading: state.isGoogleLoading,
                                     onPressed: () {
-                                      context.read<AuthBloc>().add(const AuthGoogleSignInRequested());
+                                      context.read<AuthBloc>().add(
+                                          const AuthGoogleSignInRequested());
                                     },
                                   ),
                                 ),
@@ -209,7 +262,8 @@ class _LoginPageState extends State<LoginPage> {
                                     iconPath: 'assets/images/apple_icon.png',
                                     isLoading: state.isAppleLoading,
                                     onPressed: () {
-                                      context.read<AuthBloc>().add(const AuthAppleSignInRequested());
+                                      context.read<AuthBloc>().add(
+                                          const AuthAppleSignInRequested());
                                     },
                                   ),
                                 ),
@@ -220,7 +274,8 @@ class _LoginPageState extends State<LoginPage> {
                                     Text(
                                       "Haven’t met Noorva yet? ",
                                       style: GoogleFonts.outfit(
-                                        color: Colors.white.withValues(alpha: 0.6),
+                                        color:
+                                            Colors.white.withValues(alpha: 0.6),
                                         fontSize: 16,
                                       ),
                                     ),

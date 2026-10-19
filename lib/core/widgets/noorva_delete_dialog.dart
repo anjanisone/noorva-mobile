@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'noorva_mascot.dart';
 
 class NoorvaDeleteDialog extends StatelessWidget {
   final String title;
@@ -135,10 +136,10 @@ class NoorvaDeleteDialog extends StatelessWidget {
             Positioned(
               top: -60,
               left: 16,
-              child: Image.asset(
-                topImagePath!,
+              child: NoorvaMascot(
+                mood: MascotMood.sad,
                 height: 90,
-                fit: BoxFit.contain,
+                fallbackAsset: topImagePath!,
               ),
             ),
         ],

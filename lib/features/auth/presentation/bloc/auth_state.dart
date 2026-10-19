@@ -5,6 +5,7 @@ enum AuthStatus {
   initial,
   loginSuccess,
   loginFailure,
+  accountNotFound,
   googleSignInSuccess,
   googleSignInFailure,
   appleSignInSuccess,
@@ -22,6 +23,13 @@ enum AuthStatus {
   profileUpdateSuccess,
   profileUpdateFailure,
   logoutSuccess,
+  verificationEmailSent,
+  verificationEmailFailure,
+  emailNotVerified,
+  emailVerificationPending,
+  emailVerified,
+  passwordResetEmailSent,
+  passwordResetEmailFailure,
 }
 
 class AuthState extends Equatable {
@@ -47,6 +55,9 @@ class AuthState extends Equatable {
   /// The email that has an active OTP pending verification.
   final String? otpTargetEmail;
 
+  /// The email the verification link was sent to.
+  final String? verificationEmail;
+
   const AuthState({
     this.user,
     this.isLoading = false,
@@ -63,6 +74,7 @@ class AuthState extends Equatable {
     this.pendingOccupation,
     this.recoveryEmail,
     this.otpTargetEmail,
+    this.verificationEmail,
   });
 
   AuthState copyWith({
@@ -84,6 +96,7 @@ class AuthState extends Equatable {
     bool clearPendingRegistration = false,
     String? recoveryEmail,
     String? otpTargetEmail,
+    String? verificationEmail,
   }) {
     return AuthState(
       user: clearUser ? null : (user ?? this.user),
@@ -101,6 +114,7 @@ class AuthState extends Equatable {
       pendingOccupation: clearPendingRegistration ? null : (pendingOccupation ?? this.pendingOccupation),
       recoveryEmail: recoveryEmail ?? this.recoveryEmail,
       otpTargetEmail: otpTargetEmail ?? this.otpTargetEmail,
+      verificationEmail: verificationEmail ?? this.verificationEmail,
     );
   }
 
@@ -121,5 +135,6 @@ class AuthState extends Equatable {
         pendingOccupation,
         recoveryEmail,
         otpTargetEmail,
+        verificationEmail,
       ];
 }

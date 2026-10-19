@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/widgets/noorva_mascot.dart';
 
 class SupportMenuPage extends StatelessWidget {
   const SupportMenuPage({super.key});
@@ -49,12 +50,8 @@ class SupportMenuPage extends StatelessWidget {
                 children: [
                   const SizedBox(height: 20),
                   // Avatar
-                  Center(
-                    child: Image.asset(
-                      'assets/images/noorva_home.png', // Assuming this is the wizard avatar
-                      height: 150,
-                      fit: BoxFit.contain,
-                    ),
+                  const Center(
+                    child: NoorvaMascot(mood: MascotMood.hello, height: 150),
                   ),
                   const SizedBox(height: 24),
                   // Title

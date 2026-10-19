@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../../core/widgets/noorva_mascot.dart';
 
 class InteractiveAiPage extends StatefulWidget {
   const InteractiveAiPage({super.key});
@@ -108,9 +109,13 @@ class _InteractiveAiPageState extends State<InteractiveAiPage> {
                             'assets/images/blue circle_behind_oldman.png',
                             fit: BoxFit.contain,
                           ),
-                          Image.asset(
-                            'assets/images/white_dress_oldman.png',
-                            fit: BoxFit.contain,
+                          NoorvaMascot(
+                            mood: _isVoiceMode
+                                ? MascotMood.listening
+                                : _focusNode.hasFocus
+                                    ? MascotMood.typing
+                                    : MascotMood.hello,
+                            fallbackAsset: 'assets/images/white_dress_oldman.png',
                           ),
                         ],
                       ),
@@ -179,7 +184,10 @@ class _InteractiveAiPageState extends State<InteractiveAiPage> {
                               decoration: const InputDecoration(
                                 hintText: 'Enter response',
                                 hintStyle: TextStyle(color: Colors.white38, fontSize: 16),
+                                filled: false,
                                 border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
                                 contentPadding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                               ),
                             ),

@@ -6,6 +6,7 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/otp_verification_page.dart';
+import '../../features/auth/presentation/pages/verify_email_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/auth/presentation/pages/register_profile_page.dart';
 import '../../features/auth/presentation/pages/permissions_page.dart';
@@ -58,6 +59,7 @@ class AppRouter {
         AppRoutes.register: (context) => const RegisterPage(),
         AppRoutes.forgotPassword: (context) => const ForgotPasswordPage(),
         AppRoutes.otpVerification: (context) => const OtpVerificationPage(),
+        AppRoutes.verifyEmail: (context) => const VerifyEmailPage(),
         AppRoutes.resetPassword: (context) => const ResetPasswordPage(),
         AppRoutes.home: (context) => const HomePage(),
         AppRoutes.guide: (context) => const GuidePage(),
@@ -129,6 +131,9 @@ class AppRouter {
       case AppRoutes.otpVerification:
         return MaterialPageRoute(
             builder: (_) => const OtpVerificationPage(), settings: settings);
+      case AppRoutes.verifyEmail:
+        return MaterialPageRoute(
+            builder: (_) => const VerifyEmailPage(), settings: settings);
       case AppRoutes.resetPassword:
         return MaterialPageRoute(
             builder: (_) => const ResetPasswordPage(), settings: settings);

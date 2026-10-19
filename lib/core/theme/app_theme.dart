@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 class AppTheme {
+  // Screens use dark surfaces in both themes, so the cursor is white by
+  // default. Fields on a light surface (black text) set cursorColor: black.
+  static const _textSelectionTheme = TextSelectionThemeData(
+    cursorColor: Colors.white,
+    selectionColor: Color(0x55FFFFFF),
+    selectionHandleColor: Colors.white,
+  );
+
   // Light Theme (Optional Fallback)
   static final ThemeData lightTheme = ThemeData(
     useMaterial3: true,
@@ -15,6 +23,7 @@ class AppTheme {
       error: AppColors.error,
     ),
     scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+    textSelectionTheme: _textSelectionTheme,
   );
 
   // Dark Theme - PRIMARY THEME FOR NOORVA
@@ -25,6 +34,7 @@ class AppTheme {
     fontFamily: 'Google Sans',
     scaffoldBackgroundColor: AppColors.background,
     cardColor: AppColors.card,
+    textSelectionTheme: _textSelectionTheme,
     colorScheme: const ColorScheme.dark(
       primary: AppColors.primary,
       secondary: AppColors.primary,

@@ -227,7 +227,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             iconPath: 'assets/images/google_icon.png',
                             isLoading: state.isGoogleLoading,
                             onPressed: () {
-                              context.read<AuthBloc>().add(const AuthGoogleSignInRequested());
+                              context.read<AuthBloc>().add(const AuthGoogleSignInRequested(isSignUp: true));
                             },
                           ),
                         ),

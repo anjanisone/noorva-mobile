@@ -22,7 +22,13 @@ class AuthLoginRequested extends AuthEvent {
 }
 
 class AuthGoogleSignInRequested extends AuthEvent {
-  const AuthGoogleSignInRequested();
+  /// True when triggered from the sign-up screen (creates the account if new).
+  final bool isSignUp;
+
+  const AuthGoogleSignInRequested({this.isSignUp = false});
+
+  @override
+  List<Object?> get props => [isSignUp];
 }
 
 class AuthAppleSignInRequested extends AuthEvent {
@@ -61,6 +67,31 @@ class AuthPendingProfileDataSet extends AuthEvent {
 
   @override
   List<Object?> get props => [dob, gender, occupation];
+}
+
+/// Creates the account from the pending sign-up data and emails the
+/// verification link.
+class AuthSignupRequested extends AuthEvent {
+  const AuthSignupRequested();
+}
+
+class AuthVerificationEmailResendRequested extends AuthEvent {
+  const AuthVerificationEmailResendRequested();
+}
+
+/// Checks whether the user has clicked the verification link yet.
+class AuthEmailVerificationCheckRequested extends AuthEvent {
+  const AuthEmailVerificationCheckRequested();
+}
+
+/// Sends Firebase's password reset link to [email].
+class AuthPasswordResetEmailRequested extends AuthEvent {
+  final String email;
+
+  const AuthPasswordResetEmailRequested(this.email);
+
+  @override
+  List<Object?> get props => [email];
 }
 
 class AuthSignupOtpRequested extends AuthEvent {
