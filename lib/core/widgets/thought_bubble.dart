@@ -9,12 +9,16 @@ class ThoughtBubble extends StatelessWidget {
   final double? minHeight;
   final ThoughtBubbleDotsAlignment dotsAlignment;
 
+  /// Smaller text, padding and cloud for tight layouts.
+  final bool compact;
+
   const ThoughtBubble({
     super.key,
     required this.text,
     this.maxWidth = 200,
     this.minHeight,
     this.dotsAlignment = ThoughtBubbleDotsAlignment.right,
+    this.compact = false,
   });
 
   @override
@@ -23,13 +27,15 @@ class ThoughtBubble extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         CustomPaint(
-          painter: _ThoughtBubblePainter(),
+          painter: _ThoughtBubblePainter(compact: compact),
           child: Container(
             constraints: BoxConstraints(
               maxWidth: maxWidth,
               minHeight: minHeight ?? 0,
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            padding: compact
+                ? const EdgeInsets.symmetric(horizontal: 20, vertical: 16)
+                : const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: Center(
               child: Text(
                 text,
@@ -38,8 +44,8 @@ class ThoughtBubble extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.outfit(
                   color: Colors.white,
-                  fontSize: 15,
-                  height: 1.4,
+                  fontSize: compact ? 10 : 12,
+                  height: compact ? 1 : 1.2,
                   fontWeight: FontWeight.w400,
                 ),
               ),
@@ -49,14 +55,14 @@ class ThoughtBubble extends StatelessWidget {
         // Trailing dots pointing down
         if (dotsAlignment == ThoughtBubbleDotsAlignment.right) ...[
           Positioned(
-            right: 52,
-            bottom: -30,
-            child: _dot(12),
+            right: compact ? 44 : 52,
+            bottom: compact ? -22 : -30,
+            child: _dot(compact ? 10 : 12),
           ),
           Positioned(
-            right: 48,
-            bottom: -42,
-            child: _dot(8),
+            right: compact ? 40 : 48,
+            bottom: compact ? -32 : -42,
+            child: _dot(compact ? 6 : 8),
           ),
         ] else if (dotsAlignment == ThoughtBubbleDotsAlignment.left) ...[
           Positioned(
@@ -118,6 +124,10 @@ class _DotPainter extends CustomPainter {
 }
 
 class _ThoughtBubblePainter extends CustomPainter {
+  _ThoughtBubblePainter({this.compact = false});
+
+  final bool compact;
+
   @override
   void paint(Canvas canvas, Size size) {
     final fill = Paint()
@@ -132,18 +142,24 @@ class _ThoughtBubblePainter extends CustomPainter {
     final cx = size.width / 2;
     final cy = size.height / 2;
 
+    // Hump offsets are tuned for a ~200x110 bubble; compact bubbles scale
+    // them down so the cloud doesn't spill far past the text box.
+    final sx = compact ? (size.width / 200).clamp(0.6, 1.0) : 1.0;
+    final sy = compact ? (size.height / 110).clamp(0.6, 1.0) : 1.0;
+    final radius = 28 * (sx < sy ? sx : sy);
+
     // Smaller humps for a more compact bubble
     final humps = [
-      Offset(cx - 30, cy - 35),
-      Offset(cx, cy - 40),
-      Offset(cx + 30, cy - 35),
-      Offset(cx + 55, cy - 15),
-      Offset(cx + 60, cy + 10),
-      Offset(cx + 40, cy + 35),
-      Offset(cx, cy + 40),
-      Offset(cx - 40, cy + 35),
-      Offset(cx - 60, cy + 10),
-      Offset(cx - 55, cy - 15),
+      Offset(cx - 30 * sx, cy - 35 * sy),
+      Offset(cx, cy - 40 * sy),
+      Offset(cx + 30 * sx, cy - 35 * sy),
+      Offset(cx + 55 * sx, cy - 15 * sy),
+      Offset(cx + 60 * sx, cy + 10 * sy),
+      Offset(cx + 40 * sx, cy + 35 * sy),
+      Offset(cx, cy + 40 * sy),
+      Offset(cx - 40 * sx, cy + 35 * sy),
+      Offset(cx - 60 * sx, cy + 10 * sy),
+      Offset(cx - 55 * sx, cy - 15 * sy),
     ];
 
     Path path = Path()
@@ -160,7 +176,7 @@ class _ThoughtBubblePainter extends CustomPainter {
       path = Path.combine(
         PathOperation.union,
         path,
-        Path()..addOval(Rect.fromCircle(center: h, radius: 28)),
+        Path()..addOval(Rect.fromCircle(center: h, radius: radius)),
       );
     }
 
@@ -169,5 +185,6 @@ class _ThoughtBubblePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _ThoughtBubblePainter oldDelegate) =>
+      oldDelegate.compact != compact;
 }

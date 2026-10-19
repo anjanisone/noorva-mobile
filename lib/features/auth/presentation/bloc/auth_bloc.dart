@@ -8,7 +8,8 @@ import 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _repository;
 
-  AuthBloc(this._repository) : super(const AuthState()) {
+  // Starts loading so the splash screen waits for the saved-session check.
+  AuthBloc(this._repository) : super(const AuthState(isLoading: true)) {
     on<AuthCheckRequested>(_onCheckRequested);
     on<AuthLoginRequested>(_onLoginRequested);
     on<AuthGoogleSignInRequested>(_onGoogleSignInRequested);
@@ -21,6 +22,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthOtpVerifyRequested>(_onOtpVerifyRequested);
     on<AuthResetPasswordRequested>(_onResetPasswordRequested);
     on<AuthProfileUpdateRequested>(_onProfileUpdateRequested);
+    on<AuthSignupRequested>(_onSignupRequested);
+    on<AuthVerificationEmailResendRequested>(_onVerificationEmailResendRequested);
+    on<AuthEmailVerificationCheckRequested>(_onEmailVerificationCheckRequested);
+    on<AuthPasswordResetEmailRequested>(_onPasswordResetEmailRequested);
 
     add(const AuthCheckRequested());
   }
@@ -43,6 +48,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(state.copyWith(isLoading: false, user: user, status: AuthStatus.loginSuccess));
     } on AccountNotFoundException catch (e) {
       emit(state.copyWith(isLoading: false, errorMessage: e.toString(), status: AuthStatus.accountNotFound));
+    } on EmailNotVerifiedException catch (e) {
+      emit(state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+        verificationEmail: event.email.trim(),
+        status: AuthStatus.emailNotVerified,
+      ));
     } catch (e) {
       final message = e.toString().contains('Exception: ')
           ? e.toString().replaceAll('Exception: ', '')
@@ -260,6 +272,96 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           : 'Profile update failed: ${e.toString()}';
       debugPrint('Profile Update Error: $e');
       emit(state.copyWith(isLoading: false, errorMessage: message, status: AuthStatus.profileUpdateFailure));
+    }
+  }
+
+  Future<void> _onSignupRequested(AuthSignupRequested event, Emitter<AuthState> emit) async {
+    if (state.pendingEmail == null || state.pendingPassword == null || state.pendingName == null) {
+      emit(state.copyWith(
+        errorMessage: 'Missing registration details. Please restart registration.',
+        status: AuthStatus.registerFailure,
+      ));
+      return;
+    }
+    emit(state.copyWith(isLoading: true, clearError: true, status: AuthStatus.initial));
+    try {
+      final email = state.pendingEmail!;
+      await _repository.register(
+        email: email,
+        password: state.pendingPassword!,
+        name: state.pendingName!,
+        dob: state.pendingDob,
+        gender: state.pendingGender,
+        occupation: state.pendingOccupation,
+      );
+      // Not logged in yet: the user is set once the email is verified.
+      emit(state.copyWith(
+        isLoading: false,
+        verificationEmail: email,
+        clearPendingRegistration: true,
+        status: AuthStatus.verificationEmailSent,
+      ));
+    } catch (e) {
+      final message = e.toString().contains('email-already-in-use')
+          ? 'An account with this email already exists. Please log in.'
+          : e.toString().contains('Exception: ')
+              ? e.toString().replaceAll('Exception: ', '')
+              : 'Registration failed: ${e.toString()}';
+      debugPrint('Registration Error: $e');
+      emit(state.copyWith(isLoading: false, errorMessage: message, status: AuthStatus.registerFailure));
+    }
+  }
+
+  Future<void> _onVerificationEmailResendRequested(
+      AuthVerificationEmailResendRequested event, Emitter<AuthState> emit) async {
+    emit(state.copyWith(isLoading: true, clearError: true, status: AuthStatus.initial));
+    try {
+      await _repository.sendVerificationEmail();
+      emit(state.copyWith(isLoading: false, status: AuthStatus.verificationEmailSent));
+    } catch (e) {
+      final message = e.toString().contains('Exception: ')
+          ? e.toString().replaceAll('Exception: ', '')
+          : 'Could not send the email. Please try again.';
+      debugPrint('Resend verification email error: $e');
+      emit(state.copyWith(isLoading: false, errorMessage: message, status: AuthStatus.verificationEmailFailure));
+    }
+  }
+
+  Future<void> _onEmailVerificationCheckRequested(
+      AuthEmailVerificationCheckRequested event, Emitter<AuthState> emit) async {
+    emit(state.copyWith(isLoading: true, clearError: true, status: AuthStatus.initial));
+    try {
+      final user = await _repository.checkEmailVerified();
+      if (user == null) {
+        emit(state.copyWith(
+          isLoading: false,
+          errorMessage: 'Email not verified yet. Open the link we sent you, then try again.',
+          status: AuthStatus.emailVerificationPending,
+        ));
+        return;
+      }
+      emit(state.copyWith(isLoading: false, user: user, status: AuthStatus.emailVerified));
+    } catch (e) {
+      final message = e.toString().contains('Exception: ')
+          ? e.toString().replaceAll('Exception: ', '')
+          : 'Could not check verification. Please try again.';
+      debugPrint('Check email verification error: $e');
+      emit(state.copyWith(isLoading: false, errorMessage: message, status: AuthStatus.emailVerificationPending));
+    }
+  }
+
+  Future<void> _onPasswordResetEmailRequested(
+      AuthPasswordResetEmailRequested event, Emitter<AuthState> emit) async {
+    emit(state.copyWith(isLoading: true, clearError: true, status: AuthStatus.initial));
+    try {
+      await _repository.forgotPassword(event.email);
+      emit(state.copyWith(isLoading: false, status: AuthStatus.passwordResetEmailSent));
+    } catch (e) {
+      final message = e.toString().contains('invalid-email')
+          ? 'Please enter a valid email address.'
+          : 'Could not send the reset link. Please try again.';
+      debugPrint('Password reset email error: $e');
+      emit(state.copyWith(isLoading: false, errorMessage: message, status: AuthStatus.passwordResetEmailFailure));
     }
   }
 

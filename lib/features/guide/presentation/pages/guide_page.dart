@@ -15,6 +15,7 @@ import 'sources_web_view_page.dart';
 import '../../../../core/widgets/radio_dot.dart';
 import '../../../../core/widgets/noorva_mascot.dart';
 import '../../../../core/widgets/noorva_chat_input.dart';
+import '../../../../core/widgets/chat_attachments.dart';
 import '../../../../core/widgets/perched_mascot.dart';
 
 class GoalChatArguments {
@@ -36,6 +37,7 @@ class GuidePage extends StatefulWidget {
 
 class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
   final TextEditingController _messageController = TextEditingController();
+  final ChatAttachmentController _attachments = ChatAttachmentController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _inputFocusNode = FocusNode();
 
@@ -209,6 +211,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
   @override
   void dispose() {
     _messageController.dispose();
+    _attachments.dispose();
     _customTitleController.dispose();
     _scrollController.dispose();
     _inputFocusNode.dispose();
@@ -253,6 +256,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
       _showInitialWelcome = false;
       _messages.add(ChatMessage(text: text, isUser: true));
       _messageController.clear();
+      _attachments.clear();
       _currentSuggestions = [];
       _isInputNotEmpty = false;
     });
@@ -856,13 +860,12 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
                           ),
                         ),
                         // Only the input bar's top margin sits between the
-                        // chat area and the bar while chatting.
-                        if (_currentSuggestions.isEmpty)
-                          PerchedMascot(
-                            controller: _scrollController,
-                            gapToBar: 8,
-                            mood: _guideMood,
-                          ),
+                        // chat area and the bar; with suggestions showing he
+                        // stands on top of them instead.
+                        PerchedMascot(
+                          gapToBar: _currentSuggestions.isEmpty ? 8 : 0,
+                          mood: _guideMood,
+                        ),
                       ],
                     ),
                   )
@@ -2072,6 +2075,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
           onSend: () => _handleSendMessage(_messageController.text),
           pillIconAsset: 'assets/icons/guide.png',
           pillLabel: 'Guide',
+          attachments: _attachments,
           onMicTap: _listen,
           isListening: _isListening,
           homeStyle: true,

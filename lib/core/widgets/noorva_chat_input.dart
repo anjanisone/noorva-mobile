@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import 'chat_attachments.dart';
 
 /// Shared bottom chat input used by the Guide and Event creation screens.
 ///
 /// Layout: text field on top; below it an attach button, a centred mode pill
 /// (e.g. "Guide" / "Events"), and either mic + voice buttons or a send button.
 ///
-/// With [homeStyle], it matches the Home page input instead: larger text,
-/// plain icon buttons and the mode pill sitting next to the attach button.
+/// With [homeStyle], it matches the Home page input instead: dark filled
+/// buttons and the mode pill sitting next to the attach button.
+///
+/// With [attachments], picked images and files show as chips above the text
+/// field and the attach button opens the picker (unless [onAttachTap] is set).
 class NoorvaChatInput extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode? focusNode;
@@ -24,6 +28,7 @@ class NoorvaChatInput extends StatelessWidget {
   final VoidCallback? onPillTap;
 
   final VoidCallback? onAttachTap;
+  final ChatAttachmentController? attachments;
   final VoidCallback? onMicTap;
   final VoidCallback? onVoiceTap;
   final bool isListening;
@@ -46,6 +51,7 @@ class NoorvaChatInput extends StatelessWidget {
     this.onSend,
     this.onPillTap,
     this.onAttachTap,
+    this.attachments,
     this.onMicTap,
     this.onVoiceTap,
     this.isListening = false,
@@ -55,19 +61,22 @@ class NoorvaChatInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fontSize = homeStyle ? 18.0 : 16.0;
+    final onAttach = onAttachTap ??
+        (attachments == null ? null : () => attachments!.pick(context));
     return Container(
       margin: margin ??
           (homeStyle
-              ? const EdgeInsets.fromLTRB(24, 8, 24, 24)
+              ? const EdgeInsets.fromLTRB(16, 8, 16, 16)
               : const EdgeInsets.fromLTRB(16, 0, 16, 24)),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: homeStyle
+          ? const EdgeInsets.all(16)
+          : const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
-        color: homeStyle ? const Color(0xFF141416) : AppColors.card,
-        borderRadius: BorderRadius.circular(32),
+        color: homeStyle ? const Color(0xFF161618) : AppColors.card,
+        borderRadius: BorderRadius.circular(homeStyle ? 24 : 32),
         border: Border.all(
           color: homeStyle
-              ? Colors.white.withValues(alpha: 0.08)
+              ? Colors.white.withValues(alpha: 0.1)
               : AppColors.borderLight,
         ),
       ),
@@ -75,8 +84,10 @@ class NoorvaChatInput extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (attachments != null)
+            ChatAttachmentStrip(controller: attachments!),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: homeStyle ? 12 : 8),
+            padding: EdgeInsets.symmetric(horizontal: homeStyle ? 2 : 8),
             child: TextField(
               controller: controller,
               focusNode: focusNode,
@@ -85,12 +96,12 @@ class NoorvaChatInput extends StatelessWidget {
               maxLines: null,
               minLines: 1,
               keyboardType: TextInputType.multiline,
-              style: TextStyle(color: Colors.white, fontSize: fontSize),
+              style: const TextStyle(color: Colors.white, fontSize: 16),
               decoration: InputDecoration(
                 hintText: hintText,
                 hintStyle: TextStyle(
-                  color: homeStyle ? Colors.white24 : Colors.white38,
-                  fontSize: fontSize,
+                  color: homeStyle ? Colors.white30 : Colors.white38,
+                  fontSize: 16,
                 ),
                 // Override the theme's filled/outlined field: this container
                 // already provides the surface.
@@ -104,17 +115,17 @@ class NoorvaChatInput extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(height: homeStyle ? 24 : 10),
-          homeStyle ? _buildHomeRow() : _buildRow(),
+          SizedBox(height: homeStyle ? 20 : 10),
+          homeStyle ? _buildHomeRow(onAttach) : _buildRow(onAttach),
         ],
       ),
     );
   }
 
-  Widget _buildRow() {
+  Widget _buildRow(VoidCallback? onAttach) {
     return Row(
       children: [
-        _IconButton(asset: 'assets/icons/media.png', onTap: onAttachTap),
+        _IconButton(asset: 'assets/icons/media.png', onTap: onAttach),
         const Spacer(),
         _ModePill(asset: pillIconAsset, label: pillLabel, onTap: onPillTap),
         const Spacer(),
@@ -137,12 +148,12 @@ class NoorvaChatInput extends StatelessWidget {
     );
   }
 
-  Widget _buildHomeRow() {
+  Widget _buildHomeRow(VoidCallback? onAttach) {
     return Row(
       children: [
         _IconButton(
           icon: Icons.attach_file_rounded,
-          onTap: onAttachTap,
+          onTap: onAttach,
           homeStyle: true,
         ),
         const SizedBox(width: 8),
@@ -164,7 +175,7 @@ class NoorvaChatInput extends StatelessWidget {
                 isActive: isListening,
                 homeStyle: true,
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 8),
               _IconButton(
                 asset: 'assets/icons/recording.png',
                 onTap: onVoiceTap ?? onMicTap,
@@ -197,13 +208,18 @@ class _ModePill extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        height: homeStyle ? 48 : null,
         padding: homeStyle
-            ? const EdgeInsets.symmetric(horizontal: 16, vertical: 10)
+            ? const EdgeInsets.symmetric(horizontal: 12)
             : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.08),
+          color: homeStyle
+              ? const Color(0xFF2A2A2E)
+              : Colors.white.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+          border: homeStyle
+              ? null
+              : Border.all(color: Colors.white.withValues(alpha: 0.12)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -216,7 +232,7 @@ class _ModePill extends StatelessWidget {
               style: homeStyle
                   ? const TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: 17,
                       fontWeight: FontWeight.w500,
                     )
                   : const TextStyle(
@@ -228,7 +244,8 @@ class _ModePill extends StatelessWidget {
             ),
             SizedBox(width: homeStyle ? 6 : 4),
             Icon(Icons.keyboard_arrow_down,
-                color: Colors.white60, size: homeStyle ? 20 : 16),
+                color: homeStyle ? Colors.white : Colors.white60,
+                size: homeStyle ? 22 : 16),
           ],
         ),
       ),
@@ -254,11 +271,10 @@ class _IconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = homeStyle ? 24.0 : 20.0;
-    final idleColor = homeStyle ? Colors.white54 : Colors.white70;
-    final color = isActive ? AppColors.blueAccent : idleColor;
+    final color = isActive ? AppColors.blueAccent : Colors.white70;
     final Color background;
     if (homeStyle) {
-      background = isActive ? Colors.white10 : Colors.transparent;
+      background = isActive ? Colors.white10 : const Color(0xFF2A2A2E);
     } else {
       background =
           isActive ? Colors.white24 : Colors.white.withValues(alpha: 0.08);
@@ -266,11 +282,17 @@ class _IconButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(10),
+        width: homeStyle ? 48 : null,
+        height: homeStyle ? 48 : null,
+        padding: homeStyle ? null : const EdgeInsets.all(10),
         decoration: BoxDecoration(color: background, shape: BoxShape.circle),
-        child: icon != null
-            ? Icon(icon, color: color, size: size)
-            : Image.asset(asset!, width: size, height: size, color: color),
+        child: Center(
+          widthFactor: homeStyle ? null : 1,
+          heightFactor: homeStyle ? null : 1,
+          child: icon != null
+              ? Icon(icon, color: color, size: size)
+              : Image.asset(asset!, width: size, height: size, color: color),
+        ),
       ),
     );
   }

@@ -3,7 +3,6 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../models/user_model.dart';
@@ -24,6 +23,7 @@ class AuthRepositoryImpl implements AuthRepository {
       if (user == null) {
         throw Exception('User is null after signing in.');
       }
+      if (!user.emailVerified) throw const EmailNotVerifiedException();
 
       String nameVal = user.displayName ?? 'Noorva User';
       String? dobVal;
@@ -81,17 +81,9 @@ class AuthRepositoryImpl implements AuthRepository {
         throw Exception('User is null after registration.');
       }
 
-      // Update display name
-      await user.updateDisplayName(name);
-
-      // Save supplemental details to SharedPreferences locally
-      final prefs = await SharedPreferences.getInstance();
-      if (dob != null) await prefs.setString('user_dob_${user.uid}', dob);
-      if (gender != null) await prefs.setString('user_gender_${user.uid}', gender);
-      if (occupation != null) await prefs.setString('user_occupation_${user.uid}', occupation);
-
-      // Save to Cloud Firestore
+      // Sign-up is the only place the full profile is written.
       try {
+        await user.updateDisplayName(name);
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
           'id': user.uid,
           'email': email.trim(),
@@ -100,10 +92,27 @@ class AuthRepositoryImpl implements AuthRepository {
           'dob': dob,
           'gender': gender,
           'occupation': occupation,
+          'provider': 'password',
           'createdAt': FieldValue.serverTimestamp(),
         });
       } catch (firestoreError) {
+        // Don't leave an auth account without a profile behind; undo it so
+        // the user can retry sign-up with the same email.
         debugPrint('Firestore save error on register: $firestoreError');
+        try {
+          await user.delete();
+        } catch (deleteError) {
+          debugPrint('Could not delete account after failed profile save: $deleteError');
+        }
+        await _firebaseAuth.signOut();
+        throw Exception('Could not save your profile. Please try again.');
+      }
+
+      // Failure here isn't fatal: the verify screen can resend the link.
+      try {
+        await user.sendEmailVerification();
+      } catch (e) {
+        debugPrint('Could not send verification email: $e');
       }
 
       return UserModel(
@@ -156,17 +165,19 @@ class AuthRepositoryImpl implements AuthRepository {
       String? genderVal;
       String? occupationVal;
 
+      final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
       try {
-        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        final doc = await docRef.get();
         if (doc.exists) {
+          // Login (or sign-up with an existing account): read only.
           final data = doc.data();
           nameVal = data?['name'] ?? nameVal;
           dobVal = data?['dob'];
           genderVal = data?['gender'];
           occupationVal = data?['occupation'];
-        } else {
-          // Create document
-          await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        } else if (isSignUp) {
+          // Sign-up is the only place the profile is written.
+          await docRef.set({
             'id': user.uid,
             'email': user.email ?? googleUser.email,
             'name': nameVal,
@@ -174,11 +185,17 @@ class AuthRepositoryImpl implements AuthRepository {
             'dob': null,
             'gender': null,
             'occupation': null,
+            'provider': 'google',
             'createdAt': FieldValue.serverTimestamp(),
           });
         }
       } catch (firestoreError) {
         debugPrint('Firestore fetch/create error on Google sign-in: $firestoreError');
+        if (isSignUp) {
+          await _firebaseAuth.signOut();
+          await _googleSignIn.signOut();
+          throw Exception('Could not save your profile. Please try again.');
+        }
       }
 
       return UserModel(
@@ -191,19 +208,7 @@ class AuthRepositoryImpl implements AuthRepository {
         occupation: occupationVal,
       );
     } catch (e) {
-      if (e is AccountNotFoundException) rethrow;
       debugPrint('Google Sign-In failed: $e');
-      // Mock Fallback for Developer Error (Code 10) or other config issues
-      if (e.toString().contains('10') ||
-          e.toString().contains('sign_in_failed') ||
-          e.toString().contains('network_error')) {
-        debugPrint('Using Mock User for testing...');
-        return const UserModel(
-          id: 'mock_google_id',
-          email: 'test.google@example.com',
-          name: 'Noorva Explorer (Mock)',
-        );
-      }
       rethrow;
     }
   }
@@ -325,12 +330,6 @@ class AuthRepositoryImpl implements AuthRepository {
       // Update Display Name in Firebase Auth
       await user.updateDisplayName(name);
 
-      // Save supplemental details to SharedPreferences locally (legacy compatibility)
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('user_dob_${user.uid}', dob ?? '');
-      await prefs.setString('user_gender_${user.uid}', gender ?? '');
-      await prefs.setString('user_occupation_${user.uid}', occupation ?? '');
-
       // Update Firestore
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'id': user.uid,
@@ -364,6 +363,13 @@ class AuthRepositoryImpl implements AuthRepository {
       final User? user = _firebaseAuth.currentUser;
       if (user == null) return null;
 
+      // An unverified email/password session doesn't count as logged in.
+      final isPasswordUser = user.providerData.any((p) => p.providerId == 'password');
+      if (isPasswordUser && !user.emailVerified) {
+        await _firebaseAuth.signOut();
+        return null;
+      }
+
       String nameVal = user.displayName ?? 'Noorva User';
       String? dobVal;
       String? genderVal;
@@ -395,6 +401,29 @@ class AuthRepositoryImpl implements AuthRepository {
       debugPrint('GetCurrentUser Error: $e');
       return null;
     }
+  }
+
+  @override
+  Future<void> sendVerificationEmail() async {
+    final User? user = _firebaseAuth.currentUser;
+    if (user == null) throw Exception('Session expired. Please log in again.');
+    try {
+      await user.sendEmailVerification();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'too-many-requests') {
+        throw Exception('Too many emails sent. Please wait a few minutes and try again.');
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<UserEntity?> checkEmailVerified() async {
+    final User? user = _firebaseAuth.currentUser;
+    if (user == null) throw Exception('Session expired. Please log in again.');
+    await user.reload();
+    if (!(_firebaseAuth.currentUser?.emailVerified ?? false)) return null;
+    return getCurrentUser();
   }
 
   @override

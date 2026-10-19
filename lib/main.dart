@@ -37,7 +37,8 @@ void main() async {
     MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => ThemeBloc()),
-        BlocProvider(create: (_) => AuthBloc(authRepository)),
+        // Not lazy: start restoring the saved session while the splash plays.
+        BlocProvider(create: (_) => AuthBloc(authRepository), lazy: false),
         BlocProvider(create: (_) => EventsBloc()),
         BlocProvider(create: (_) => GoalsBloc()),
         BlocProvider(create: (_) => NotificationBloc()),

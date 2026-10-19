@@ -127,31 +127,39 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                               BlocConsumer<AuthBloc, AuthState>(
                                 listenWhen: (previous, current) =>
                                     current.status ==
-                                        AuthStatus.passwordResetOtpSent ||
+                                        AuthStatus.passwordResetEmailSent ||
                                     current.status ==
-                                        AuthStatus.passwordResetOtpFailure,
+                                        AuthStatus.passwordResetEmailFailure,
                                 listener: (context, state) {
                                   if (state.status ==
-                                      AuthStatus.passwordResetOtpSent) {
+                                      AuthStatus.passwordResetEmailSent) {
                                     FocusScope.of(context).unfocus();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'If an account exists for ${_emailController.text.trim()}, a password reset link has been sent. Check your inbox.'),
+                                        backgroundColor: Colors.green,
+                                        duration: const Duration(seconds: 5),
+                                      ),
+                                    );
                                     // Let the mascot finish: Thinking revers (1s) ->
                                     // idle -> success (1s) must play before leaving.
                                     Future.delayed(
                                         const Duration(milliseconds: 2800), () {
                                       if (context.mounted) {
-                                        Navigator.pushNamed(
+                                        Navigator.pushNamedAndRemoveUntil(
                                           context,
-                                          AppRoutes.otpVerification,
-                                          arguments: 'forgotPassword',
+                                          AppRoutes.login,
+                                          (route) => false,
                                         );
                                       }
                                     });
                                   } else if (state.status ==
-                                      AuthStatus.passwordResetOtpFailure) {
+                                      AuthStatus.passwordResetEmailFailure) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(state.errorMessage ??
-                                            'Failed to send reset code.'),
+                                            'Failed to send reset link.'),
                                         backgroundColor: Colors.redAccent,
                                       ),
                                     );
@@ -169,11 +177,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                     );
                                   }
                                   return NoorvaButton(
-                                    text: 'Get OTP',
+                                    text: 'Send Reset Link',
                                     onPressed: () {
                                       if (_formKey.currentState!.validate()) {
                                         context.read<AuthBloc>().add(
-                                              AuthPasswordResetOtpRequested(
+                                              AuthPasswordResetEmailRequested(
                                                   _emailController.text),
                                             );
                                       }

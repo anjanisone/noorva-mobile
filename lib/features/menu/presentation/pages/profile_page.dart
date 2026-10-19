@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/crystal_card.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 
 class UserProfileState {
   static String name = 'Noorva User';
@@ -56,7 +57,8 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     final displayName = user?.name ?? UserProfileState.name;
-    final displayInitials = user != null ? _getInitials(user.name) : UserProfileState.initials;
+    final displayInitials =
+        user != null ? _getInitials(user.name) : UserProfileState.initials;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -75,9 +77,11 @@ class _ProfilePageState extends State<ProfilePage> {
                       decoration: BoxDecoration(
                         color: Colors.transparent,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.1)),
                       ),
-                      child: const Icon(Icons.chevron_left, color: Colors.white, size: 24),
+                      child: const Icon(Icons.chevron_left,
+                          color: Colors.white, size: 24),
                     ),
                   ),
                   Expanded(
@@ -129,7 +133,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     right: 4,
                     child: GestureDetector(
                       onTap: () async {
-                        await Navigator.pushNamed(context, AppRoutes.editPersonalDetails);
+                        await Navigator.pushNamed(
+                            context, AppRoutes.editPersonalDetails);
                         setState(() {}); // Refresh on return
                       },
                       child: Container(
@@ -160,7 +165,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 color: Colors.white,
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
-              ), 
+              ),
             ),
 
             const SizedBox(height: 32),
@@ -182,11 +187,14 @@ class _ProfilePageState extends State<ProfilePage> {
                             icon: Icons.person_outline_rounded,
                             title: 'Personal Details',
                             onTap: () async {
-                              await Navigator.pushNamed(context, AppRoutes.personalDetails);
+                              await Navigator.pushNamed(
+                                  context, AppRoutes.personalDetails);
                               setState(() {}); // Refresh on return
                             },
                           ),
-                          Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
+                          Divider(
+                              color: Colors.white.withValues(alpha: 0.05),
+                              height: 1),
                           _buildMenuItem(
                             icon: Icons.tune_rounded,
                             title: 'Preferences',
@@ -198,12 +206,15 @@ class _ProfilePageState extends State<ProfilePage> {
                               );
                             },
                           ),
-                          Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
+                          Divider(
+                              color: Colors.white.withValues(alpha: 0.05),
+                              height: 1),
                           _buildMenuItem(
                             icon: Icons.lock_outline_rounded,
                             title: 'Change Password',
                             onTap: () {
-                              Navigator.pushNamed(context, AppRoutes.changePassword);
+                              Navigator.pushNamed(
+                                  context, AppRoutes.changePassword);
                             },
                           ),
                         ],
@@ -222,31 +233,44 @@ class _ProfilePageState extends State<ProfilePage> {
                             icon: Icons.delete_outline_rounded,
                             title: 'Delete Account',
                             onTap: () {
-                              Navigator.pushNamed(context, AppRoutes.deleteAccount);
+                              Navigator.pushNamed(
+                                  context, AppRoutes.deleteAccount);
                             },
                           ),
-                          Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
+                          Divider(
+                              color: Colors.white.withValues(alpha: 0.05),
+                              height: 1),
                           _buildMenuItem(
                             icon: Icons.logout_rounded,
                             title: 'Logout',
                             isRed: true,
                             showChevron: false,
                             onTap: () async {
-                              context.read<AuthBloc>().add(const AuthLogoutRequested());
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    backgroundColor: const Color(0xFF1E1E22),
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    content: Text(
-                                      'Logged out successfully.',
-                                      style: GoogleFonts.outfit(color: Colors.white),
-                                    ),
+                              final authBloc = context.read<AuthBloc>();
+                              authBloc.add(const AuthLogoutRequested());
+                              // Wait for sign-out to actually finish.
+                              final result = await authBloc.stream
+                                  .firstWhere((s) => !s.isLoading);
+                              if (!context.mounted) return;
+                              final loggedOut =
+                                  result.status == AuthStatus.logoutSuccess;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  backgroundColor: const Color(0xFF1E1E22),
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
-                                );
+                                  content: Text(
+                                    loggedOut
+                                        ? 'Logged out successfully.'
+                                        : 'Logout failed. Please try again.',
+                                    style:
+                                        GoogleFonts.outfit(color: Colors.white),
+                                  ),
+                                ),
+                              );
+                              if (loggedOut) {
                                 Navigator.pushNamedAndRemoveUntil(
                                     context, AppRoutes.login, (route) => false);
                               }
