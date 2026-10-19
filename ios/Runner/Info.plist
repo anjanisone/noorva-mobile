@@ -42,8 +42,14 @@
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access so you can take photos to attach to your conversations with Noorva.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app requires microphone access to convert your voice into text for Noorva Guide.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs photo library access so you can attach images to your conversations with Noorva.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>This app needs permission to save images from your conversations with Noorva to your photo library.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>This app requires speech recognition access to provide conversational guidance.</string>
 	<key>UIApplicationSceneManifest</key>

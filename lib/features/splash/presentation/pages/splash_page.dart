@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -58,10 +60,21 @@ class _SplashPageState extends State<SplashPage>
       ),
     );
 
-    _controller.forward().then((_) {
-      // Navigate to onboarding after animation
-      Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
-    });
+    _controller.forward().then((_) => _goNext());
+  }
+
+  /// Logged-in users skip onboarding and land on Home.
+  Future<void> _goNext() async {
+    final authBloc = context.read<AuthBloc>();
+    var authState = authBloc.state;
+    if (authState.isLoading) {
+      authState = await authBloc.stream.firstWhere((s) => !s.isLoading);
+    }
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(
+      context,
+      authState.user != null ? AppRoutes.home : AppRoutes.onboarding,
+    );
   }
 
   @override

@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../../core/widgets/noorva_mascot.dart';
 import '../../../../core/widgets/noorva_chat_input.dart';
+import '../../../../core/widgets/chat_attachments.dart';
 import '../../../../core/widgets/perched_mascot.dart';
 
 class InteractiveEventCreationPage extends StatefulWidget {
@@ -19,6 +20,7 @@ class _InteractiveEventCreationPageState
   int _flowStep = 0;
   bool _showMenuOverlay = false;
   final TextEditingController _inputController = TextEditingController();
+  final ChatAttachmentController _attachments = ChatAttachmentController();
   final FocusNode _focusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
 
@@ -47,6 +49,7 @@ class _InteractiveEventCreationPageState
   @override
   void dispose() {
     _inputController.dispose();
+    _attachments.dispose();
     _focusNode.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -75,6 +78,7 @@ class _InteractiveEventCreationPageState
         _flowStep = 3;
         _inputController.clear();
       }
+      _attachments.clear();
       _focusNode.unfocus();
     });
     _scrollToBottom();
@@ -156,6 +160,20 @@ class _InteractiveEventCreationPageState
   // ─── Initial State (Step 0) ──────────────────────────────────────────────────
 
   Widget _buildInitialState() {
+    // With the keyboard open there may not be room for the card and Noorva:
+    // Noorva shrinks first, then the card scrolls instead of overflowing.
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: IntrinsicHeight(child: _buildInitialContent()),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInitialContent() {
     return Column(
       children: [
         Padding(
@@ -237,7 +255,7 @@ class _InteractiveEventCreationPageState
       children: [
         Positioned.fill(child: _buildChatList()),
         // The chat area ends 8px above the bar (the bar's top margin).
-        PerchedMascot(controller: _scrollController, gapToBar: 8),
+        const PerchedMascot(gapToBar: 8),
       ],
     );
   }
@@ -652,6 +670,7 @@ class _InteractiveEventCreationPageState
         onSend: _submitMessage,
         pillIconAsset: 'assets/icons/schedules.png',
         pillLabel: 'Events',
+        attachments: _attachments,
         homeStyle: true,
       ),
     );

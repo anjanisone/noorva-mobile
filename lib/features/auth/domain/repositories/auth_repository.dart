@@ -9,6 +9,15 @@ class AccountNotFoundException implements Exception {
   String toString() => 'No account found. Please sign up first.';
 }
 
+/// Thrown when an email/password user signs in before clicking the
+/// verification link. The user stays signed in so the link can be resent.
+class EmailNotVerifiedException implements Exception {
+  const EmailNotVerifiedException();
+
+  @override
+  String toString() => 'Please verify your email before logging in.';
+}
+
 abstract class AuthRepository {
   Future<UserEntity> login(String email, String password);
   /// With [isSignUp] false, a Google account that has no Noorva account yet
@@ -34,6 +43,13 @@ abstract class AuthRepository {
     String? occupation,
   });
   Future<UserEntity?> getCurrentUser();
+
+  /// Sends Firebase's verification link to the signed-in user's email.
+  Future<void> sendVerificationEmail();
+
+  /// Reloads the signed-in user; returns the profile once the email is
+  /// verified, or null if the link hasn't been clicked yet.
+  Future<UserEntity?> checkEmailVerified();
 
   /// Generates a 6-digit OTP, stores it in Firestore, and sends it to [email].
   /// [purpose] is either `'verification'` (signup) or `'forgotPassword'`.

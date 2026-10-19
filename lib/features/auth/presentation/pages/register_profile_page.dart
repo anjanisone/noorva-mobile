@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/dob_input.dart';
 import '../../../../core/widgets/crystal_card.dart';
 import '../../../../core/widgets/noorva_button.dart';
 import '../../../../core/widgets/noorva_text_field.dart';
@@ -63,15 +64,21 @@ class _RegisterProfilePageState extends State<RegisterProfilePage> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listenWhen: (previous, current) =>
-          current.status == AuthStatus.signupOtpSent ||
-          current.status == AuthStatus.signupOtpFailure,
+          current.status == AuthStatus.verificationEmailSent ||
+          current.status == AuthStatus.registerFailure,
       listener: (context, state) {
-        if (state.status == AuthStatus.signupOtpSent) {
-          Navigator.pushNamed(context, AppRoutes.otpVerification, arguments: 'register');
-        } else if (state.status == AuthStatus.signupOtpFailure) {
+        if (state.status == AuthStatus.verificationEmailSent) {
+          // The account now exists; clear the sign-up screens from the stack.
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.verifyEmail,
+            (route) => false,
+            arguments: 'register',
+          );
+        } else if (state.status == AuthStatus.registerFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.errorMessage ?? 'Failed to send verification code.'),
+              content: Text(state.errorMessage ?? 'Registration failed. Please try again.'),
               backgroundColor: Colors.redAccent,
             ),
           );
@@ -129,6 +136,9 @@ class _RegisterProfilePageState extends State<RegisterProfilePage> {
                         hintText: 'dd-mm-yyyy',
                         controller: _dobController,
                         isRequired: false,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [DobInputFormatter()],
+                        validator: validateDob,
                         suffixIcon: IconButton(
                           icon: Icon(
                             Icons.calendar_today_outlined,
@@ -246,6 +256,7 @@ class _RegisterProfilePageState extends State<RegisterProfilePage> {
                           return NoorvaButton(
                             text: 'Register',
                             onPressed: () {
+                              if (!(_formKey.currentState?.validate() ?? true)) return;
                               if (_agreedToTerms) {
                                 context.read<AuthBloc>()
                                   ..add(AuthPendingProfileDataSet(
@@ -253,7 +264,7 @@ class _RegisterProfilePageState extends State<RegisterProfilePage> {
                                     gender: _selectedGender,
                                     occupation: _occupationController.text,
                                   ))
-                                  ..add(const AuthSignupOtpRequested());
+                                  ..add(const AuthSignupRequested());
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(

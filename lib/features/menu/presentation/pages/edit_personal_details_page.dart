@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/dob_input.dart';
 import '../../../../core/widgets/noorva_button.dart';
 import '../../../../core/widgets/noorva_text_field.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -30,7 +31,10 @@ class _EditPersonalDetailsPageState extends State<EditPersonalDetailsPage> {
     final user = context.read<AuthBloc>().state.user;
     _nameController = TextEditingController(text: user?.name ?? UserProfileState.name);
     _emailController = TextEditingController(text: user?.email ?? UserProfileState.email);
-    _dobController = TextEditingController(text: user?.dob ?? UserProfileState.dob);
+    // Start empty rather than with the 'dd-mm-yyyy' placeholder, which
+    // would fail validation.
+    final dob = user?.dob ?? UserProfileState.dob;
+    _dobController = TextEditingController(text: parseDob(dob) != null ? dob : '');
     _occupationController = TextEditingController(text: user?.occupation ?? UserProfileState.occupation);
     _selectedGender = user?.gender ?? UserProfileState.gender;
   }
@@ -260,6 +264,9 @@ class _EditPersonalDetailsPageState extends State<EditPersonalDetailsPage> {
                         label: 'What’s your date of birth?',
                         hintText: 'dd-mm-yyyy',
                         controller: _dobController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [DobInputFormatter()],
+                        validator: validateDob,
                         suffixIcon: IconButton(
                           icon: Icon(
                             Icons.calendar_today_outlined,

@@ -224,6 +224,10 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
     }
   }
 
+  // Tighter than CrystalCard's default (24h / 32v) so the card, bubble and
+  // mascot fit on one screen.
+  static const _stepCardPadding = EdgeInsets.fromLTRB(20, 24, 20, 20);
+
   TextStyle get _unifiedTitleStyle => GoogleFonts.outfit(
         color: Colors.white,
         fontSize: 20,
@@ -291,80 +295,92 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: size.height),
               child: SafeArea(
+                // spaceBetween pushes the bubble to the bottom when there's
+                // room; a tall card just grows the page and it scrolls.
+                // (Not IntrinsicHeight: it under-measures the width-capped
+                // bubble text and overflows.)
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Back button (Step 1 matching Figma)
-                    if (_currentStep > 0) ...[
-                      Padding(
-                        padding:
-                            const EdgeInsets.only(left: 20, top: 12, right: 20),
-                        child: Row(
-                          children: [
-                            GestureDetector(
-                              onTap: _prevStep,
-                              child: Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: const Color(
-                                      0xFF1C1C1E), // Solid dark grey per Figma
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.15),
-                                    width: 1.2,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Back button (Step 1 matching Figma)
+                        if (_currentStep > 0) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                left: 20, top: 12, right: 20),
+                            child: Row(
+                              children: [
+                                GestureDetector(
+                                  onTap: _prevStep,
+                                  child: Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      color: const Color(
+                                          0xFF1C1C1E), // Solid dark grey per Figma
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.15),
+                                        width: 1.2,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.chevron_left,
+                                      color: Colors.white,
+                                      size: 26,
+                                    ),
                                   ),
                                 ),
-                                child: const Icon(
-                                  Icons.chevron_left,
-                                  color: Colors.white,
-                                  size: 26,
-                                ),
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                    ] else
-                      const SizedBox(height: 60),
+                          ),
+                          const SizedBox(height: 20),
+                        ] else
+                          const SizedBox(height: 60),
 
-                    // Main step card with Animated Transition
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 500),
-                        transitionBuilder:
-                            (Widget child, Animation<double> animation) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0.05, 0),
-                                end: Offset.zero,
-                              ).animate(CurvedAnimation(
-                                parent: animation,
-                                curve: Curves.easeOutCubic,
-                              )),
-                              child: child,
+                        // Main step card with Animated Transition
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 500),
+                            transitionBuilder:
+                                (Widget child, Animation<double> animation) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0.05, 0),
+                                    end: Offset.zero,
+                                  ).animate(CurvedAnimation(
+                                    parent: animation,
+                                    curve: Curves.easeOutCubic,
+                                  )),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: KeyedSubtree(
+                              key: ValueKey<int>(_currentStep),
+                              child: _buildCurrentStep(),
                             ),
-                          );
-                        },
-                        child: KeyedSubtree(
-                          key: ValueKey<int>(_currentStep),
-                          child: _buildCurrentStep(),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
+
+                    // ── Thought bubble (Individually defined for each step) ──
+                    // Laid out below the card (not overlaid) so a tall card
+                    // pushes it down instead of being covered by it.
+                    _buildStepBubble(_currentStep, size),
                   ],
                 ),
               ),
             ),
           ),
-
-          // ── Thought bubble (All steps) ───────────────────────────────────
-          // ── Thought bubble (Individually defined for each step) ────────────────
-          _buildStepBubble(_currentStep, size),
         ],
       ),
     );
@@ -373,10 +389,11 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildChatStep(BuildContext context, Size size) {
     bool isStep5 = _currentStep == 5;
-    String message = isStep5 
+    String message = isStep5
         ? "Is there something you want to learn, a goal you want to achieve, or anything you're currently working on? Take your time - there's no rush. You can share as many things as you like"
         : "That's Wonderful! All goals and activities you mentioned will keep the body and mind fit. Do you need any guidance to learn them?";
-    TextEditingController controller = isStep5 ? _goalsController : _guidanceController;
+    TextEditingController controller =
+        isStep5 ? _goalsController : _guidanceController;
 
     return SafeArea(
       child: Column(
@@ -412,7 +429,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
               ],
             ),
           ),
-          
+
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -465,7 +482,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
               ),
             ),
           ),
-          
+
           // Input Area
           Padding(
             padding: const EdgeInsets.all(20),
@@ -520,7 +537,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
                       ),
                       suffixIcon: GestureDetector(
                         onTap: () {
-                           if (controller.text.isNotEmpty) _nextStep();
+                          if (controller.text.isNotEmpty) _nextStep();
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
@@ -529,7 +546,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
                                 ? const Color(0xFF1C1C1E)
                                 : Colors.transparent,
                             child: Icon(
-                              Icons.arrow_upward, 
+                              Icons.arrow_upward,
                               color: controller.text.isNotEmpty
                                   ? Colors.white
                                   : Colors.white.withValues(alpha: 0.2),
@@ -540,74 +557,75 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
                       ),
                     ),
                     onSubmitted: (_) {
-                       if (controller.text.isNotEmpty) _nextStep();
+                      if (controller.text.isNotEmpty) _nextStep();
                     },
-                    onChanged: (val) => setState((){}),
+                    onChanged: (val) => setState(() {}),
                   ),
                 ),
-                
+
                 // Bottom Icons (Mic, Chat, Close)
                 if (MediaQuery.of(context).viewInsets.bottom == 0) ...[
-                   const SizedBox(height: 24),
-                   Row(
-                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                     children: [
-                       // Mic Icon
-                       Container(
-                         width: 50,
-                         height: 50,
-                         decoration: BoxDecoration(
-                           color: Colors.white.withValues(alpha: 0.05),
-                           shape: BoxShape.circle,
-                           border: Border.all(
-                             color: Colors.white.withValues(alpha: 0.1),
-                           ),
-                         ),
-                         child: const Icon(Icons.mic_none, color: Colors.white),
-                       ),
-                       
-                       // Center glowing icon
-                       Container(
-                         width: 60,
-                         height: 60,
-                         decoration: BoxDecoration(
-                           color: Colors.white,
-                           shape: BoxShape.circle,
-                           boxShadow: [
-                             BoxShadow(
-                               color: Colors.blue.withValues(alpha: 0.5),
-                               blurRadius: 15,
-                               spreadRadius: 4,
-                             ),
-                           ],
-                         ),
-                         child: const Icon(
-                           Icons.chat_bubble_outline,
-                           color: Colors.black,
-                           size: 26,
-                         ),
-                       ),
-                       
-                       // Close Icon
-                       GestureDetector(
-                         onTap: () {
-                           Navigator.pushReplacementNamed(context, AppRoutes.home);
-                         },
-                         child: Container(
-                           width: 50,
-                           height: 50,
-                           decoration: BoxDecoration(
-                             color: Colors.white.withValues(alpha: 0.05),
-                             shape: BoxShape.circle,
-                             border: Border.all(
-                               color: Colors.white.withValues(alpha: 0.1),
-                             ),
-                           ),
-                           child: const Icon(Icons.close, color: Colors.white),
-                         ),
-                       ),
-                     ],
-                   ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Mic Icon
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.05),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.1),
+                          ),
+                        ),
+                        child: const Icon(Icons.mic_none, color: Colors.white),
+                      ),
+
+                      // Center glowing icon
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.withValues(alpha: 0.5),
+                              blurRadius: 15,
+                              spreadRadius: 4,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.chat_bubble_outline,
+                          color: Colors.black,
+                          size: 26,
+                        ),
+                      ),
+
+                      // Close Icon
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pushReplacementNamed(
+                              context, AppRoutes.home);
+                        },
+                        child: Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.1),
+                            ),
+                          ),
+                          child: const Icon(Icons.close, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
                 ]
               ],
             ),
@@ -648,6 +666,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
     return CrystalCard(
       title: 'Welcome to Noorva!!',
       titleStyle: _unifiedTitleStyle,
+      padding: _stepCardPadding,
       description:
           'My role is to guide your productivity and wellness. To ensure my advice actually fits your reality, I need to understand a little bit about you. Shall we set up your profile?',
       child: Column(
@@ -678,6 +697,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
     return CrystalCard(
       title: 'What should I call you?',
       titleStyle: _unifiedTitleStyle,
+      padding: _stepCardPadding,
       child: Column(
         children: [
           const SizedBox(height: 20),
@@ -733,6 +753,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
     return CrystalCard(
       title: 'Personalize notification experience',
       titleStyle: _unifiedTitleStyle,
+      padding: _stepCardPadding,
       child: Column(
         children: [
           ...options.map((opt) => _buildSelectionItem(
@@ -743,7 +764,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
                   _triggerSelectionBubble();
                 },
               )),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           NoorvaButton(
             text: 'Next',
             onPressed: _isStepCompleted ? _nextStep : null,
@@ -761,6 +782,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
     return CrystalCard(
       title: 'How do you want Noorva to communicate?',
       titleStyle: _unifiedTitleStyle,
+      padding: _stepCardPadding,
       child: Column(
         children: [
           ...options.map((opt) => _buildSelectionItem(
@@ -771,7 +793,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
                   _triggerSelectionBubble();
                 },
               )),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           NoorvaButton(
             text: 'Next',
             onPressed: _isStepCompleted ? _nextStep : null,
@@ -793,6 +815,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
     return CrystalCard(
       title: 'Define how expressive and interactive Noorva should be?',
       titleStyle: _unifiedTitleStyle,
+      padding: _stepCardPadding,
       child: Column(
         children: [
           ...options.map((opt) => _buildSelectionItem(
@@ -804,7 +827,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
                   _triggerSelectionBubble();
                 },
               )),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           NoorvaButton(
             text: 'Finish',
             onPressed: _isStepCompleted ? _nextStep : null,
@@ -993,8 +1016,8 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
               ? Colors.white.withValues(alpha: 0.12)
@@ -1018,19 +1041,19 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
                     maxLines: 5,
                     style: GoogleFonts.outfit(
                       color: Colors.white,
-                      fontSize: 17,
+                      fontSize: 16,
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),
                   if (subtitle != null) ...[
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 3),
                     Text(
                       maxLines: 5,
                       subtitle,
                       style: GoogleFonts.outfit(
                         color: Colors.white.withValues(alpha: 0.5),
-                        fontSize: 14,
+                        fontSize: 13,
                         height: 1.3,
                       ),
                     ),
@@ -1053,7 +1076,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
     double left = 80;
     double bottom = _getBubbleBottom(step, size);
     ThoughtBubbleDotsAlignment dotsAlignment = ThoughtBubbleDotsAlignment.right;
-    double maxWidth = size.width * 0.55;
+    double maxWidth = size.width * 0.5;
 
     // ── Separate Definitions for Each Stepper ──────────────────────────────
     switch (step) {
@@ -1061,7 +1084,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
         left = 60;
         dotsAlignment = ThoughtBubbleDotsAlignment.right;
         break;
-      case 2: // Notification Step
+      case 2: // Expressiveness Step
         left = 110;
         dotsAlignment = ThoughtBubbleDotsAlignment.right;
         break;
@@ -1069,15 +1092,21 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
         left = 110;
         dotsAlignment = ThoughtBubbleDotsAlignment.right;
         break;
-      case 4: // Expressiveness Step
+      case 4: // Notification Step
         left = 90;
         dotsAlignment = ThoughtBubbleDotsAlignment.right;
         break;
     }
 
-    return Positioned(
-      bottom: bottom,
-      left: left,
+    // [bottom] is measured from the screen edge, but this sits inside the
+    // SafeArea; the top padding keeps a gap when the card pushes it down.
+    final safeBottom = MediaQuery.of(context).padding.bottom;
+    return Padding(
+      padding: EdgeInsets.only(
+        left: left,
+        top: 16,
+        bottom: (bottom - safeBottom).clamp(0.0, double.infinity),
+      ),
       child: FadeTransition(
         opacity: _bubbleOpacity,
         child: SlideTransition(
@@ -1086,6 +1115,7 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
             text: _bubbleText,
             maxWidth: maxWidth,
             dotsAlignment: dotsAlignment,
+            compact: true,
           ),
         ),
       ),
@@ -1109,4 +1139,3 @@ class _PersonalizationFlowPageState extends State<PersonalizationFlowPage>
     }
   }
 }
-

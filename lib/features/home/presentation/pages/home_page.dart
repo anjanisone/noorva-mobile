@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:ui' show ImageFilter;
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/chat_attachments.dart';
 import '../../../../core/widgets/crystal_card.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../../core/widgets/noorva_mascot.dart';
 import '../../../../core/widgets/perched_mascot.dart';
+import '../../../../core/widgets/waveform_bars.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,6 +26,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final PageController _pageController = PageController();
   final TextEditingController _inputController = TextEditingController();
+  final ChatAttachmentController _attachments = ChatAttachmentController();
   int _currentCardPage = 0;
   final GlobalKey _bottomKey = GlobalKey();
   double _bottomHeight = 380;
@@ -48,7 +52,7 @@ class _HomePageState extends State<HomePage> {
 
   final List<Map<String, dynamic>> _chatMessages = [];
 
-  // Chat list; Noorva stands on the input bar as it scrolls up.
+  // Chat list; Noorva stands on the left of the input bar below it.
   final ScrollController _chatScrollController = ScrollController();
 
   final List<Map<String, dynamic>> _conversations = [
@@ -168,6 +172,7 @@ class _HomePageState extends State<HomePage> {
     _pageController.dispose();
     _chatScrollController.dispose();
     _inputController.dispose();
+    _attachments.dispose();
     _focusNode.dispose();
     _speech.stop();
     super.dispose();
@@ -307,10 +312,11 @@ class _HomePageState extends State<HomePage> {
     });
 
     _inputController.clear();
+    _attachments.clear();
     _focusNode.unfocus();
     _speech.stop();
 
-    // Show the newest message; this also tucks Noorva back behind the bar.
+    // Show the newest message, scrolled clear of Noorva on the bar.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_chatScrollController.hasClients) return;
       _chatScrollController.animateTo(
@@ -320,10 +326,6 @@ class _HomePageState extends State<HomePage> {
       );
     });
   }
-
-  /// All cards share one height: the tallest (missed-task card with its
-  /// "Tap to recalibrate" button) sets it.
-  static const double _cardPagerHeight = 224;
 
   /// Height of the card + input block, so the mascot can fill exactly the
   /// space between the header and that block.
@@ -355,28 +357,34 @@ class _HomePageState extends State<HomePage> {
           children: [
             // Mascot moves and resizes together. Not shown behind the chat:
             // there he stands on the input bar instead (see _buildChatContent).
+            // At rest he stands on the left, beside the speech bubble and
+            // above the cards; while typing he moves to the centre.
             if (!_isChatActive)
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 350),
                 curve: Curves.easeOutCubic,
                 left: 0,
-                right: 0,
+                right: _isFocused || _isInputNotEmpty ? 0 : size.width * 0.54,
                 top: _isFocused || _isInputNotEmpty
                     ? size.height * 0.15
-                    : size.height * 0.26,
+                    : headerHeight + 8,
                 height: _isFocused || _isInputNotEmpty
                     ? size.height * 0.45
-                    : size.height * 0.72,
+                    : restingMascotHeight,
                 child: IgnorePointer(
-                  child: NoorvaMascot(mood: _homeMood, cycleIdle: true),
+                  child: NoorvaMascot(
+                    mood: _homeMood,
+                    cycleIdle: true,
+                    alignment: Alignment.bottomCenter,
+                  ),
                 ),
               ),
 
             // Speech bubble beside the mascot (home resting state only)
             Positioned(
-              top: headerHeight + restingMascotHeight * 0.12,
-              left: size.width * 0.5,
-              right: 24,
+              top: headerHeight + restingMascotHeight * 0.18,
+              left: size.width * 0.46,
+              right: 16,
               child: IgnorePointer(
                 child: AnimatedOpacity(
                   duration: const Duration(milliseconds: 250),
@@ -399,7 +407,7 @@ class _HomePageState extends State<HomePage> {
                       ? _buildChatContent()
                       : SingleChildScrollView(
                           physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -506,27 +514,37 @@ class _HomePageState extends State<HomePage> {
                             delayMs: 200,
                             Column(
                               children: [
-                                SizedBox(
-                                  height: _cardPagerHeight,
-                                  child: PageView.builder(
-                                    controller: _pageController,
-                                    onPageChanged: (index) {
-                                      setState(() {
-                                        _currentCardPage = index;
-                                      });
-                                    },
-                                    itemCount: _conversations.length,
-                                    itemBuilder: (context, index) {
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20, vertical: 6),
-                                        child: _buildConversationCard(
-                                            _conversations[index]),
-                                      );
-                                    },
-                                  ),
+                                // The hidden copies size the pager to the
+                                // tallest card, so no card's content is cut
+                                // and every page shares that height.
+                                Stack(
+                                  children: [
+                                    for (final conversation in _conversations)
+                                      Visibility(
+                                        visible: false,
+                                        maintainSize: true,
+                                        maintainAnimation: true,
+                                        maintainState: true,
+                                        child: IgnorePointer(
+                                          child: _cardPage(conversation),
+                                        ),
+                                      ),
+                                    Positioned.fill(
+                                      child: PageView.builder(
+                                        controller: _pageController,
+                                        onPageChanged: (index) {
+                                          setState(() {
+                                            _currentCardPage = index;
+                                          });
+                                        },
+                                        itemCount: _conversations.length,
+                                        itemBuilder: (context, index) =>
+                                            _cardPage(_conversations[index]),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 10),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: List.generate(
@@ -726,23 +744,25 @@ class _HomePageState extends State<HomePage> {
         clipBehavior: Clip.none,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              color: Colors.white10,
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
+              border: Border.all(color: Colors.white24),
             ),
             child: Icon(icon, color: Colors.white, size: 24),
           ),
           if (hasBadge)
             Positioned(
-              right: 2,
-              top: 2,
+              right: 13,
+              top: 12,
               child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFF8A8A),
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF5C5C),
                   shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.background, width: 1.5),
                 ),
               ),
             ),
@@ -1087,106 +1107,124 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _cardPage(Map<String, dynamic> data) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: _buildConversationCard(data),
+    );
+  }
+
   Widget _buildConversationCard(Map<String, dynamic> data) {
     bool isMissed = data['isMissed'] == true;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: BoxDecoration(
-          gradient: isMissed
-              ? const LinearGradient(
-                  colors: [Color(0xFF8B4A4A), Color(0xFF5C3333)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color:
-              isMissed ? null : const Color(0xFF1C1C1E).withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: const Color(0xFF3B3B3B)),
+    final card = Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      decoration: BoxDecoration(
+        // Frosted glass over a blurred background: a translucent tint that is
+        // brighter at the top-left like a light sheen. Missed tasks are
+        // tinted red (#FF8A8A), the rest white.
+        gradient: LinearGradient(
+          colors: isMissed
+              ? const [Color(0x2EFF8A8A), Color(0x14FF8A8A)]
+              : const [Color(0x1FFFFFFF), Color(0x08FFFFFF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        child: SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: isMissed
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(isMissed ? 14 : 10),
+              border: Border.all(
+                  color: isMissed ? Colors.white54 : Colors.white38, width: 1),
+            ),
+            child: Text(
+              data['tag']!,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white24, width: 1),
-                ),
+              Expanded(
                 child: Text(
-                  data['tag']!,
+                  data['title']!,
                   style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w400),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      data['title']!,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 19,
-                        fontWeight: FontWeight.w500,
-                        height: 1.2,
-                      ),
-                    ),
-                  ),
-                  if (!isMissed) const SizedBox(width: 12),
-                  if (!isMissed)
-                    const Icon(Icons.north_east, color: Colors.white, size: 24),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                data['subtitle']!,
-                style: TextStyle(
-                  color: isMissed ? const Color(0xFFFFA9A9) : Colors.white70,
-                  fontSize: 14,
-                  fontStyle: isMissed ? FontStyle.italic : FontStyle.normal,
-                  fontWeight: FontWeight.w400,
-                  height: 1.4,
-                ),
-              ),
-              if (isMissed) ...[
-                const SizedBox(height: 16),
-                GestureDetector(
-                  onTap: _showRecalibrateBottomSheet,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'Tap to recalibrate',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    height: 1.25,
                   ),
                 ),
-              ],
+              ),
+              if (!isMissed) const SizedBox(width: 12),
+              if (!isMissed)
+                const Padding(
+                  padding: EdgeInsets.only(top: 2),
+                  child: Icon(Icons.north_east, color: Colors.white, size: 22),
+                ),
             ],
           ),
+          const SizedBox(height: 8),
+          Text(
+            data['subtitle']!,
+            style: TextStyle(
+              color: isMissed ? const Color(0xFFFF8A8A) : Colors.white70,
+              fontSize: isMissed ? 14 : 15,
+              fontStyle: isMissed ? FontStyle.italic : FontStyle.normal,
+              fontWeight: FontWeight.w400,
+              height: 1.4,
+            ),
+          ),
+          if (isMissed) ...[
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: _showRecalibrateBottomSheet,
+              child: Container(
+                width: double.infinity,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(26),
+                ),
+                child: const Center(
+                  child: Text(
+                    'Tap to recalibrate',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: card,
         ),
       ),
     );
@@ -1195,12 +1233,14 @@ class _HomePageState extends State<HomePage> {
   Widget _buildDot({bool isActive = false}) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      width: 8,
-      height: 8,
+      margin: const EdgeInsets.symmetric(horizontal: 3),
+      width: 6,
+      height: 6,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.2),
+        color: isActive
+            ? const Color(0xFF3B9BFF)
+            : Colors.white.withValues(alpha: 0.25),
       ),
     );
   }
@@ -1294,29 +1334,30 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildInputSection() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF141416),
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        color: const Color(0xFF161618),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          ChatAttachmentStrip(controller: _attachments),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 2),
             child: TextField(
               controller: _inputController,
               focusNode: _focusNode,
               maxLines: null,
               minLines: 1,
               keyboardType: TextInputType.multiline,
-              style: const TextStyle(color: Colors.white, fontSize: 18),
+              style: const TextStyle(color: Colors.white, fontSize: 16),
               decoration: const InputDecoration(
                 hintText: 'Ask Noorva Anything',
-                hintStyle: TextStyle(color: Colors.white24, fontSize: 18),
+                hintStyle: TextStyle(color: Colors.white30, fontSize: 16),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -1325,29 +1366,13 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           Row(
             children: [
               _buildInputIconButton(
                   icon: Icons.attach_file_rounded,
                   filled: true,
-                  onTap: () {
-                    _showOptionsBottomSheet(
-                      context,
-                      options: [
-                        {
-                          'title': 'Gallery',
-                          'icon': Icons.image_outlined,
-                          'onTap': () {},
-                        },
-                        {
-                          'title': 'Files',
-                          'icon': Icons.description_outlined,
-                          'onTap': () {},
-                        },
-                      ],
-                    );
-                  }),
+                  onTap: () => _attachments.pick(context)),
               if (!_isChatActive) ...[
                 const SizedBox(width: 8),
                 GestureDetector(
@@ -1371,13 +1396,11 @@ class _HomePageState extends State<HomePage> {
                     );
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
+                    height: 48,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
+                      color: const Color(0xFF2A2A2E),
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.12)),
                     ),
                     child: Row(
                       children: [
@@ -1387,11 +1410,11 @@ class _HomePageState extends State<HomePage> {
                         const Text('Guide',
                             style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 16,
+                                fontSize: 17,
                                 fontWeight: FontWeight.w500)),
                         const SizedBox(width: 6),
                         const Icon(Icons.keyboard_arrow_down,
-                            color: Colors.white60, size: 20),
+                            color: Colors.white, size: 22),
                       ],
                     ),
                   ),
@@ -1445,25 +1468,26 @@ class _HomePageState extends State<HomePage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.all(filled ? 12 : 10),
+        width: 48,
+        height: 48,
         decoration: BoxDecoration(
           color: isActive
               ? Colors.white10
-              : (filled
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.transparent),
+              : (filled ? const Color(0xFF2A2A2E) : Colors.transparent),
           shape: BoxShape.circle,
         ),
-        child: icon != null
-            ? Icon(icon,
-                color: isActive ? AppColors.blueAccent : Colors.white54,
-                size: 24)
-            : Image.asset(
-                assetPath!,
-                width: 24,
-                height: 24,
-                color: isActive ? AppColors.blueAccent : Colors.white54,
-              ),
+        child: Center(
+          child: icon != null
+              ? Icon(icon,
+                  color: isActive ? AppColors.blueAccent : Colors.white70,
+                  size: 24)
+              : Image.asset(
+                  assetPath!,
+                  width: 24,
+                  height: 24,
+                  color: isActive ? AppColors.blueAccent : Colors.white70,
+                ),
+        ),
       ),
     );
   }
@@ -1475,17 +1499,17 @@ class _HomePageState extends State<HomePage> {
         ? _conversations[_currentCardPage]['welcomeMessage'] as String
         : 'You are all caught up!';
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1E),
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _WaveformBars(),
+          const WaveformBars(),
           const SizedBox(height: 10),
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 500),
@@ -1498,7 +1522,7 @@ class _HomePageState extends State<HomePage> {
               key: ValueKey('$_currentCardPage-$_firstName'),
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 12.5,
+                fontSize: 13,
                 height: 1.4,
               ),
             ),
@@ -1519,7 +1543,7 @@ class _HomePageState extends State<HomePage> {
             onTap: () => Navigator.pushNamed(context, AppRoutes.menu),
           ),
           _buildHeaderButton(
-            Icons.notifications_outlined,
+            Icons.notifications_none_rounded,
             hasBadge: true,
             onTap: () => Navigator.pushNamed(context, AppRoutes.notifications),
           ),
@@ -1555,7 +1579,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               // The chat area ends 13px above the bar (spacer + bar margin).
-              PerchedMascot(controller: _chatScrollController, gapToBar: 13),
+              const PerchedMascot(gapToBar: 13),
             ],
           ),
         ),
@@ -1658,35 +1682,6 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Static audio-waveform glyph shown at the top of the speech bubble.
-class _WaveformBars extends StatelessWidget {
-  const _WaveformBars();
-
-  static const _heights = <double>[
-    4, 8, 14, 9, 18, 12, 6, 15, 20, 11, 5, 13, 17, 8, 12, 6, 10, 4, //
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        for (final h in _heights)
-          Container(
-            width: 2.5,
-            height: h,
-            margin: const EdgeInsets.only(right: 3),
-            decoration: BoxDecoration(
-              color: const Color(0xFF3B9BFF),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-      ],
     );
   }
 }

@@ -41,6 +41,7 @@ class _LoginPageState extends State<LoginPage> {
           current.status == AuthStatus.loginSuccess ||
           current.status == AuthStatus.loginFailure ||
           current.status == AuthStatus.accountNotFound ||
+          current.status == AuthStatus.emailNotVerified ||
           current.status == AuthStatus.googleSignInSuccess ||
           current.status == AuthStatus.googleSignInFailure ||
           current.status == AuthStatus.appleSignInSuccess ||
@@ -70,6 +71,20 @@ class _LoginPageState extends State<LoginPage> {
               ),
             );
             Navigator.pushNamed(context, AppRoutes.register);
+            break;
+          case AuthStatus.emailNotVerified:
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.errorMessage ??
+                    'Please verify your email before logging in.'),
+              ),
+            );
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.verifyEmail,
+              (route) => false,
+              arguments: 'login',
+            );
             break;
           case AuthStatus.loginFailure:
             ScaffoldMessenger.of(context).showSnackBar(
