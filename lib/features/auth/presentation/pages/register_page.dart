@@ -10,6 +10,7 @@ import '../../../../core/widgets/social_button.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import 'register_profile_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -49,7 +50,16 @@ class _RegisterPageState extends State<RegisterPage> {
         switch (state.status) {
           case AuthStatus.googleSignInSuccess:
           case AuthStatus.appleSignInSuccess:
-            Navigator.pushReplacementNamed(context, AppRoutes.permissions);
+            // Google/Apple don't give us a DOB etc., so new accounts fill in
+            // the same details as email sign-up first. Clear the auth screens
+            // so back can't return to them.
+            final needsProfile = state.user?.dob == null;
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              needsProfile ? AppRoutes.registerProfile : AppRoutes.permissions,
+              (route) => false,
+              arguments: needsProfile ? RegisterProfilePage.socialArgument : null,
+            );
             break;
           case AuthStatus.googleSignInFailure:
             ScaffoldMessenger.of(context).showSnackBar(

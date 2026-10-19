@@ -34,7 +34,8 @@ dependencies:
   rive: ^0.14.11
   image_picker: ^1.2.2
   file_picker: ^11.0.3
-  flutter_tts: ^4.2.5
+  just_audio: ^0.10.6
+  audio_session: ^0.2.4
 
 dev_dependencies:
   flutter_test:
@@ -46,7 +47,10 @@ flutter_launcher_icons:
   android: "ic_launcher"
   ios: true
   image_path: "assets/images/app icon.jpg"
-  min_sdk_android: 21 # flutter_launcher_icons requires this for adaptive icons, though we are using a simple one
+  min_sdk_android: 21
+  remove_alpha_ios: true
+  adaptive_icon_background: "#111113"
+  adaptive_icon_foreground: "assets/images/app_icon_foreground.png"
 
 flutter:
   uses-material-design: true
@@ -55,3 +59,6 @@ flutter:
     - assets/icons/
     - assets/rive/old_men_v9.riv
     - assets/rive/old_men_walk.riv
+    - assets/audio/noorva_welcome.mp3
+    # Loudness per 50 ms of noorva_welcome.mp3, drives the onboarding waveform.
+    - assets/audio/noorva_welcome_levels.json

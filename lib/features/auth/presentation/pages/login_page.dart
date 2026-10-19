@@ -21,6 +21,11 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  static const double _cardTop = 150;
+  static const double _mascotHeight = 150;
+  // Sinks the feet slightly into the card edge so he looks planted on it.
+  static const double _mascotFootOverlap = 6;
+
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -55,9 +60,11 @@ class _LoginPageState extends State<LoginPage> {
             // Login Success (1s) must play before leaving the page.
             Future.delayed(const Duration(milliseconds: 2800), () {
               if (context.mounted) {
-                Navigator.pushReplacementNamed(
+                // Clear the auth screens so back can't return to them.
+                Navigator.pushNamedAndRemoveUntil(
                   context,
                   AppRoutes.home,
+                  (route) => false,
                   arguments: HomePage.welcomeArgument,
                 );
               }
@@ -92,7 +99,8 @@ class _LoginPageState extends State<LoginPage> {
                 content: Text(
                   (state.errorMessage ?? '').contains('invalid-credential')
                       ? 'Incorrect email or password, or no account exists yet.'
-                      : (state.errorMessage ?? 'Login failed. Please try again.'),
+                      : (state.errorMessage ??
+                          'Login failed. Please try again.'),
                 ),
                 backgroundColor: Colors.redAccent,
                 action: SnackBarAction(
@@ -129,26 +137,23 @@ class _LoginPageState extends State<LoginPage> {
             ),
             child: Stack(
               children: [
-                // Character Image peaking from top right
-                const Positioned(
-                  top: 40,
-                  right: -10,
-                  child: AuthMascot(
-                    height: 200,
-                    fallbackAsset: 'assets/images/noorva_login.png',
-                  ),
-                ),
-
                 // Main Content
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
                       children: [
-                        const SizedBox(height: 120),
+                        const SizedBox(height: _cardTop),
                         CrystalCard(
                           title: 'Welcome to Noorva',
-                          padding: const EdgeInsets.all(24),
+                          titleStyle: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.6,
+                            height: 1.15,
+                          ),
+                          padding: const EdgeInsets.all(20),
                           child: Form(
                             key: _formKey,
                             child: Column(
@@ -165,7 +170,7 @@ class _LoginPageState extends State<LoginPage> {
                                     return null;
                                   },
                                 ),
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 14),
                                 NoorvaTextField(
                                   label: 'Password',
                                   hintText: 'Password',
@@ -192,7 +197,7 @@ class _LoginPageState extends State<LoginPage> {
                                     return null;
                                   },
                                 ),
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 2),
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: TextButton(
@@ -210,7 +215,7 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 32),
+                                const SizedBox(height: 8),
                                 BlocBuilder<AuthBloc, AuthState>(
                                   builder: (context, state) {
                                     if (state.isLoading) {
@@ -241,9 +246,9 @@ class _LoginPageState extends State<LoginPage> {
                                     );
                                   },
                                 ),
-                                const SizedBox(height: 40),
+                                const SizedBox(height: 20),
                                 _buildDivider(),
-                                const SizedBox(height: 32),
+                                const SizedBox(height: 16),
                                 BlocBuilder<AuthBloc, AuthState>(
                                   builder: (context, state) => SocialButton(
                                     label: 'Sign in with Google',
@@ -255,7 +260,7 @@ class _LoginPageState extends State<LoginPage> {
                                     },
                                   ),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 12),
                                 BlocBuilder<AuthBloc, AuthState>(
                                   builder: (context, state) => SocialButton(
                                     label: 'Sign in with Apple',
@@ -267,7 +272,7 @@ class _LoginPageState extends State<LoginPage> {
                                     },
                                   ),
                                 ),
-                                const SizedBox(height: 32),
+                                const SizedBox(height: 16),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -300,6 +305,23 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                ),
+
+                // Mascot drawn after the card so he stands on its top edge
+                // instead of hiding behind it.
+                Positioned(
+                  top: MediaQuery.paddingOf(context).top +
+                      _cardTop -
+                      _mascotHeight +
+                      _mascotFootOverlap,
+                  right: 24,
+                  child: const IgnorePointer(
+                    child: AuthMascot(
+                      height: _mascotHeight,
+                      alignment: Alignment.bottomCenter,
+                      fallbackAsset: 'assets/images/noorva_login.png',
                     ),
                   ),
                 ),
