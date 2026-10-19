@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -47,6 +48,17 @@ void main() async {
     ),
   );
 }
+
+/// Web has no google-services.json. These values are the public client
+/// config already committed in android/app/google-services.json.
+const FirebaseOptions _webFirebaseOptions = FirebaseOptions(
+  apiKey: 'AIzaSyCTsvhwz07EtUP4uChzZ8hjnUgwOUcAmlI',
+  appId: '1:875117978323:android:ad1222882bb72c4f482a26',
+  messagingSenderId: '875117978323',
+  projectId: 'noorva-companion-mlp',
+  storageBucket: 'noorva-companion-mlp.firebasestorage.app',
+  authDomain: 'noorva-companion-mlp.firebaseapp.com',
+);
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
