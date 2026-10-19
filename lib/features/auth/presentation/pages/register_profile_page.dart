@@ -12,6 +12,10 @@ import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 
 class RegisterProfilePage extends StatefulWidget {
+  /// Route argument for Google/Apple sign-up: the account already exists, so
+  /// this page also asks for the name and saves the details onto it.
+  static const socialArgument = 'social';
+
   const RegisterProfilePage({super.key});
 
   @override
@@ -20,16 +24,77 @@ class RegisterProfilePage extends StatefulWidget {
 
 class _RegisterProfilePageState extends State<RegisterProfilePage> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _dobController = TextEditingController();
   final _occupationController = TextEditingController();
   String _selectedGender = 'Male';
   bool _agreedToTerms = false;
+  bool _isSocial = false;
+  bool _initialised = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialised) return;
+    _initialised = true;
+    _isSocial = ModalRoute.of(context)?.settings.arguments ==
+        RegisterProfilePage.socialArgument;
+    if (_isSocial) {
+      final name = context.read<AuthBloc>().state.user?.name ?? '';
+      // Skip the placeholders used when the provider gives no name.
+      if (name != 'Google User' && name != 'Apple User') {
+        _nameController.text = name;
+      }
+    }
+  }
 
   @override
   void dispose() {
+    _nameController.dispose();
     _dobController.dispose();
     _occupationController.dispose();
     super.dispose();
+  }
+
+  /// For social sign-up the account already exists, so leaving abandons it:
+  /// sign out and go back to login.
+  void _back() {
+    if (!_isSocial) {
+      Navigator.pop(context);
+      return;
+    }
+    context.read<AuthBloc>().add(const AuthLogoutRequested());
+    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (route) => false);
+  }
+
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? true)) return;
+    if (!_agreedToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please agree to the terms and conditions'),
+        ),
+      );
+      return;
+    }
+    final bloc = context.read<AuthBloc>();
+    if (_isSocial) {
+      bloc.add(AuthProfileUpdateRequested(
+        name: _nameController.text.trim(),
+        email: bloc.state.user?.email ?? '',
+        dob: _dobController.text,
+        gender: _selectedGender,
+        occupation: _occupationController.text.trim(),
+      ));
+    } else {
+      bloc
+        ..add(AuthPendingProfileDataSet(
+          dob: _dobController.text,
+          gender: _selectedGender,
+          occupation: _occupationController.text,
+        ))
+        ..add(const AuthSignupRequested());
+    }
   }
 
   Future<void> _selectDate() async {
@@ -62,12 +127,30 @@ class _RegisterProfilePageState extends State<RegisterProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
+    return PopScope(
+      canPop: !_isSocial,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _back();
+      },
+      child: BlocListener<AuthBloc, AuthState>(
       listenWhen: (previous, current) =>
           current.status == AuthStatus.verificationEmailSent ||
-          current.status == AuthStatus.registerFailure,
+          current.status == AuthStatus.registerFailure ||
+          current.status == AuthStatus.profileUpdateSuccess ||
+          current.status == AuthStatus.profileUpdateFailure,
       listener: (context, state) {
-        if (state.status == AuthStatus.verificationEmailSent) {
+        if (state.status == AuthStatus.profileUpdateSuccess) {
+          // Social sign-up: details saved, carry on to permissions.
+          Navigator.pushNamedAndRemoveUntil(
+              context, AppRoutes.permissions, (route) => false);
+        } else if (state.status == AuthStatus.profileUpdateFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage ?? 'Could not save your details. Please try again.'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        } else if (state.status == AuthStatus.verificationEmailSent) {
           // The account now exists; clear the sign-up screens from the stack.
           Navigator.pushNamedAndRemoveUntil(
             context,
@@ -94,7 +177,7 @@ class _RegisterProfilePageState extends State<RegisterProfilePage> {
             children: [
               // Back Button
               GestureDetector(
-                onTap: () => Navigator.pop(context),
+                onTap: _back,
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -130,15 +213,36 @@ class _RegisterProfilePageState extends State<RegisterProfilePage> {
                       ),
                       const SizedBox(height: 32),
 
+                      // Name (social sign-up only; email sign-up asked already)
+                      if (_isSocial) ...[
+                        NoorvaTextField(
+                          label: 'Full Name',
+                          hintText: 'e.g. John Doe',
+                          controller: _nameController,
+                          isRequired: true,
+                          validator: (value) => (value?.trim() ?? '').isEmpty
+                              ? 'Full Name is required'
+                              : null,
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+
                       // Date of Birth
                       NoorvaTextField(
                         label: 'What’s your date of birth?',
                         hintText: 'dd-mm-yyyy',
                         controller: _dobController,
-                        isRequired: false,
+                        isRequired: _isSocial,
                         keyboardType: TextInputType.number,
                         inputFormatters: [DobInputFormatter()],
-                        validator: validateDob,
+                        validator: (value) {
+                          // Required for social sign-up: it's also how we
+                          // tell the profile has been completed.
+                          if (_isSocial && (value?.trim() ?? '').isEmpty) {
+                            return 'Date of birth is required';
+                          }
+                          return validateDob(value);
+                        },
                         suffixIcon: IconButton(
                           icon: Icon(
                             Icons.calendar_today_outlined,
@@ -254,26 +358,8 @@ class _RegisterProfilePageState extends State<RegisterProfilePage> {
                             );
                           }
                           return NoorvaButton(
-                            text: 'Register',
-                            onPressed: () {
-                              if (!(_formKey.currentState?.validate() ?? true)) return;
-                              if (_agreedToTerms) {
-                                context.read<AuthBloc>()
-                                  ..add(AuthPendingProfileDataSet(
-                                    dob: _dobController.text,
-                                    gender: _selectedGender,
-                                    occupation: _occupationController.text,
-                                  ))
-                                  ..add(const AuthSignupRequested());
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Please agree to the terms and conditions'),
-                                  ),
-                                );
-                              }
-                            },
+                            text: _isSocial ? 'Continue' : 'Register',
+                            onPressed: _submit,
                           );
                         },
                       ),
@@ -284,6 +370,7 @@ class _RegisterProfilePageState extends State<RegisterProfilePage> {
             ],
           ),
         ),
+      ),
       ),
       ),
     );

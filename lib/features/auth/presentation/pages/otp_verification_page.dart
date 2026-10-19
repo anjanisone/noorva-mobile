@@ -146,7 +146,9 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
             break;
           case AuthStatus.otpVerifiedRegisterFlow:
             setState(() => _errorMessage = null);
-            Navigator.pushReplacementNamed(context, AppRoutes.permissions);
+            // Clear the auth screens so back can't return to them.
+            Navigator.pushNamedAndRemoveUntil(
+                context, AppRoutes.permissions, (route) => false);
             break;
           case AuthStatus.otpVerificationFailure:
           case AuthStatus.registerFailure:
