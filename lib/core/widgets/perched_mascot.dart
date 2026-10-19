@@ -14,7 +14,7 @@ class PerchedMascot extends StatelessWidget {
     super.key,
     this.gapToBar = 0,
     this.left = 24,
-    this.mood = MascotMood.idle,
+    this.mood = MascotMood.chatting,
   });
 
   /// Height of the perched mascot.

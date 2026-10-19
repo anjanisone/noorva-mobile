@@ -10,7 +10,8 @@ export 'package:rive/rive.dart' show Fit;
 ///
 /// Most moods are driven by the `Number 1` input of `State Machine 1` in
 /// `old_men_v9.riv`. [welcome] and [sad] have no state in the state machine,
-/// so they play their timelines directly.
+/// so they play their timelines directly. [chatting] plays `hands back loop`
+/// from `old_men_walk.riv`.
 ///
 /// Note: the exported .riv originally routed `Number 1 == 7` from idle to
 /// `sad loop` (which only exits on 8), leaving the mascot stuck sad. The
@@ -29,15 +30,21 @@ enum MascotMood {
 
   /// Shown while the user types (see [NoorvaMascot.reactToTyping]).
   typing(null, 'Entry loop'),
+
+  /// Typing variant for the chat-style inputs (home, guide, event creation).
+  chatting(null, 'hands back loop', true),
   sad(null, 'sad loop');
 
-  const MascotMood(this.stateValue, [this.animation]);
+  const MascotMood(this.stateValue, [this.animation, this.inWalkFile = false]);
 
   /// Value for the `Number 1` input, or null when played as a single animation.
   final int? stateValue;
 
   /// Timeline played directly when [stateValue] is null.
   final String? animation;
+
+  /// Whether [animation] lives in `old_men_walk.riv` instead of the main file.
+  final bool inWalkFile;
 }
 
 /// Animated Noorva mascot backed by the shared Rive file.
@@ -54,6 +61,7 @@ class NoorvaMascot extends StatefulWidget {
     this.alignment = Alignment.center,
     this.fallbackAsset = 'assets/images/noorva_home.png',
     this.reactToTyping = false,
+    this.typingMood = MascotMood.typing,
     this.cycleIdle = false,
   });
 
@@ -77,6 +85,9 @@ class NoorvaMascot extends StatefulWidget {
   /// [mood] is a resting one (idle, hello, explaining, welcome). Busy moods
   /// like thinking, listening, success or failed always win.
   final bool reactToTyping;
+
+  /// Mood shown while typing when [reactToTyping] is set.
+  final MascotMood typingMood;
   final double? width;
   final double? height;
   final Fit fit;
@@ -90,6 +101,12 @@ class NoorvaMascot extends StatefulWidget {
 
   static final FileLoader _loader =
       FileLoader.fromAsset(_asset, riveFactory: Factory.flutter);
+
+  /// Second file holding moods flagged [MascotMood.inWalkFile]. It has a
+  /// single artboard, so it's picked by index rather than name.
+  static const _walkAsset = 'assets/rive/old_men_walk.riv';
+  static final FileLoader _walkLoader =
+      FileLoader.fromAsset(_walkAsset, riveFactory: Factory.flutter);
 
   /// Length of a directly played mood's timeline (e.g. [MascotMood.welcome]),
   /// or null if it isn't loaded yet or the mood uses the state machine.
@@ -126,6 +143,11 @@ class NoorvaMascot extends StatefulWidget {
       if (kDebugMode) _debugDump(file);
     } catch (e) {
       debugPrint('NoorvaMascot preload failed: $e');
+    }
+    try {
+      await _walkLoader.file();
+    } catch (e) {
+      debugPrint('NoorvaMascot preload of $_walkAsset failed: $e');
     }
   }
 
@@ -202,7 +224,7 @@ class _NoorvaMascotState extends State<NoorvaMascot> {
       widget.cycleIdle && widget.mood == MascotMood.idle && !_typingOverride;
 
   MascotMood get _effectiveMood {
-    if (_typingOverride) return MascotMood.typing;
+    if (_typingOverride) return widget.typingMood;
     if (_cycling) return NoorvaMascot.idleCycle[_idleStep];
     return widget.mood;
   }
@@ -306,7 +328,23 @@ class _NoorvaMascotState extends State<NoorvaMascot> {
     try {
       final value = mood.stateValue;
       if (value == null) {
-        _animArtboard = file.artboard(NoorvaMascot._artboard);
+        if (mood.inWalkFile) {
+          final walkFile = NoorvaMascot._walkLoader.fileSync;
+          if (walkFile == null) {
+            // Keep showing the current mood until the second file is ready.
+            NoorvaMascot._walkLoader.file().then((_) {
+              if (mounted && _applied == mood && _animPainter == null) {
+                setState(() => _setup(file, mood));
+              }
+            }).catchError((Object e) {
+              debugPrint('NoorvaMascot load of walk file failed: $e');
+            });
+            return;
+          }
+          _animArtboard = walkFile.artboardAt(0);
+        } else {
+          _animArtboard = file.artboard(NoorvaMascot._artboard);
+        }
         _animPainter = SingleAnimationPainter(
           mood.animation!,
           fit: widget.fit,

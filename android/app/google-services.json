@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "474080234687-g12u16q73fvtu03bpvva81kaa2j7vp03.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.noorva.app.noorva_app",
+            "certificate_hash": "652c46cf5e6cae5c873010028b81d54602a53daf"
+          }
+        },
+        {
           "client_id": "474080234687-tjvv56260itcmshchl5jaebph6bsfvp1.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
