@@ -13,10 +13,15 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import 'image_viewer_page.dart';
 import 'sources_web_view_page.dart';
 import '../../../../core/widgets/radio_dot.dart';
+import '../../../../core/widgets/chat_scroll.dart';
 import '../../../../core/widgets/noorva_mascot.dart';
 import '../../../../core/widgets/noorva_chat_input.dart';
 import '../../../../core/widgets/chat_attachments.dart';
 import '../../../../core/widgets/perched_mascot.dart';
+import '../../../../core/services/noorva_api_service.dart';
+import '../../data/guide_plan_models.dart';
+import '../widgets/guide_plan_card.dart';
+import '../widgets/guide_plan_text_parser.dart';
 
 class GoalChatArguments {
   final String goalId;
@@ -42,8 +47,10 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
   final FocusNode _inputFocusNode = FocusNode();
 
   final List<ChatMessage> _messages = [];
+  final NoorvaApiService _noorvaApi = NoorvaApiService();
   List<String> _currentSuggestions = [];
   bool _isTyping = false;
+  bool _noorvaBootstrapped = false;
   bool _showInitialWelcome = true;
   bool _isInputNotEmpty = false;
   bool _isInputFocused = false;
@@ -58,9 +65,6 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
   bool _showSuccessOverlay = false;
   bool _isVideoPlaying = false;
   bool _isVideoBuffering = false;
-
-  bool _isDraftingEmail = false;
-  int _emailDraftStep = 0;
 
   // ── Toast overlay state ──────────────────────────────────────────────────
   bool _showToastBanner = false;
@@ -131,6 +135,170 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
     _initSpeech();
   }
 
+  Future<void> _bootstrapNoorva() async {
+    try {
+      await _noorvaApi.checkHealth();
+    } on NoorvaApiException catch (e) {
+      if (mounted) {
+        _showToast(e.message, isRed: true);
+      }
+    } catch (_) {
+      if (mounted) {
+        _showToast(
+          'Cannot reach Noorva. Start EC2 staging and reopen Guide.',
+          isRed: true,
+        );
+      }
+    }
+  }
+
+  Future<void> _sendLiveNoorva(String text) async {
+    setState(() => _isTyping = true);
+    try {
+      final result = await _noorvaApi.sendGuideHiai(text);
+      if (!mounted) return;
+      _appendAssistantMessage(result.message);
+
+      if (result.handoffJobId != null) {
+        await _pollPlanJob(result.handoffJobId!);
+      }
+    } on NoorvaApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isTyping = false;
+        _messages.add(ChatMessage(
+          text: e.message,
+          isUser: false,
+          showCharacter: true,
+        ));
+      });
+      _scrollToBottom();
+      if (e.serverDown) _showToast(e.message, isRed: true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isTyping = false;
+        _messages.add(ChatMessage(
+          text: 'Something went wrong. Try again in a moment.',
+          isUser: false,
+          showCharacter: true,
+        ));
+      });
+      _scrollToBottom();
+    }
+  }
+
+  void _appendAssistantMessage(String text) {
+    final parsed = GuidePlanTextParser.tryParse(text);
+    setState(() {
+      _isTyping = false;
+      if (parsed != null && parsed.phases.isNotEmpty) {
+        _messages.add(ChatMessage(
+          text: parsed.title,
+          isUser: false,
+          showCharacter: true,
+          type: MessageType.planDocument,
+          planDocument: parsed,
+        ));
+      } else {
+        _messages.add(ChatMessage(
+          text: text,
+          isUser: false,
+          showCharacter: true,
+        ));
+      }
+    });
+    _scrollToBottom();
+  }
+
+  Widget _buildAssistantBody(ChatMessage message) {
+    final doc = message.planDocument ??
+        (message.type == MessageType.planDocument
+            ? null
+            : GuidePlanTextParser.tryParse(message.text));
+    if (doc != null && doc.phases.isNotEmpty) {
+      return GuidePlanCard(plan: doc, leadIn: doc.intro);
+    }
+    if (message.text.isEmpty) return const SizedBox.shrink();
+    return Text(
+      message.text,
+      style: const TextStyle(
+        color: Color(0xFFE5E5E7),
+        fontSize: 16,
+        height: 1.5,
+      ),
+    );
+  }
+
+  Future<void> _pollPlanJob(String jobId) async {
+    ChatMessage? progressMsg;
+    for (var i = 0; i < 60; i++) {
+      await Future.delayed(const Duration(milliseconds: 1500));
+      if (!mounted) return;
+      try {
+        final job = await _noorvaApi.getPlanJob(jobId);
+        if (job.status == 'done' && job.planBody != null) {
+          setState(() {
+            if (progressMsg != null) {
+              _messages.remove(progressMsg);
+            }
+            _messages.add(ChatMessage(
+              text: job.planDocument?.title ?? job.planTitle ?? 'Your plan',
+              isUser: false,
+              showCharacter: true,
+              type: MessageType.planDocument,
+              planDocument: job.planDocument,
+              options: const ['Not now', 'Create Event'],
+            ));
+          });
+          _scrollToBottom();
+          return;
+        }
+        if (job.status == 'failed') {
+          setState(() {
+            _messages.add(ChatMessage(
+              text: job.error ?? 'Plan could not be completed.',
+              isUser: false,
+              showCharacter: true,
+            ));
+          });
+          _scrollToBottom();
+          return;
+        }
+        final label = job.progressLabel ?? 'Building your plan…';
+        if (progressMsg == null) {
+          setState(() {
+            progressMsg = ChatMessage(
+              text: label,
+              isUser: false,
+              showCharacter: true,
+            );
+            _messages.add(progressMsg!);
+          });
+          _scrollToBottom();
+        } else if (progressMsg!.text != label) {
+          setState(() {
+            final idx = _messages.indexOf(progressMsg!);
+            if (idx >= 0) {
+              _messages[idx] = ChatMessage(
+                text: label,
+                isUser: false,
+                showCharacter: true,
+              );
+              progressMsg = _messages[idx];
+            }
+          });
+          _scrollToBottom();
+        }
+      } on NoorvaApiException catch (e) {
+        if (e.serverDown) {
+          _showToast(e.message, isRed: true);
+          return;
+        }
+      }
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -171,6 +339,10 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
         }
       }
       _isInit = false;
+    }
+    if (!_noorvaBootstrapped && !_isGoalChat) {
+      _noorvaBootstrapped = true;
+      _bootstrapNoorva();
     }
   }
 
@@ -229,23 +401,6 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
     return MascotMood.chatting;
   }
 
-  // ── Bot response helper ────────────────────────────────────────────────────
-
-  void _simulateBotResponse(ChatMessage response, {int delayMs = 1000}) {
-    setState(() => _isTyping = true);
-
-    Future.delayed(Duration(milliseconds: delayMs), () {
-      if (mounted) {
-        setState(() {
-          _isTyping = false;
-          _messages.add(response);
-          _currentSuggestions = [];
-        });
-        _scrollToBottom();
-      }
-    });
-  }
-
   // ── Message sending ────────────────────────────────────────────────────────
 
   void _handleSendMessage(String text) {
@@ -260,137 +415,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
       _isInputNotEmpty = false;
     });
     _scrollToBottom();
-
-    final lower = text.toLowerCase();
-
-    // Email drafting active flow check
-    if (_isDraftingEmail) {
-      if (_emailDraftStep == 1) {
-        setState(() {
-          _messages.add(ChatMessage(text: text, isUser: true));
-          _emailDraftStep = 2;
-        });
-        _scrollToBottom();
-
-        _simulateBotResponse(ChatMessage(
-          text:
-              "Got it. I drafted something straightforward so it doesn't create unnecessary back-and-forth. How does this sound?",
-          isUser: false,
-          type: MessageType.emailDraft,
-          showCharacter: true,
-        ));
-        return;
-      }
-    }
-
-    if ((lower.contains('draft') ||
-            lower.contains('write') ||
-            lower.contains('send')) &&
-        (lower.contains('email') || lower.contains('mail')) &&
-        lower.contains('sumanth')) {
-      setState(() {
-        _showInitialWelcome = false;
-        _messages.add(ChatMessage(text: text, isUser: true));
-        _isDraftingEmail = true;
-        _emailDraftStep = 1;
-      });
-      _scrollToBottom();
-
-      _simulateBotResponse(ChatMessage(
-        text:
-            "Sure thing. What’s the core message you want to get across to Sumanth today? Are we just giving him a quick update, or do you need him to take action on something?",
-        isUser: false,
-        showCharacter: true,
-      ));
-      return;
-    }
-
-    if (lower.contains('afternoon slump') ||
-        lower.contains('energy slump') ||
-        lower.contains('slump without coffee') ||
-        lower.contains('beat the afternoon')) {
-      final loadingMessage = ChatMessage(
-        text: "",
-        isUser: false,
-        type: MessageType.preciseSearch,
-        showCharacter: true,
-      );
-      setState(() {
-        _showInitialWelcome = false;
-        _messages.add(loadingMessage);
-      });
-      _scrollToBottom();
-      return;
-    }
-
-    // Image fetch request
-    if ((lower.contains('generate') ||
-                lower.contains('fetch') ||
-                lower.contains('find')) &&
-            (lower.contains('image') ||
-                lower.contains('photo') ||
-                lower.contains('picture')) ||
-        (lower.contains('zen monk') || lower.contains('monk meditating'))) {
-      _simulateBotResponse(ChatMessage(
-        text:
-            "No, I can't generate images as of now, but i can fetch some images for you",
-        isUser: false,
-        type: MessageType.imageGallery,
-        imagePaths: [
-          'assets/images/zen_monk.png',
-          'assets/images/zen_monk.png',
-        ],
-        showCharacter: false,
-      ));
-      // User specified a time → settlement + priority
-    } else if ((lower.contains('meditate at') ||
-            lower.contains('want to meditate') ||
-            lower.contains('i want to meditate at')) &&
-        (lower.contains('am') || lower.contains('pm'))) {
-      _simulateBotResponse(ChatMessage(
-        text:
-            "It is settled. I will quietly tap your shoulder at 6:55 AM tomorrow so you don't have to watch the clock",
-        secondaryText:
-            "To ensure my nudge matches the weight of your intention, what priority should we assign to this reminder?",
-        isUser: false,
-        type: MessageType.options,
-        options: [
-          "High Priority",
-          "Medium Priority",
-          "Low Priority",
-          "I'll decide later",
-        ],
-        showCharacter: true,
-      ));
-    } else if (lower.contains('meditate') || lower.contains('meditation')) {
-      setState(() => _conversationTitle = 'Meditation for inner peace');
-      _simulateBotResponse(ChatMessage(
-        text:
-            "Inner peace is a profound and beautiful goal. When the mind is quiet, everything else we must handle during the day becomes a little easier to navigate. To help us build a rhythm that truly serves you, tell me - which style do you prefer?",
-        isUser: false,
-        type: MessageType.options,
-        options: [
-          "Spiritual way",
-          "Scientific way",
-          "Suggest me the best option",
-        ],
-        showCharacter: true,
-      ));
-    } else if (lower.contains('inner peace')) {
-      _simulateBotResponse(ChatMessage(
-        text:
-            "That is a beautiful intention. Finding inner peace through meditation is a journey of self-discovery. Shall we begin with your first session today?",
-        isUser: false,
-        showCharacter: true,
-      ));
-    } else {
-      _simulateBotResponse(ChatMessage(
-        text:
-            "That's an interesting thought! As your Noorva Guide, I'm here to help you navigate your journey. Would you like to explore a meditation practice or perhaps plan your daily routine?",
-        isUser: false,
-        showCharacter: true,
-      ));
-    }
+    _sendLiveNoorva(text);
   }
 
   // ── Toast Banner ────────────────────────────────────────────────────────────
@@ -438,132 +463,12 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
   // ── Option selection ───────────────────────────────────────────────────────
 
   void _handleOptionSelected(String option) {
-    if (option == "Looks good, send it") {
-      setState(() {
-        _isDraftingEmail = false;
-        _emailDraftStep = 0;
-      });
-      _simulateBotResponse(ChatMessage(
-        text:
-            "Done. That is sent and off your plate. You can clear Sumanth from your mind for now and get back to your focus",
-        isUser: false,
-        showCharacter: true,
-      ));
-      return;
-    } else if (option == "Let's tweak the tone") {
-      _simulateBotResponse(ChatMessage(
-        text: "Sure! Should we make it more formal, friendly, or concise?",
-        isUser: false,
-        type: MessageType.options,
-        options: const ["More formal", "More friendly", "Keep it concise"],
-        showCharacter: true,
-      ));
-      return;
-    } else if (option == "Save it for later") {
-      setState(() {
-        _isDraftingEmail = false;
-        _emailDraftStep = 0;
-      });
-      _simulateBotResponse(ChatMessage(
-        text:
-            "I have saved this draft for you. You can resume writing or send it whenever you are ready.",
-        isUser: false,
-        showCharacter: true,
-      ));
+    if (option == 'Not now') {
+      _showToast('Saved for later');
       return;
     }
-
-    if (option == "Yes, generate my reset plan") {
-      _simulateBotResponse(ChatMessage(
-        text:
-            "Excellent. I will structure a precise routine utilizing light, movement, and hydration. To ensure it fits your workday, what time do you usually feel this energy drop hit the hardest?",
-        isUser: false,
-        type: MessageType.options,
-        options: const [
-          "Around 1:30 PM",
-          "Around 3:00 PM",
-          "Enter the specific time",
-        ],
-        showCharacter: true,
-      ));
-      return;
-    } else if (option == "Yes, but let's focus only on diet") {
-      _simulateBotResponse(ChatMessage(
-        text:
-            "Understood. We will focus purely on post-meal nutrition, blood sugar stabilization, and smart snacking. What time does your slump usually occur?",
-        isUser: false,
-        type: MessageType.options,
-        options: const [
-          "Around 1:30 PM",
-          "Around 3:00 PM",
-          "Enter the specific time",
-        ],
-        showCharacter: true,
-      ));
-      return;
-    } else if (option == "No, I just need the information") {
-      _simulateBotResponse(ChatMessage(
-        text:
-            "Of course. Let me know if you would like me to summarize any other scientific insights or neurobiology data regarding health and wellness.",
-        isUser: false,
-        showCharacter: true,
-      ));
-      return;
-    } else if (option == "Around 1:30 PM" || option == "Around 3:00 PM") {
-      _simulateBotResponse(ChatMessage(
-        text:
-            "Wonderful. I have added a daily 15-minute 'Afternoon Reset' task to your goals list, starting tomorrow at ${option.replaceAll('Around ', '')}. I will be here to nudge you when the time comes.",
-        isUser: false,
-        showCharacter: true,
-      ));
-      return;
-    }
-
-    if (_isGoalChat) {
-      setState(() {
-        _messages.add(ChatMessage(text: option, isUser: true));
-        _currentSuggestions = [];
-      });
-      _scrollToBottom();
-
-      if (option == 'Yes, I finished it') {
-        _simulateBotResponse(
-            ChatMessage(
-              text:
-                  'Incredible work! I have marked this task as completed. Keep up the amazing progress.',
-              isUser: false,
-              showCharacter: true,
-            ),
-            delayMs: 600);
-
-        Future.delayed(const Duration(milliseconds: 1600), () {
-          if (mounted) {
-            setState(() {
-              _showSuccessOverlay = true;
-            });
-          }
-        });
-      } else if (option == 'I\'m having trouble') {
-        _simulateBotResponse(ChatMessage(
-          text:
-              'It\'s completely okay. Settle down, take a deep breath. Let me guide you through the pause. What part is feeling difficult?',
-          isUser: false,
-          showCharacter: true,
-          type: MessageType.options,
-          options: const [
-            'Physical posture',
-            'Mind is wandering too much',
-            'I don\'t have enough time',
-          ],
-        ));
-      } else {
-        _simulateBotResponse(ChatMessage(
-          text:
-              'I understand. Remember, consistency is about making space for the pause, even if it feels incomplete. Let\'s try together next time!',
-          isUser: false,
-          showCharacter: true,
-        ));
-      }
+    if (option == 'Create Event') {
+      _showToast('Create Event is not available yet');
       return;
     }
 
@@ -574,110 +479,15 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
     });
     _scrollToBottom();
 
-    if (option == "Spiritual way") {
-      _simulateBotResponse(ChatMessage(
-        text:
-            "Consistency is the foundation of any spiritual practice. To help you build this habit sustainably, how many days would you like to commit to this meditation practice?",
-        isUser: false,
-        type: MessageType.options,
-        options: ["21 Days", "45 Days", "60 Days", "90 Days"],
-        hasInputOption: true,
-        showCharacter: true,
-      ));
-    } else if (option.contains("Days")) {
-      // Roadmap message: text + PDF attachment + time-of-day options
-      _simulateBotResponse(
-        ChatMessage(
-          text:
-              "Twenty-one days is the perfect window to wire a new habit into your daily life. By the end of this journey, finding your inner peace will feel as natural as taking a breath",
-          secondaryText:
-              "To help us build a rhythm that truly serves you, tell me - when do you usually want to meditate?",
-          isUser: false,
-          type: MessageType.options,
-          options: [
-            "Morning (Between 6AM - 10AM)",
-            "Afternoon (Between 12PM - 3PM)",
-            "Evening (Between 4PM - 8PM)",
-            "I'll decide later",
-          ],
-          hasPdfAttachment: true,
-          pdfName: "21 days Meditation roadmap.pdf",
-          pdfSize: "100Kb",
-          showCharacter: true,
-        ),
-        delayMs: 800,
-      );
-    } else if (option.startsWith("Morning") ||
-        option.startsWith("Afternoon") ||
-        option.startsWith("Evening")) {
-      final period = option.startsWith("Morning")
-          ? "morning"
-          : option.startsWith("Afternoon")
-              ? "afternoon"
-              : "evening";
-      _simulateBotResponse(ChatMessage(
-        text: "Tell me the exact time you want to meditate in the $period",
-        isUser: false,
-        showCharacter: false,
-      ));
-    } else if (option == "Suggest me the best option") {
-      setState(() => _conversationTitle = 'Meditation for inner peace');
-      // First send a text response, then follow with the video message
-      _simulateBotResponse(ChatMessage(
-        text:
-            "The most effective approach combines both ancient wisdom and modern science. Let me show you some teachings from respected masters to help you find what resonates best with you.",
-        isUser: false,
-        showCharacter: true,
-      ));
-      Future.delayed(const Duration(milliseconds: 2200), () {
-        if (mounted) {
-          _simulateBotResponse(
-            ChatMessage(
-              text: '',
-              isUser: false,
-              type: MessageType.videoWithSources,
-              showCharacter: false,
-            ),
-            delayMs: 300,
-          );
-        }
+    if (_isGoalChat && option == 'Yes, I finished it') {
+      _sendLiveNoorva(option);
+      Future.delayed(const Duration(milliseconds: 1600), () {
+        if (mounted) setState(() => _showSuccessOverlay = true);
       });
-      // After the video, follow up with the day commitment options
-      Future.delayed(const Duration(milliseconds: 4000), () {
-        if (mounted) {
-          _simulateBotResponse(
-            ChatMessage(
-              text:
-                  "To help you build a lasting habit, how many days would you like to commit to this meditation practice?",
-              isUser: false,
-              type: MessageType.options,
-              options: ["21 Days", "45 Days", "60 Days", "90 Days"],
-              hasInputOption: true,
-              showCharacter: true,
-            ),
-            delayMs: 600,
-          );
-        }
-      });
-    } else if (option == "High Priority") {
-      _simulateBotResponse(ChatMessage(
-        text:
-            "High priority. I have noted the weight of this commitment. I will be firm but gentle tomorrow morning—I will not let this window slide by unnoticed. To help anchor your focus the moment you hear my chime, what shall we call this morning intention?",
-        isUser: false,
-        type: MessageType.titleInput,
-        showCharacter: true,
-      ));
-    } else if (option == "Medium Priority" ||
-        option == "Low Priority" ||
-        option == "I'll decide later") {
-      _simulateBotResponse(ChatMessage(
-        text:
-            "Intention set. I have noted the weight of this commitment. I will nudge you gently tomorrow morning. To help anchor your focus the moment you hear my chime, what shall we call this morning intention?",
-        isUser: false,
-        type: MessageType.titleInput,
-        showCharacter: true,
-      ));
+      return;
     }
+
+    _sendLiveNoorva(option);
   }
 
   void _handleTitleSubmitted(String title) {
@@ -685,14 +495,7 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
       _messages.add(ChatMessage(text: title, isUser: true));
     });
     _scrollToBottom();
-
-    _simulateBotResponse(ChatMessage(
-      text:
-          "Since we are already here and your intention is clear, would you like to do a brief, three-minute trial session right now? It is a gentle way to get comfortable with the practice before tomorrow morning",
-      isUser: false,
-      type: MessageType.trialPrompt,
-      showCharacter: true,
-    ));
+    _sendLiveNoorva(title);
   }
 
   void _handleTrialPromptSelected(String option) {
@@ -700,50 +503,20 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
       _messages.add(ChatMessage(text: option, isUser: true));
     });
     _scrollToBottom();
-
-    if (option == "Let me try it") {
-      _simulateBotResponse(ChatMessage(
-        text: "Meditation for inner peace",
-        isUser: false,
-        type: MessageType.trialCarousel,
-        showCharacter: false,
-      ));
-    } else {
-      _simulateBotResponse(ChatMessage(
-        text:
-            "Perfect. Rest well tonight. I will quietly tap your shoulder tomorrow morning to begin our journey together.",
-        isUser: false,
-        showCharacter: true,
-      ));
-    }
+    _sendLiveNoorva(option);
   }
 
   void _handleTrialFinished() {
     setState(() {
-      _messages
-          .add(ChatMessage(text: "Trial session completed!", isUser: true));
+      _messages.add(
+        ChatMessage(text: 'Trial session completed!', isUser: true),
+      );
     });
     _scrollToBottom();
-
-    _simulateBotResponse(ChatMessage(
-      text:
-          "Perfect. I've noted your preference. Your 21-day journey to inner peace begins tomorrow morning. I'll be quietly by your side every step of the way.",
-      isUser: false,
-      showCharacter: true,
-    ));
+    _sendLiveNoorva('Trial session completed');
   }
 
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
+  void _scrollToBottom() => pinChatScrollToBottom(_scrollController);
 
   // ── Build ──────────────────────────────────────────────────────────────────
 
@@ -1465,15 +1238,8 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
               ] else ...[
                 // Primary text (skip for videoWithSources which renders its own content)
                 if (message.type != MessageType.videoWithSources &&
-                    message.text.isNotEmpty)
-                  Text(
-                    message.text,
-                    style: const TextStyle(
-                      color: Color(0xFFE5E5E7),
-                      fontSize: 16,
-                      height: 1.5,
-                    ),
-                  ),
+                    (message.text.isNotEmpty || message.planDocument != null))
+                  _buildAssistantBody(message),
               ],
 
               // PDF attachment card
@@ -1499,8 +1265,9 @@ class _GuidePageState extends State<GuidePage> with TickerProviderStateMixin {
               ],
 
               // Option buttons
-              if (message.type == MessageType.options &&
-                  message.options != null) ...[
+              if (message.options != null &&
+                  (message.type == MessageType.options ||
+                      message.type == MessageType.planDocument)) ...[
                 const SizedBox(height: 20),
                 ...message.options!.map((option) => Padding(
                       padding: const EdgeInsets.only(bottom: 12),
@@ -2410,6 +2177,7 @@ enum MessageType {
   preciseSearch,
   preciseSearchResult,
   emailDraft,
+  planDocument,
 }
 
 class ChatMessage {
@@ -2427,6 +2195,7 @@ class ChatMessage {
 
   /// When type == videoWithSources, these steps appear above the exploration text
   final List<String>? steps;
+  final GuidePlanDocument? planDocument;
 
   ChatMessage({
     required this.text,
@@ -2441,6 +2210,7 @@ class ChatMessage {
     this.pdfSize,
     this.imagePaths,
     this.steps,
+    this.planDocument,
   });
 }
 

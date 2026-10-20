@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/noorva_local_store.dart';
 import 'theme_event.dart';
 import 'theme_state.dart';
 
@@ -15,8 +15,7 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
   }
 
   Future<void> _onStarted(ThemeStarted event, Emitter<ThemeState> emit) async {
-    final prefs = await SharedPreferences.getInstance();
-    final themeStr = prefs.getString(themeKey);
+    final themeStr = await NoorvaLocalStore.instance.getString(themeKey);
     if (themeStr != null) {
       final mode = ThemeMode.values.firstWhere(
         (e) => e.toString() == themeStr,
@@ -28,7 +27,6 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
 
   Future<void> _onModeChanged(ThemeModeChanged event, Emitter<ThemeState> emit) async {
     emit(state.copyWith(themeMode: event.mode));
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(themeKey, event.mode.toString());
+    await NoorvaLocalStore.instance.setString(themeKey, event.mode.toString());
   }
 }

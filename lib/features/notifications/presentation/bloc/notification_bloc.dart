@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/services/noorva_local_store.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
@@ -36,8 +36,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   // ── Loading / persistence ────────────────────────────────────────────────
 
   Future<void> _onLoadRequested(NotificationsLoadRequested event, Emitter<NotificationState> emit) async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? encoded = prefs.getString(_prefsKey);
+    final String? encoded = await NoorvaLocalStore.instance.getString(_prefsKey);
     if (encoded != null) {
       try {
         final List<dynamic> decoded = jsonDecode(encoded);
@@ -54,9 +53,8 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   }
 
   Future<void> _saveNotifications(List<NotificationModel> notifications) async {
-    final prefs = await SharedPreferences.getInstance();
     final String encoded = jsonEncode(notifications.map((n) => n.toJson()).toList());
-    await prefs.setString(_prefsKey, encoded);
+    await NoorvaLocalStore.instance.setString(_prefsKey, encoded);
   }
 
   List<NotificationModel> _seedDefaultNotifications() {

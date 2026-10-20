@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:async';
 import 'dart:ui' show ImageFilter;
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -9,9 +10,11 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/chat_attachments.dart';
 import '../../../../core/widgets/crystal_card.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../../core/widgets/chat_scroll.dart';
 import '../../../../core/widgets/noorva_mascot.dart';
 import '../../../../core/widgets/perched_mascot.dart';
 import '../../../../core/widgets/waveform_bars.dart';
+import '../../../../core/services/noorva_api_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -51,6 +54,8 @@ class _HomePageState extends State<HomePage> {
   final List<Timer> _introTimers = [];
 
   final List<Map<String, dynamic>> _chatMessages = [];
+  final NoorvaApiService _noorvaApi = NoorvaApiService();
+  bool _chatLoading = false;
 
   // Chat list; Noorva stands on the left of the input bar below it.
   final ScrollController _chatScrollController = ScrollController();
@@ -278,52 +283,123 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _handleSendMessage() {
+  Future<void> _handleSendMessage() async {
     final text = _inputController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || _chatLoading) return;
 
     setState(() {
       _isChatActive = true;
-      _chatMessages.add({
-        'isUser': true,
-        'text': text,
-      });
-
-      // Mock AI response
-      String mockAiResponse =
-          'London. A city of infinite layers and constant motion. To plan a journey on such short notice often invites unnecessary noise. Before we look at the map, let us decide on the nature of this trip. Are we traveling to execute work, or to find a season of rest?';
-
-      final lowerText = text.toLowerCase();
-      if (lowerText.contains('story')) {
-        mockAiResponse =
-            'There was once a young architect who sought to build a great sanctuary in the center of a loud, endless city.\n\nEvery day the merchants in the marketplace shouted at him. \'Build faster,\' they demanded. \'Add more rooms. Do not stop until the roof touches the sky.\' Hearing the constant noise, the young architect abandoned his careful blueprint. He began laying bricks frantically in all directions, terrified that if he paused to rest, he would fall behind the others.';
-      } else if (lowerText.contains('stop') ||
-          lowerText.contains('other time')) {
-        mockAiResponse = 'Sure, i will be waiting...';
-      }
-
-      _chatMessages.add({
-        'isUser': false,
-        'text': mockAiResponse,
-      });
-
-      _lastWords = ''; // clear speech words
-      _isListening = false; // ensure listening stops UI-wise
+      _chatMessages.add({'isUser': true, 'text': text});
+      _chatLoading = true;
+      _lastWords = '';
+      _isListening = false;
     });
 
     _inputController.clear();
     _attachments.clear();
     _focusNode.unfocus();
     _speech.stop();
+    _scrollChatToEnd();
 
-    // Show the newest message, scrolled clear of Noorva on the bar.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_chatScrollController.hasClients) return;
-      _chatScrollController.animateTo(
-        _chatScrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOutCubic,
-      );
+    try {
+      final result = await _noorvaApi.sendHomeChat(text);
+      if (!mounted) return;
+      setState(() {
+        _chatLoading = false;
+        _chatMessages.add({'isUser': false, 'text': result.message});
+      });
+      if (result.handoffJobId != null) {
+        await _pollPlanJob(result.handoffJobId!);
+      }
+    } on NoorvaApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _chatLoading = false;
+        _chatMessages.add({'isUser': false, 'text': e.message});
+      });
+    } on PlatformException catch (e) {
+      debugPrint('Home chat platform: $e');
+      if (!mounted) return;
+      setState(() {
+        _chatLoading = false;
+        _chatMessages.add({
+          'isUser': false,
+          'text': 'App storage failed to load. Reinstall the app and try again.',
+        });
+      });
+    } catch (e, st) {
+      debugPrint('Home chat error: $e\n$st');
+      if (!mounted) return;
+      setState(() {
+        _chatLoading = false;
+        _chatMessages.add({
+          'isUser': false,
+          'text': 'Something went wrong. Try again in a moment.',
+        });
+      });
+    }
+    _scrollChatToEnd();
+  }
+
+  void _scrollChatToEnd() => pinChatScrollToBottom(_chatScrollController);
+
+  Future<void> _pollPlanJob(String jobId) async {
+    if (!mounted) return;
+    setState(() => _chatLoading = true);
+    _scrollChatToEnd();
+    for (var i = 0; i < 60; i++) {
+      await Future.delayed(const Duration(milliseconds: 1500));
+      if (!mounted) return;
+      try {
+        final job = await _noorvaApi.getPlanJob(jobId);
+        if (job.status == 'done' &&
+            (job.planBody != null && job.planBody!.trim().isNotEmpty)) {
+          setState(() {
+            _chatLoading = false;
+            _chatMessages.add({'isUser': false, 'text': job.planBody!});
+          });
+          _scrollChatToEnd();
+          return;
+        }
+        if (job.status == 'failed') {
+          setState(() {
+            _chatLoading = false;
+            _chatMessages.add({
+              'isUser': false,
+              'text': job.error ?? 'Plan could not be completed.',
+            });
+          });
+          _scrollChatToEnd();
+          return;
+        }
+      } on NoorvaApiException catch (e) {
+        setState(() {
+          _chatLoading = false;
+          _chatMessages.add({'isUser': false, 'text': e.message});
+        });
+        _scrollChatToEnd();
+        return;
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _chatLoading = false;
+      _chatMessages.add({
+        'isUser': false,
+        'text': 'Plan is taking longer than expected. Try again in a moment.',
+      });
+    });
+    _scrollChatToEnd();
+  }
+
+  Future<void> _startNewChat() async {
+    setState(() => _chatLoading = true);
+    await _noorvaApi.resetAppFromScratch();
+    if (!mounted) return;
+    setState(() {
+      _isChatActive = false;
+      _chatMessages.clear();
+      _chatLoading = false;
     });
   }
 
@@ -1567,8 +1643,11 @@ class _HomePageState extends State<HomePage> {
                   // clear of Noorva standing on the input bar.
                   padding: const EdgeInsets.fromLTRB(
                       24, 16, 24, 16 + PerchedMascot.height),
-                  itemCount: _chatMessages.length,
+                  itemCount: _chatMessages.length + (_chatLoading ? 1 : 0),
                   itemBuilder: (context, index) {
+                    if (_chatLoading && index == _chatMessages.length) {
+                      return _buildNoorvaResponse('…');
+                    }
                     final message = _chatMessages[index];
                     if (message['isUser']) {
                       return _buildUserMessage(message['text']);
@@ -1599,10 +1678,7 @@ class _HomePageState extends State<HomePage> {
           ),
           _buildHeaderIconButton(
             'assets/icons/edit.png', // New Chat icon from Image 2
-            onTap: () => setState(() {
-              _isChatActive = false;
-              _chatMessages.clear();
-            }),
+            onTap: _startNewChat,
           ),
         ],
       ),
